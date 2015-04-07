@@ -1,39 +1,38 @@
 /*
     http://www.gammon.com.au/forum/?id=11428
 */
-// #include "RS485_protocol.h"
-#include <SoftwareSerial.h>
+#include "RS485_protocol.h"
 #include "RS485_non_blocking.h"
-
+#include <SoftwareSerial.h>
 
 const byte ENABLE_PIN   = 3;
 const byte LED_PIN      = 13;
 
-SoftwareSerial rs485 (10, 11);  // receive pin, transmit pin
+SoftwareSerial RS485 (10, 11);  // receive pin, transmit pin
 
 // callback routines
 
 void fWrite (const byte what) {
-    rs485.write (what);
+    RS485.write (what);
 }
 
 int fAvailable () {
-    return rs485.available ();
+    return RS485.available ();
 }
 
 int fRead () {
-    return rs485.read ();
+    return RS485.read ();
 }
 
 void setup() {
-    rs485.begin (28800);
+    RS485.begin (28800);
     pinMode (ENABLE_PIN, OUTPUT);  // driver output enable
     pinMode (LED_PIN, OUTPUT);  // built-in LED
 }  // end of setup
 
 byte old_level = 0;
-void sendMsg (const byte * data, const byte length);
-
+// void sendMsg (const byte * data, const byte length);
+// byte received = recvMsg (fAvailable, fRead, buf, sizeof buf);
 void loop() {
 
     // read potentiometer

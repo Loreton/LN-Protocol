@@ -37,7 +37,7 @@
  */
 
 
-#include "RS485_non_blocking.h"
+#include <RS485_non_blocking.h>
 
 // allocate the requested buffer size
 void RS485::begin () {
