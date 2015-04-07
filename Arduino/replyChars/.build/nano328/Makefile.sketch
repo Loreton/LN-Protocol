@@ -1,0 +1,14 @@
+
+
+
+
+
+.build/nano328/src/replyChars.cpp : src/replyChars.ino
+	@mkdir -p .build/nano328/src
+	@echo [93msrc/replyChars.ino[0m
+	@/usr/local/bin/ino preproc  -o $@ $^
+
+
+all : .build/nano328/src/replyChars.cpp
+	@true
+
