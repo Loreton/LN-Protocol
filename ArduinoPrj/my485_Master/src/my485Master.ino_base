@@ -1,0 +1,147 @@
+/*
+    http://www.gammon.com.au/forum/?id=11428
+
+ino build --verbose --cxxflags=-I/home/pi/gitREPO/Ln-RS485/Arduino/my485_Master/lib --cflags=-I/home/pi/gitREPO/Ln-RS485/Arduino/my485_Master/lib --ldflags=-I/home/pi/gitREPO/Ln-RS485/Arduino/my485_Master/lib --cppflags=-I/home/pi/gitREPO/Ln-RS485/Arduino/my485_Master/lib
+
+ino build --verbose --cppflags=-I/home/pi/gitREPO/Ln-RS485/Arduino/my485_Master/lib
+
+*/
+#include <RS485_protocol.h>
+#include <RS485_non_blocking.h>
+#include <SoftwareSerial.h>
+
+const byte ENABLE_PIN   =  3;
+const byte LED_PIN      = 13;
+
+SoftwareSerial RS485 (10, 11);  // receive pin, transmit pin
+// SoftwareSerial mySer.begin(9600);
+
+// callback routines
+void fWrite(const byte what)    { RS485.write (what); }
+int fAvailable ()               { return RS485.available (); }
+int fRead ()                    { return RS485.read (); }
+
+
+
+void setup() {
+    Serial.begin(9600);
+    RS485.begin (9600);
+    pinMode (ENABLE_PIN, OUTPUT);  // driver output enable
+    pinMode (LED_PIN, OUTPUT);  // built-in LED
+}  // end of setup
+
+
+void loop() {
+    byte level = 0;
+    for (level=0; level<=255; level++) {
+        LnSendMessage(level);
+        LnRcvMessage();
+        delay(3000);
+    }
+    level = 0;
+}
+
+// DEV=/dev/Arduino1 && ino build -m nano328 && ino upload -p $DEV -m nano328 && ino serial -p $DEV
+// #############################################################
+// #
+// #############################################################
+void LnSendMessage(const byte data) {
+    // assemble message
+    byte msg [] = {
+                1,    // device 1
+                2,    // turn light on
+                data
+            };
+
+    // send to slave
+    digitalWrite(ENABLE_PIN, HIGH);  // enable sending
+    sendMsg(fWrite, msg, sizeof(msg));
+    Serial.print("[Master] Comando  inviato : ");printHex(msg, sizeof(msg));Serial.println("");
+    digitalWrite(ENABLE_PIN, LOW);  // disable sending
+
+}
+
+
+// #############################################################
+// #
+// #############################################################
+void LnRcvMessage() {
+    // receive response
+    byte buf [10];
+    byte received = recvMsg (fAvailable, fRead, buf, sizeof buf);
+    digitalWrite (LED_PIN, received == 0);  // turn on LED if error
+
+    // only send once per successful change
+    if (received) {
+        Serial.print("[Master] Risposta ricevuta: ");printHex(buf, sizeof(buf));Serial.println("");
+    }
+}
+
+
+
+
+
+void printHex(const byte *data, const byte len) {
+    byte i;
+
+    Serial.print("len:");
+    Serial.print(len, DEC);
+    Serial.print("  -  ");
+    for (i=0; i<len; i++) {
+        Serial.print(data[i], HEX);
+        Serial.print(" ");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+#if 0
+
+void loopOK() {
+
+    byte level = 54; // LnDEBUG - imposto un valore fisso
+
+    // no change? forget it
+    if (level == old_level)
+        return;
+
+    Serial.print("level:");Serial.println(level);
+    Serial.println("preparazione messaggio");
+    // assemble message
+    byte msg [] = {
+                1,    // device 1
+                2,    // turn light on
+                level // to what level
+            };
+
+    // send to slave
+    digitalWrite(ENABLE_PIN, HIGH);  // enable sending
+    sendMsg(fWrite, msg, sizeof msg);
+    Serial.println("messaggio inviato");
+    digitalWrite(ENABLE_PIN, LOW);  // disable sending
+
+    // receive response
+    Serial.println("ricezione messaggio");
+    byte buf [10];
+    byte received = recvMsg (fAvailable, fRead, buf, sizeof buf);
+    Serial.print("messaggio ricevuto:");Serial.println(received);
+
+    digitalWrite (LED_PIN, received == 0);  // turn on LED if error
+
+
+    // only send once per successful change
+    if (received) {
+        Serial.print("received:");Serial.println(received);
+        old_level = level;
+    }
+
+}  // end of loop
+
+#endif
