@@ -41,8 +41,10 @@
 
 #include "RS485_protocol.h"
 
-const byte STX = '\2';
-const byte ETX = '\3';
+const byte STX = '\02';
+const byte ETX = '\03';
+// bool  LORETO_CRC_BEFORE_ETX = false;    // by Loreto
+bool  LORETO_CRC_BEFORE_ETX = true;    // by Loreto
 
 // calculate 8-bit CRC
 static byte crc8 (const byte *addr, byte len) {
@@ -78,12 +80,33 @@ byte c;
 
 // send a message of "length" bytes (max 255) to other end
 // put STX at start, ETX at end, and add CRC
-void sendMsg (WriteCallback fSend, const byte * data, const byte length) {
+char lnCount = 0;                       // by Loreto
+void sendMsg (WriteCallback fSend, const byte * data, const byte length, byte *msgSENT_DEBUG) {
+
+    lnCount = 0;
+    byte CRC8value = crc8 (data, length);       // by Loreto
+
     fSend (STX);  // STX
-    for (byte i = 0; i < length; i++)
+    msgSENT_DEBUG[++lnCount] = STX;         // by Loreto
+    for (byte i = 0; i < length; i++) {
         sendComplemented (fSend, data [i]);
-    fSend (ETX);  // ETX
-    sendComplemented (fSend, crc8 (data, length));
+        msgSENT_DEBUG[++lnCount] = data[i];         // by Loreto
+    }
+
+    if (LORETO_CRC_BEFORE_ETX == true) {
+        sendComplemented (fSend, CRC8value);  // by Loreto - inserito prima del ETX
+        msgSENT_DEBUG[++lnCount] = CRC8value;       // by Loreto
+        fSend (ETX);
+        msgSENT_DEBUG[++lnCount] = ETX;             // by Loreto
+    } else {
+        fSend (ETX);
+        msgSENT_DEBUG[++lnCount] = ETX;             // by Loreto
+        sendComplemented (fSend, CRC8value);
+        msgSENT_DEBUG[++lnCount] = CRC8value;       // by Loreto
+    }
+    msgSENT_DEBUG[0] = lnCount;                 // by Loreto
+
+
 }  // end of sendMsg
 
 // receive a message, maximum "length" bytes, timeout after "timeout" milliseconds
@@ -121,8 +144,31 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     break;
 
                 case ETX:   // end of text
-                    have_etx = true;
-                    break;
+                    if (LORETO_CRC_BEFORE_ETX == true) {
+                        /*
+                            il byte precedente dovrebbe essere il CRC.
+                            verifichiamo che sia valido.
+                        */
+                        byte CRCpos = input_pos;      // dovrebbe puntare al CRC
+                        byte CRC8calc = crc8(data, input_pos-1); // verificato
+                        byte CRC8rcvd = data[CRCpos-1];
+                        // ---- DEBUG
+                        // data[0] = CRC8calc;
+                        // data[1] = CRC8rcvd;
+                        // data[2] = data[CRCpos-1];
+                        // data[3] = data[CRCpos-2];
+                        // return 2;
+                        // ---- DEBUG
+
+                        if (CRC8calc != CRC8rcvd)
+                            return 0;  // bad crc
+                        return input_pos-1;  // return received length escludendo il byte di CRC
+                    } else {
+                        have_etx = true;
+                        break;
+                    }
+
+
 
                 default:
                     // wait until packet officially starts

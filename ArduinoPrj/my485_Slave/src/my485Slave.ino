@@ -37,7 +37,6 @@ void setup() {
     pinMode (LED_PIN,    OUTPUT);  // built-in LED
 }
 
-
 // DEV=/dev/Arduino4 && ino build -m nano328 && ino upload -p $DEV -m nano328 && ino serial -p $DEV
 void loop() {
     byte buf [10];
@@ -69,10 +68,10 @@ void loop() {
            4,           // data to be returned
            5,           // data to be returned
         };
-
+        byte msgSENT_DEBUG [100] = "                                                                ";   // gli faccio scrivere il messaggio inviato con relativo CRC
         delay (1000);  // give the master a moment to prepare to receive
         digitalWrite (ENABLE_PIN, HIGH);  // enable sending
-        sendMsg (fWrite, msg, sizeof msg);
+        sendMsg (fWrite, msg, sizeof msg, msgSENT_DEBUG);
         Serial.print("[Slave] - Risposta inviata: ");printHex(msg, sizeof(msg));
         digitalWrite (ENABLE_PIN, LOW);  // disable sending
 

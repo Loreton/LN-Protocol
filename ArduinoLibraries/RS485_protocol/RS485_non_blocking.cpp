@@ -39,6 +39,10 @@
 
 #include "RS485_non_blocking.h"
 
+// bool  LORETO_CRC_BEFORE_ETX = false;    // by Loreto
+bool  LORETO_CRC_BEFORE_ETX = true;    // by Loreto
+
+
 // allocate the requested buffer size
 void RS485::begin () {
     data_ = (byte *) malloc (bufferSize_);
@@ -95,16 +99,38 @@ byte c;
 
 // send a message of "length" bytes (max 255) to other end
 // put STX at start, ETX at end, and add CRC
-void RS485::sendMsg (const byte * data, const byte length) {
+char lnCount = 0;                       // by Loreto
+void RS485::sendMsg (const byte * data, const byte length, byte *msgSENT_DEBUG) {
   // no callback? Can't send
     if (fWriteCallback_ == NULL)
         return;
 
+    lnCount = 0;
+    msgSENT_DEBUG[++lnCount] = STX;         // by Loreto
+    byte CRC8value = crc8 (data, length);       // by Loreto
+
     fWriteCallback_ (STX);  // STX
-    for (byte i = 0; i < length; i++)
+
+    for (byte i = 0; i < length; i++) {
+        msgSENT_DEBUG[++lnCount] = data[i];         // by Loreto
         sendComplemented (data [i]);
-    fWriteCallback_ (ETX);  // ETX
-    sendComplemented (crc8 (data, length));
+    }
+
+
+    if (LORETO_CRC_BEFORE_ETX == true) {
+        sendComplemented (CRC8value);               // by Loreto
+        msgSENT_DEBUG[++lnCount] = CRC8value;       // by Loreto
+        fWriteCallback_ (ETX);  // ETX
+        msgSENT_DEBUG[++lnCount] = ETX;             // by Loreto
+    } else {
+        fWriteCallback_ (ETX);  // ETX
+        msgSENT_DEBUG[++lnCount] = ETX;             // by Loreto
+        sendComplemented (CRC8value);               // by Loreto
+        msgSENT_DEBUG[++lnCount] = CRC8value;       // by Loreto
+    }
+
+    msgSENT_DEBUG[0] = lnCount;                 // by Loreto
+
 }  // end of RS485::sendMsg
 
 // called periodically from main loop to process data and
@@ -138,8 +164,26 @@ bool RS485::update () {
             break;
 
         case ETX:   // end of text (now expect the CRC check)
-            haveETX_ = true;
-            break;
+            if (LORETO_CRC_BEFORE_ETX == true) {
+                /*
+                    il byte precedente dovrebbe essere il CRC.
+                    verifichiamo che sia valido.
+                */
+                char CRCpos   = inputPos_;   // dovrebbe puntare al CRC
+                char CRC8calc = crc8(data_, inputPos_);
+                char CRC8rcvd = data_[CRCpos];
+
+                if (CRC8calc != CRC8rcvd) {
+                    reset ();
+                    errorCount_++;
+                    break;  // bad crc
+                } // end of bad CRC
+                available_ = true;
+                return true;  // show data ready
+            } else {
+                haveETX_ = true;
+                break;
+            }
 
         default:
             // wait until packet officially starts

@@ -13,10 +13,10 @@ def preparePATHs(fDEBUG):
     thisModuleDIR   = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
     # print (thisModuleDIR)
     if thisModuleDIR.endswith('.zip'):
-        myPaths = [ '.', '../', '../../', '../../../' , '../../../../' ]
+        myPaths = [ '.', '../', '../../', '../../../' , '../../../../', '/home/pi/gitREPO']
 
     else:
-        myPaths = [ '.', '../', '../../', '../../../',  ]
+        myPaths = [ '.', '../', '../../', '../../../', '/home/pi/gitREPO']
 
     myPaths.reverse()
     if fDEBUG: print ("...... l'ordine va letto dal basso verso l'alto")

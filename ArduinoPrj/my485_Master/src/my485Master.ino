@@ -69,10 +69,27 @@ void LnSendMessage(const byte data) {
                 data
             };
 
+    // msgSENT_DEBUG[0] contiene lunghezza dei dati
+    byte msgSENT_DEBUG [100] = "                                                                ";   // gli faccio scrivere il messaggio inviato con relativo CRC
+    // byte msgSENT_DEBUG [100] = "";   // gli faccio scrivere il messaggio inviato con relativo CRC
+
+    // for (i=1; i<msgSENT_DEBUG[0]; i++) {
+    //     Serial.print(data[i], HEX);
+    //     Serial.print(" ");
+    // }
+
     // send to slave
+    unsigned int msgLen = sizeof(msg);
+    unsigned int msgSENTLen = *msgSENT_DEBUG;
+
     digitalWrite(ENABLE_PIN, HIGH);  // enable sending
-    sendMsg(fWrite, msg, sizeof(msg));
-    Serial.print("[Master] - Comando  inviato : ");printHex(msg, sizeof(msg));
+    // Serial.print("[Master] - invio    Comando: ");printHex(msg, sizeof(msg));
+    Serial.print("[Master] - invio    Comando: ");printHex(msg, msgLen);
+
+    sendMsg(fWrite, msg, sizeof(msg), msgSENT_DEBUG);
+    Serial.print("[Master] - Len (msg, debug) : "); Serial.print(msgLen); Serial.print("/"); Serial.println(msgSENTLen);
+    Serial.print("[Master] - Comando  inviato : ");printHex(msgSENT_DEBUG, msgSENTLen);
+
     digitalWrite(ENABLE_PIN, LOW);  // disable sending
 
 }

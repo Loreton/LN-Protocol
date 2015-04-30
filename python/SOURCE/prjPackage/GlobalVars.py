@@ -50,3 +50,34 @@ class GlobalVars():
     REQ.wrCount         = 0     # is like 'rdCount', but used for writes - or for read/write functions
     REQ.wrData          = ()     # is a tuple or list holding words to write
     REQ.badCrc          = 0     # (for example) could be added to force a bad CRC to any request created
+
+
+    ####################
+    ## Default values ##
+    ####################
+
+    # BAUDRATE = 19200
+    # """Default value for the baudrate in Baud (int)."""
+
+    # PARITY   = serial.PARITY_NONE
+    # """Default value for the parity. See the pySerial module for documentation. Defaults to serial.PARITY_NONE"""
+
+    # BYTESIZE = 8
+    # """Default value for the bytesize (int)."""
+
+    # STOPBITS = 1
+    # """Default value for the number of stopbits (int)."""
+
+    # TIMEOUT  = 0.05
+    # """Default value for the timeout value in seconds (float)."""
+
+    # CLOSE_PORT_AFTER_EACH_CALL = False
+    # """Default value for port closure setting."""
+
+    #####################
+    ## Named constants ##
+    #####################
+
+    # MODE_RTU   = 'rtu'
+    # MODE_ASCII = 'ascii'
+

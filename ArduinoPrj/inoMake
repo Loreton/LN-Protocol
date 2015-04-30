@@ -1,0 +1,20 @@
+#!/bin/bash
+
+[[ "$1" == "" ]] && echo "Enter USB port: ttyUSB0, ttyUSB1, ...." && exit
+
+device=/dev/$1
+
+[[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
+module='nano328'
+
+ino build -m $module;rCode=$?
+[[ "$rCode" != "0" ]] && echo $rCode && exit
+
+ino upload -p $device -m $module;rCode=$?
+[[ "$rCode" != "0" ]] && echo $rCode && exit
+
+
+ino serial -p $device;rCode=$?
+[[ "$rCode" != "0" ]] && echo $rCode && exit
+
+

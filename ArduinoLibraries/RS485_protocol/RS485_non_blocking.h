@@ -21,6 +21,7 @@ class RS485 {
     enum {
         STX = '\2',   // start of text
         ETX = '\3'    // end of text
+        // ETX = '\a'    // end of text
     };  // end of enum
 
     // callback functions to do reading/writing
@@ -84,7 +85,7 @@ class RS485 {
         void reset ();
 
         // send data
-        void sendMsg (const byte * data, const byte length);
+        void sendMsg (const byte * data, const byte length, byte *msgSENT_DEBUG);
 
         // returns true if packet available
         bool available () const { return available_; };

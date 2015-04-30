@@ -9,7 +9,7 @@ typedef int  (*AvailableCallback)  ();              // return number of bytes av
 typedef int  (*ReadCallback)  ();                   // read a byte from serial port
 
 void sendMsg (WriteCallback fSend,
-              const byte * data, const byte length);
+              const byte * data, const byte length, byte *msgSENT_DEBUG);
 
 byte recvMsg (AvailableCallback fAvailable, ReadCallback fRead,
               byte * data, const byte length,
