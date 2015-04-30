@@ -129,7 +129,7 @@ void RS485::sendMsg (const byte * data, const byte length, byte *msgSENT_DEBUG) 
         msgSENT_DEBUG[++lnCount] = CRC8value;       // by Loreto
     }
 
-    msgSENT_DEBUG[0] = lnCount;                 // by Loreto
+    msgSENT_DEBUG[0] = lnCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
 
 }  // end of RS485::sendMsg
 

@@ -6,7 +6,7 @@
 #include <RS485_non_blocking.h>
 #include <SoftwareSerial.h>
 
-void printHex(const byte *data, const byte len);
+void printHex(const byte *data, const byte len, char * endStr);
 
 #define START_PIN       5
 #define ENABLE_PIN      3
@@ -43,6 +43,7 @@ void loop() {
     byte SLEEP_TIME=10;
     byte level = 0;
     for (level=0; level<=255; level++) {
+        Serial.println("");
         LnSendMessage(level);
         // if (digitalRead(START_PIN) == 1) {
         //     Serial.print("[Master] - START_PIN : ");Serial.println(digitalRead(START_PIN));
@@ -52,7 +53,6 @@ void loop() {
         if (LnRcvMessage(10000)) {
             Serial.print("[Master] - Working on response data. Sleeping for ");Serial.print(SLEEP_TIME, DEC);Serial.println(" sec.");
         }
-
         delay(SLEEP_TIME*1000);
     }
 }
@@ -61,7 +61,10 @@ void loop() {
 // #############################################################
 // #
 // #############################################################
+bool fDEBUG = false;
 void LnSendMessage(const byte data) {
+    // fDEBUG = true;
+
     // assemble message
     byte msg [] = {
                 1,    // device 1
@@ -69,28 +72,25 @@ void LnSendMessage(const byte data) {
                 data
             };
 
-    // msgSENT_DEBUG[0] contiene lunghezza dei dati
-    byte msgSENT_DEBUG [100] = "                                                                ";   // gli faccio scrivere il messaggio inviato con relativo CRC
-    // byte msgSENT_DEBUG [100] = "";   // gli faccio scrivere il messaggio inviato con relativo CRC
+    /* --------------------
+        mi serve per verificare i dati e l'ordine con cui sono
+        stati inviati inclusi STX, CRC, ETX
+        DEBUG_sentMsg[0] contiene lunghezza dei dati
+    -------------------- */
+    byte DEBUG_sentMsg [200] = "                                                                ";   // gli faccio scrivere il messaggio inviato con relativo CRC
 
-    // for (i=1; i<msgSENT_DEBUG[0]; i++) {
-    //     Serial.print(data[i], HEX);
-    //     Serial.print(" ");
-    // }
-
-    // send to slave
-    unsigned int msgLen = sizeof(msg);
-    unsigned int msgSENTLen = *msgSENT_DEBUG;
-
+   // send to slave
+    char msgLen = sizeof(msg);
     digitalWrite(ENABLE_PIN, HIGH);  // enable sending
-    // Serial.print("[Master] - invio    Comando: ");printHex(msg, sizeof(msg));
-    Serial.print("[Master] - invio    Comando: ");printHex(msg, msgLen);
-
-    sendMsg(fWrite, msg, sizeof(msg), msgSENT_DEBUG);
-    Serial.print("[Master] - Len (msg, debug) : "); Serial.print(msgLen); Serial.print("/"); Serial.println(msgSENTLen);
-    Serial.print("[Master] - Comando  inviato : ");printHex(msgSENT_DEBUG, msgSENTLen);
-
+    sendMsg(fWrite, msg, sizeof(msg), DEBUG_sentMsg);
     digitalWrite(ENABLE_PIN, LOW);  // disable sending
+
+    Serial.print("[Master] - Comando  inviato : ");printHex(msg, msgLen, "");
+    if (fDEBUG) {
+        char DEBUG_SentMsgLen = *DEBUG_sentMsg;           // byte 0
+        Serial.print("[Master] - Comando2 inviato : ");printHex(&DEBUG_sentMsg[1], DEBUG_SentMsgLen, "[STX ...data... CRC ETX]"); // contiene LEN STX ...data... CRC ETX
+    }
+
 
 }
 
@@ -107,9 +107,9 @@ byte LnRcvMessage(unsigned long timeOUT) {
 
     // only send once per successful change
     if (rcvLen > 0) {
-        Serial.print("[Master] - Risposta ricevuta: ");printHex(buf, rcvLen);
+        Serial.print("[Master] - Risposta ricevuta: ");printHex(buf, rcvLen, "");
     } else {
-        Serial.print("[Master] - TIMEOUT waiting response. len=");printHex(buf, rcvLen);
+        Serial.print("[Master] - TIMEOUT waiting response. len=");printHex(buf, rcvLen, "");
     }
     return rcvLen;
 }
@@ -117,7 +117,7 @@ byte LnRcvMessage(unsigned long timeOUT) {
 
 
 
-void printHex(const byte *data, const byte len) {
+void printHex(const byte *data, const byte len, char * endStr) {
     byte i;
 
     Serial.print("len:");
@@ -127,5 +127,5 @@ void printHex(const byte *data, const byte len) {
         Serial.print(data[i], HEX);
         Serial.print(" ");
     }
-    Serial.println("");
+    Serial.println(endStr);
 }
