@@ -26,7 +26,7 @@ def byteArrayCheckSum(byteArray_data):
 def calculateCRC8(byteArray_data):
     result = 0
     for byte in byteArray_data:
-        print (byte, result)
+        # print ('byte: {0} - result {1}'.format( byte, result))
         b2 = byte
         if (byte < 0):
             b2 = byte + 256

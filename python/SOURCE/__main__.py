@@ -97,45 +97,33 @@ ModBus.CLOSE_PORT_AFTER_EACH_CALL = True
 ################################################################################
 if __name__ == "__main__":
     gv.Lnf = Ln.preparePATHs(False)
-    # SER1 = LnClass()
-    # SER1.REQ = gv.REQ
-    # SER1.REQ.addr = 1                                   #slave address (in decimal)
+
+    # it = iter([1,2,3,4,5,6])
+    # for x, y in zip(it, it):
+    #     print (x, y)
+
+    # for i in range(0,10,2): print(i) sys.exit()
+
     slave01 = ModBus.Instrument('/dev/ttyUSB1', 1, ModBus.MODE_ASCII)  # port name, slave address (in decimal)
-    data = slave01.readData(fDEBUG=False)
-    # print (type(comando))
+    slave01.serial.baudrate =  9600
+    data = slave01.readData(STX=0x02, ETX=0x03, fDEBUG=False)
+
+
+    print ("received data:", end='')
     for ch in data:
-        # chHex = binascii.hexlify(ch)
-        # print ("printing: {0} - {0:#X}".format(ch))
-        print ("printing: %03d - x%02X" %(ch, ch))
+        print (" x%02X" %(ch), end="")
 
-    print(Ln.calcCheckSum(data))
-    # SER2 = ModBus.Instrument('/dev/ttyUSB2', 2, ModBus.MODE_RTU)  # port name, slave address (in decimal)
-    # Arduino = ModBus.Instrument('/dev/ttyUSB3', 2, ModBus.MODE_RTU)  # port name, slave address (in decimal)
-    # SER1.serial.baudrate =  115200
-    # Arduino.serial.baudrate =  9600
-    # print (SER2.serial.baudrate)
-    # print (SER1.serial)
-    # print (SER1)
-    # temperature = Arduino.read_register(289, 1) # Registernumber, number of decimals
-    # print (temperature)
+    print()
 
+    # for ch in data[::2]:
+    #     print ("printing: %03d - x%02X" %(ch, ch))
+    # print()
 
-    '''
-    #!/usr/bin/env python
-    import minimalmodbus
+    # it = iter(data)
+    # for ch1, ch2 in zip(it, it):
+    #     print ("    printing: x%02X + x%02X" %(ch1, ch2))
 
-    instrument = minimalmodbus.Instrument('/dev/ttyUSB1', 1) # port name, slave address (in decimal)
-
-    ## Read temperature (PV = ProcessValue) ##
-    temperature = instrument.read_register(289, 1) # Registernumber, number of decimals
-    print temperature
-
-    ## Change temperature setpoint (SP) ##
-    NEW_TEMPERATURE = 95
-    instrument.write_register(24, NEW_TEMPERATURE, 1) # Registernumber, value, number of decimals for storage
-    '''
-
-
-
-
+    # print('...')
+    # print(Ln.byteArrayCheckSum(data))
+    # print(Ln.calculateCRC8(data))
 

@@ -2,6 +2,7 @@
     http://www.gammon.com.au/forum/?id=11428
 
 */
+#include <LnFunctions.h>
 #include <RS485_protocol.h>
 #include <RS485_non_blocking.h>
 #include <SoftwareSerial.h>
@@ -63,7 +64,7 @@ void loop() {
 // #############################################################
 bool fDEBUG = false;
 void LnSendMessage(const byte data) {
-    // fDEBUG = true;
+    fDEBUG = true;
 
     // assemble message
     byte msg [] = {
@@ -79,18 +80,19 @@ void LnSendMessage(const byte data) {
     -------------------- */
     byte DEBUG_sentMsg [200] = "                                                                ";   // gli faccio scrivere il messaggio inviato con relativo CRC
 
-   // send to slave
+        // send to slave
     char msgLen = sizeof(msg);
     digitalWrite(ENABLE_PIN, HIGH);  // enable sending
     sendMsg(fWrite, msg, sizeof(msg), DEBUG_sentMsg);
     digitalWrite(ENABLE_PIN, LOW);  // disable sending
 
-    Serial.print("[Master] - Comando  inviato : ");printHex(msg, msgLen, "");
     if (fDEBUG) {
         char DEBUG_SentMsgLen = *DEBUG_sentMsg;           // byte 0
-        Serial.print("[Master] - Comando2 inviato : ");printHex(&DEBUG_sentMsg[1], DEBUG_SentMsgLen, "[STX ...data... CRC ETX]"); // contiene LEN STX ...data... CRC ETX
+        Serial.print("[Master] - Comando  inviato : ");printHex(&DEBUG_sentMsg[1], DEBUG_SentMsgLen, "[STX ...data... CRC ETX]"); // contiene LEN STX ...data... CRC ETX
     }
-
+    else {
+        Serial.print("[Master] - Comando  inviato : ");printHex(msg, msgLen, "");
+    }
 
 }
 
@@ -115,6 +117,7 @@ byte LnRcvMessage(unsigned long timeOUT) {
 }
 
 
+// char *D2X(unsigned int Valore, char size);
 
 
 void printHex(const byte *data, const byte len, char * endStr) {
@@ -123,9 +126,12 @@ void printHex(const byte *data, const byte len, char * endStr) {
     Serial.print("len:");
     Serial.print(len, DEC);
     Serial.print("  -  ");
+    char *buff = "0000000000";
     for (i=0; i<len; i++) {
-        Serial.print(data[i], HEX);
+        D2X(buff, data[i], 2);
+        Serial.print(buff);
         Serial.print(" ");
     }
     Serial.println(endStr);
 }
+

@@ -27,6 +27,8 @@ which was $Revision: 200 $.
 
 """
 
+import  prjPackage as Ln
+
 __author__   = 'Jonas Berg'
 __email__    = 'pyhys@users.sourceforge.net'
 __url__      = 'http://minimalmodbus.sourceforge.net/'
@@ -201,24 +203,101 @@ class Instrument():
         if self.close_port_after_each_call:
             self.serial.open()
 
+        # ---------------------------------------------
         # --- lettura dati da seriale fino a ETX
+        # --- Non controlliamo i complementi
+        # ---------------------------------------------
         chInt = 0
         buffer = bytearray()            # Creating an empty instance - e' un array di integer
+
+            # ---------------------------------------------
+            # - waiting for STX
+            # ---------------------------------------------
+        while chInt != STX:
+            ch = self.serial.read(1)        # ch e' un bytes
+            if ch == b'': continue
+            chHex = binascii.hexlify(ch)
+            chInt = int(chHex, 16)
+
+        buffer.append(chInt)
+
+            # ---------------------------------------------
+            # - waiting for ETX
+            # ---------------------------------------------
         while chInt != ETX:
             ch = self.serial.read(1)        # ch e' un bytes
             if ch == b'': continue
             chHex = binascii.hexlify(ch)
             chInt = int(chHex, 16)
-            if fDEBUG:print ("Reading: {0} - {1:<10} - {2:<10} {3:<10} - {4:<10} {5:<10} ".format(type(ch), ch, type(chInt), chInt, type(chHex), chHex))
+            if fDEBUG: print ("Reading: {0} - {1:<10} - {2:<10} {3:<10} - {4:<10} {5:<10} ".format(type(ch), ch, type(chInt), chInt, type(chHex), chHex))
             buffer.append(chInt)
 
+
+        bufferLen = len(buffer)
         if fDEBUG:print ('TROVATO')
         if self.close_port_after_each_call:
             self.serial.close()
 
-        # return buffer
-        # print(Ln.calcCheckSum(buffer))
-        # --- ricerca del STX e ritorna solo la parte compresa tra STX-[returnedData]-ETX
+        # --- print Received Data
+        if fDEBUG:
+            print ("received Data:", end="")
+            for ch in buffer:
+                print (" x%02X" %(ch), end="")
+            print ()
+
+
+        # --- verifica STX & ETX
+        if buffer[0] != STX or buffer[-1] != ETX:
+            return bytearray()
+
+        # --- elaborazione payload + CRC
+        retVal = bytearray()
+        xy = iter(buffer[1:-1])
+        ERROR = False
+        for ch1, ch2 in zip(xy, xy):
+            if fDEBUG: print ("complementedData: x%02X + x%02X" %(ch1, ch2), end="")
+            if ERROR: break
+
+            ch1_HNibble = (ch1 >> 4) & 0x0F
+            ch1_LNibble = ~ch1 & 0x0F
+            if ch1_LNibble != ch1_HNibble:
+                ERROR = True
+
+            ch2_HNibble = (ch2 >> 4) & 0x0F
+            ch2_LNibble = ~ch2 & 0x0F
+            if ch2_LNibble != ch2_HNibble:
+                ERROR = True
+
+                # ricostruzione byte
+            newByte = ch2_HNibble + ch1_HNibble*16
+            if fDEBUG: print ("    -   resulting data BYTE: x%02X" %(newByte))
+            retVal.append(newByte)
+
+        if ERROR:
+            return bytearray()
+
+        CRC_received    = retVal[-1]
+        CRC_calculated  = Ln.byteArrayCheckSum(retVal[:-1])
+        if CRC_received != CRC_calculated:
+            return bytearray()
+
+        if fDEBUG:
+            print ("CRC received  : x%02X" % (CRC_received))
+            xx = Ln.byteArrayCheckSum(retVal[:-1])
+            print ("CRC calculated: x%02X" % (CRC_calculated))
+            print ()
+
+        return retVal[:-1]                      # Escludiamo il CRC
+
+
+
+
+
+        '''
+        # ---------------------------------------------
+        # - ricerca del STX e ritorna solo la parte
+        # - compresa tra STX-[returnedData]-ETX
+        # ---------------------------------------------
         retVal = None
         bufferLen = len(buffer)
         for inx, ch in enumerate(reversed(buffer)):   # ch e' un INTEGER
@@ -227,9 +306,16 @@ class Instrument():
                 if fDEBUG:print ("found STX: {0}".format(inx))
                 retVal = buffer[bufferLen-inx:-1]
                 break
+        '''
+
+        # ---------------------------------------------
+        # - recuperiamo i dati reali
+        # ---------------------------------------------
+
         print()
-        print("CRC={0}".format(retVal[-1]))
-        return retVal[:-1]  # elimina il CRC
+        # print("CRC={0}".format(retVal[-1]))
+        # return retVal[:-1]  # elimina il CRC
+        return retVal
 
 
 
