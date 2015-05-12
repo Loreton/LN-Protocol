@@ -5,8 +5,8 @@
 #                                               by Loreto Notarantonio 2013, February
 # ######################################################################################
 import sys, os; sys.dont_write_bytecode = True
-import subprocess
-
+import serial
+import time
 
 import logging
 import logging.handlers as Handlers
@@ -29,7 +29,7 @@ class LnClass(): pass
 
 import  prjPackage as Ln
 # from    prjPackage.LnMinimalModbus            import *
-import  prjPackage.LnModbus  as ModBus
+import  prjPackage.LnRs485  as rs485
 
 
 # gv                  = GlobalVars          # shortCut alle GlobalVars
@@ -37,7 +37,6 @@ gv                  = Ln.GlobalVars          # shortCut alle GlobalVars
 gv.Ln               = Ln                  # Funzioni
 
 # xx = GlobalVars.LnClass()
-
 
 
 
@@ -51,11 +50,7 @@ __status__   = 'Beta'
 __revision__ = '$Rev: 200 $'
 __date__     = '$Date: 2015-03-28 $'
 
-import os
-import serial
-import struct
-import sys
-import time
+
 
 if sys.version > '3':    import binascii
 
@@ -86,9 +81,118 @@ def bestr_to_u16( st):
 
 
 
+def startSlave(usbDevice):
+    slave01 = rs485.Instrument(usbDevice, 1, rs485.MODE_ASCII)  # port name, slave address (in decimal)
+    slave01.serial.baudrate = 9600
+    slave01.serial.STX      = 0x02
+    slave01.serial.ETX      = 0x03
+    data = slave01.readData(fDEBUG=False)
+
+    return data
 
 
-ModBus.CLOSE_PORT_AFTER_EACH_CALL = True
+
+def startMaster(usbDevice):
+
+    Master = rs485.Instrument(usbDevice, 0, rs485.MODE_ASCII)  # port name, slave address (in decimal)
+    Master.serial.baudrate = 9600
+    Master.serial.STX      = 0x02
+    Master.serial.ETX      = 0x03
+
+    slaveADDR = 0x02
+
+    data = bytearray()
+    data.append(slaveADDR)   # Address
+    data.append(0x12)
+    data.append(0x13)
+    data = Master.writeData(data, fDEBUG=True)
+    # data = Master.writeData1(data, fDEBUG=True)
+
+
+
+# - DEBUG ----
+
+def openPort(portName, baud=115200):
+
+    port = serial.Serial(port=portName,
+            baudrate=baud,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE,
+            bytesize=serial.EIGHTBITS,
+            timeout = 6
+        )
+
+    return port
+
+#######################################################################
+# Scrittura  di una riga con il presupposto che '\n' indica fine riga
+#######################################################################
+def writeLine(port, data):
+    # if data[-1] != '\n': data = data + '\n'
+    # print ("{0} - Sending:  {1}".format(port.port, data[:-1]))
+    # port.write(data.encode('utf-8'))
+    port.write( bytearray(data,'ascii'))
+    for i in data:
+        print (int(i), type(i), chr(int(i)))
+        print (" DEC:{:0<4}".format(i))
+        # print (" DEC:{:0<4} x{0:02X}".format(i))
+        # port.write(i.encode('utf-8'))
+        # port.write(int(i))
+        # port.write(chr(int(i)))
+
+#######################################################################
+# Scrittura  di una riga con il presupposto che '\n' indica fine riga
+#######################################################################
+def writeLine2(port, data):
+    # if data[-1] != '\n': data = data + '\n'
+    # print ("{0} - Sending:  {1}".format(port.port, data[:-1]))
+    port.write(data.encode('utf-8'))
+    for i in data:
+        print (i)
+        # print (" x{0:02X}".format(int(i)))
+        port.write(i.encode('utf-8'))
+
+
+def writeLoop(portName):
+    # Data = '02 0F 1E 1E 2D 1E 3C A5 96 03'  # STX(02) + 01 12 13 + CRC(xA9) + ETX(03)
+    port = openPort(portName, baud=9600)
+    print (port)
+    counter = 0
+    while True:
+        counter += 1
+        destAddr = counter%3
+        if destAddr == int(portName[-1]):
+            continue
+        data = "[Addr:{0}] - Frame counter: {1}".format(destAddr, counter)
+        print (data)
+        writeLine(port, data)
+        time.sleep(5)
+
+def writeLoop2(portName):
+    port = openPort(portName, baud=9600)
+    print (port)
+    counter = 0
+    while True:
+        counter += 1
+        destAddr = counter%3
+        if destAddr == int(portName[-1]):
+            continue
+        # data = "[Addr:{0}] - Frame counter: {1}".format(destAddr, counter)
+        data = '02 0F 1E 1E 2D 1E 3C A5 96 03'  # STX(02) + 01 12 13 + CRC(xA9) + ETX(03)
+        data = [0x02, 0x0F, 0x1E, 0x1E, 0x2D, 0x1E, 0x3C, 0xA5, 0x96, 0x03]  # STX(02) + 01 12 13 + CRC(xA9) + ETX(03)
+        print (data)
+        byteArrayData = bytearray()
+        strData = ''
+        for byte in data:
+            byteArrayData.append(byte)
+            strData += str(byte)
+        # writeLine(port, data)
+        writeLine(port, strData)
+        # writeLine(port, byteArrayData)
+        time.sleep(5)
+
+
+rs485.CLOSE_PORT_AFTER_EACH_CALL = True
 
 ################################################################################
 # - M A I N
@@ -98,22 +202,49 @@ ModBus.CLOSE_PORT_AFTER_EACH_CALL = True
 if __name__ == "__main__":
     gv.Lnf = Ln.preparePATHs(False)
 
-    # it = iter([1,2,3,4,5,6])
-    # for x, y in zip(it, it):
-    #     print (x, y)
+    usbDevice = sys.argv[1]
 
-    # for i in range(0,10,2): print(i) sys.exit()
+    try:
+        startMaster(usbDevice)
+        # writeLoop2(usbDevice)
 
-    slave01 = ModBus.Instrument('/dev/ttyUSB1', 1, ModBus.MODE_ASCII)  # port name, slave address (in decimal)
-    slave01.serial.baudrate =  9600
-    data = slave01.readData(STX=0x02, ETX=0x03, fDEBUG=False)
+    except (KeyboardInterrupt) as key:
+        print ("Keybord interrupt has been pressed")
+        sys.exit()
 
 
-    print ("received data:", end='')
-    for ch in data:
-        print (" x%02X" %(ch), end="")
 
-    print()
+    sys.exit()
+
+
+    while True:
+        try:
+            # key = str(getKey())
+            # print ("Key: x{0:02X}".format(key))
+
+            data = startSlave(usbDevice)
+            print ("received data:", end=' ')
+            for ch in data:
+                print (" x{0:02X}".format(ch), end="")
+
+            print()
+
+        except (KeyboardInterrupt) as key:
+            print (key)
+            # choice      = input().strip()
+            # if choice.upper() == 'X': break
+            break
+
+
+# while 1:
+#    x = str(getKey())
+#    if x == "b'  '":
+#       print('found')
+#    else:
+#       print(x)
+
+    # print()
+    # data = slave01.writeData(data, fDEBUG=False)
 
     # for ch in data[::2]:
     #     print ("printing: %03d - x%02X" %(ch, ch))

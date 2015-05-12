@@ -1,0 +1,14 @@
+
+
+
+
+
+.build/nano328/src/my485Slave01.cpp : src/my485Slave01.ino
+	@mkdir -p .build/nano328/src
+	@echo [93msrc/my485Slave01.ino[0m
+	@/usr/local/bin/ino preproc  -o $@ $^
+
+
+all : .build/nano328/src/my485Slave01.cpp
+	@true
+

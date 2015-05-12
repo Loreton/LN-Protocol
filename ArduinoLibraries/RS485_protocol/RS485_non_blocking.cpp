@@ -36,11 +36,11 @@
 
  */
 
-
+// #include <LnFunctions.h>                    // for SET_CRC_BEFORE_ETX definition
 #include "RS485_non_blocking.h"
-
-// bool  LORETO_CRC_BEFORE_ETX = false;    // by Loreto
-bool  LORETO_CRC_BEFORE_ETX = true;    // by Loreto
+const bool  SET_CRC_BEFORE_ETX = true;    // by Loreto
+// bool  SET_CRC_BEFORE_ETX = false;    // by Loreto
+// bool  SET_CRC_BEFORE_ETX = true;    // by Loreto
 
 
 // allocate the requested buffer size
@@ -117,7 +117,7 @@ void RS485::sendMsg (const byte * data, const byte length, byte *msgSENT_DEBUG) 
     }
 
 
-    if (LORETO_CRC_BEFORE_ETX == true) {
+    if (SET_CRC_BEFORE_ETX == true) {
         sendComplemented (CRC8value);               // by Loreto
         msgSENT_DEBUG[++lnCount] = CRC8value;       // by Loreto
         fWriteCallback_ (ETX);  // ETX
@@ -164,7 +164,7 @@ bool RS485::update () {
             break;
 
         case ETX:   // end of text (now expect the CRC check)
-            if (LORETO_CRC_BEFORE_ETX == true) {
+            if (SET_CRC_BEFORE_ETX == true) {
                 /*
                     il byte precedente dovrebbe essere il CRC.
                     verifichiamo che sia valido.

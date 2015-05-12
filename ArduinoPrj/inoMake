@@ -2,19 +2,22 @@
 
 [[ "$1" == "" ]] && echo "Enter USB port: ttyUSB0, ttyUSB1, ...." && exit
 
-device=/dev/$1
+device=/dev/ttyUSBx
+device=$1
 
 [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
 module='nano328'
 
-ino build -m $module;rCode=$?
+CMD="ino build -m $module"; echo $CMD; eval $CMD;rCode=$?
 [[ "$rCode" != "0" ]] && echo $rCode && exit
 
-ino upload -p $device -m $module;rCode=$?
+CMD="ino upload -p $device -m $module"; echo $CMD; eval $CMD;rCode=$?
+# ino upload -p $device -m $module;rCode=$?
 [[ "$rCode" != "0" ]] && echo $rCode && exit
 
 
-ino serial -p $device;rCode=$?
+CMD="ino serial -p $device"; echo $CMD; eval $CMD;rCode=$?
+# ino serial -p $device;rCode=$?
 [[ "$rCode" != "0" ]] && echo $rCode && exit
 
 
