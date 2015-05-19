@@ -18,6 +18,12 @@
     #define I_AM_LN_FUNCTIONS
     #define uchar unsigned char
 
+    #define RCV_ERROR      1
+    #define RCV_BADCRC     1
+    #define RCV_BADCHAR    1
+    #define RCV_TIMEOUT    0
+
+
     // bool  SET_CRC_BEFORE_ETX = false;    // by Loreto
     // bool  SET_CRC_BEFORE_ETX = true;    // by Loreto
 

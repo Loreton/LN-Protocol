@@ -231,11 +231,11 @@ include .build/nano328/arduino/Tone.d
 
 
 
-.build/nano328/src/my485Slave01.o : .build/nano328/src/my485Slave01.cpp
-	@echo [93msrc/my485Slave01.cpp[0m
+.build/nano328/src/my485Slave.o : .build/nano328/src/my485Slave.cpp
+	@echo [93msrc/my485Slave.cpp[0m
 	@mkdir -p .build/nano328/src
-	@/usr/bin/avr-g++ -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=101 -I/usr/share/arduino/hardware/arduino/cores/arduino -ffunction-sections -fdata-sections -g -Os -w -I/usr/share/arduino/hardware/arduino/variants/eightanaloginputs -I/usr/share/arduino/libraries/SoftwareSerial -I/usr/share/arduino/libraries/RS485_protocol -I/usr/share/arduino/libraries/LnFunctions -I/usr/share/arduino/hardware/arduino/cores/arduino -fno-exceptions -iquote src  -o $@ -c .build/nano328/src/my485Slave01.cpp
-include .build/nano328/src/my485Slave01.d
+	@/usr/bin/avr-g++ -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=101 -I/usr/share/arduino/hardware/arduino/cores/arduino -ffunction-sections -fdata-sections -g -Os -w -I/usr/share/arduino/hardware/arduino/variants/eightanaloginputs -I/usr/share/arduino/libraries/SoftwareSerial -I/usr/share/arduino/libraries/RS485_protocol -I/usr/share/arduino/libraries/LnFunctions -I/usr/share/arduino/hardware/arduino/cores/arduino -fno-exceptions -iquote src  -o $@ -c .build/nano328/src/my485Slave.cpp
+include .build/nano328/src/my485Slave.d
 
 
 
@@ -243,7 +243,7 @@ include .build/nano328/src/my485Slave01.d
 
 
 
-.build/nano328/firmware.elf : .build/nano328/src/my485Slave01.o .build/nano328/SoftwareSerial/libSoftwareSerial.a .build/nano328/RS485_protocol/libRS485_protocol.a .build/nano328/LnFunctions/libLnFunctions.a .build/nano328/arduino/libarduino.a
+.build/nano328/firmware.elf : .build/nano328/src/my485Slave.o .build/nano328/SoftwareSerial/libSoftwareSerial.a .build/nano328/RS485_protocol/libRS485_protocol.a .build/nano328/LnFunctions/libLnFunctions.a .build/nano328/arduino/libarduino.a
 	@echo [92mLinking firmware.elf[0m
 	@/usr/bin/avr-gcc -mmcu=atmega328p -Wl,-Os -Wl,--gc-sections -o $@ $^ -lm
 

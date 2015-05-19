@@ -208,6 +208,7 @@ class Instrument():
         byte1, byte2 = self.getComplemented(CRC_value, fDEBUG=True)
         dataToSend.append(byte1)
         dataToSend.append(byte2)
+        # dataToSend.append(CRC_value)   # per generare un errore
 
             # - ETX
         dataToSend.append(self.ETX)

@@ -17,6 +17,11 @@
  * Packet end indicator (ETX)
  * Packet CRC (checksum)
 
+Modifiche di Loreto:
+    - Spostato il CRC prima del byte di ETX
+    - inserita la variabile DEBUG_TxMsg per ritornare il messaggio ricevuto oppure trasmesso e verificarne il contenuto.
+      Anche il valore di ritorno è stato portato da 0 ad 1 per permettere di analizzare il contenuto.
+
 
  To allow flexibility with hardware (eg. Serial, SoftwareSerial, I2C)
  you provide three "callback" functions which send or receive data. Examples are:
@@ -114,8 +119,10 @@ void sendMsg (WriteCallback fSend, const byte * data, const byte length, byte *D
 
 }  // end of sendMsg
 
+
 // receive a message, maximum "length" bytes, timeout after "timeout" milliseconds
 // if nothing received, or an error (eg. bad CRC, bad data) return 0
+// if nothing received, or an error (eg. bad CRC, bad data) return 1 (by Loreto per fare comunque il display dei dati ricevuti)
 // otherwise, returns length of received data
 byte recvMsg (AvailableCallback fAvailable,   // return available count
               ReadCallback fRead,             // read one byte
@@ -135,6 +142,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
     byte input_pos;
     bool first_nibble;
     byte current_byte;
+    DEBUG_RxMsg[0] = 0;     // initialize il counter a 0
 
     while (millis () - start_time < timeout) {
         if (fAvailable () > 0) {
@@ -172,7 +180,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
                         DEBUG_RxMsg[0] = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
                         if (CRC8calc != CRC8rcvd)
-                            return 0;  // bad crc
+                            return RCV_BADCRC;  // bad crc
                         return input_pos-1;  // return received length escludendo il byte di CRC
 
                     } else {
@@ -203,7 +211,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
                     // check byte is in valid form (4 bits followed by 4 bits complemented)
                     if ((inByte >> 4) != ((inByte & 0x0F) ^ 0x0F) )
-                        return 0;  // bad character
+                        return RCV_BADCHAR;  // bad character
 
                       // convert back
                     inByte >>= 4;
@@ -224,7 +232,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     if (have_etx) {
                         DEBUG_RxMsg[0] = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
                         if (crc8 (data, input_pos) != current_byte)
-                            return 0;  // bad crc
+                            return RCV_BADCRC;  // bad crc
                         return input_pos;  // return received length
                     }  // end if have ETX already
 
@@ -232,7 +240,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     if (input_pos < length)
                         data [input_pos++] = current_byte;
                     else
-                        return 0;  // overflow
+                        return RCV_ERROR;  // overflow
                     break;
 
                 default:
@@ -243,6 +251,6 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
         }  // end of incoming data
     } // end of while not timed out
 
-    return 0;  // timeout
+    return RCV_TIMEOUT;  // timeout
 } // end of recvMsg
 

@@ -83,6 +83,7 @@ def bestr_to_u16( st):
 
 def startSlave(usbDevice):
     slave01 = rs485.Instrument(usbDevice, 1, rs485.MODE_ASCII)  # port name, slave address (in decimal)
+    # slave01.serial.baudrate = 19200
     slave01.serial.baudrate = 9600
     slave01.serial.STX      = 0x02
     slave01.serial.ETX      = 0x03
@@ -92,104 +93,26 @@ def startSlave(usbDevice):
 
 
 
-def startMaster(usbDevice):
+def startMaster(usbDevice, slave=0x01):
 
     Master = rs485.Instrument(usbDevice, 0, rs485.MODE_ASCII)  # port name, slave address (in decimal)
+    # Master.serial.baudrate = 19200
     Master.serial.baudrate = 9600
     Master.serial.STX      = 0x02
     Master.serial.ETX      = 0x03
 
-    slaveADDR = 0x02
+    # slaveADDR = 0x01
+    slaveADDR = int(slave)
 
     data = bytearray()
     data.append(slaveADDR)   # Address
+    data.append(0x11)
     data.append(0x12)
-    data.append(0x13)
     data = Master.writeData(data, fDEBUG=True)
-    # data = Master.writeData1(data, fDEBUG=True)
 
 
 
-# - DEBUG ----
 
-def openPort(portName, baud=115200):
-
-    port = serial.Serial(port=portName,
-            baudrate=baud,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            bytesize=serial.EIGHTBITS,
-            timeout = 6
-        )
-
-    return port
-
-#######################################################################
-# Scrittura  di una riga con il presupposto che '\n' indica fine riga
-#######################################################################
-def writeLine(port, data):
-    # if data[-1] != '\n': data = data + '\n'
-    # print ("{0} - Sending:  {1}".format(port.port, data[:-1]))
-    # port.write(data.encode('utf-8'))
-    port.write( bytearray(data,'ascii'))
-    for i in data:
-        print (int(i), type(i), chr(int(i)))
-        print (" DEC:{:0<4}".format(i))
-        # print (" DEC:{:0<4} x{0:02X}".format(i))
-        # port.write(i.encode('utf-8'))
-        # port.write(int(i))
-        # port.write(chr(int(i)))
-
-#######################################################################
-# Scrittura  di una riga con il presupposto che '\n' indica fine riga
-#######################################################################
-def writeLine2(port, data):
-    # if data[-1] != '\n': data = data + '\n'
-    # print ("{0} - Sending:  {1}".format(port.port, data[:-1]))
-    port.write(data.encode('utf-8'))
-    for i in data:
-        print (i)
-        # print (" x{0:02X}".format(int(i)))
-        port.write(i.encode('utf-8'))
-
-
-def writeLoop(portName):
-    # Data = '02 0F 1E 1E 2D 1E 3C A5 96 03'  # STX(02) + 01 12 13 + CRC(xA9) + ETX(03)
-    port = openPort(portName, baud=9600)
-    print (port)
-    counter = 0
-    while True:
-        counter += 1
-        destAddr = counter%3
-        if destAddr == int(portName[-1]):
-            continue
-        data = "[Addr:{0}] - Frame counter: {1}".format(destAddr, counter)
-        print (data)
-        writeLine(port, data)
-        time.sleep(5)
-
-def writeLoop2(portName):
-    port = openPort(portName, baud=9600)
-    print (port)
-    counter = 0
-    while True:
-        counter += 1
-        destAddr = counter%3
-        if destAddr == int(portName[-1]):
-            continue
-        # data = "[Addr:{0}] - Frame counter: {1}".format(destAddr, counter)
-        data = '02 0F 1E 1E 2D 1E 3C A5 96 03'  # STX(02) + 01 12 13 + CRC(xA9) + ETX(03)
-        data = [0x02, 0x0F, 0x1E, 0x1E, 0x2D, 0x1E, 0x3C, 0xA5, 0x96, 0x03]  # STX(02) + 01 12 13 + CRC(xA9) + ETX(03)
-        print (data)
-        byteArrayData = bytearray()
-        strData = ''
-        for byte in data:
-            byteArrayData.append(byte)
-            strData += str(byte)
-        # writeLine(port, data)
-        writeLine(port, strData)
-        # writeLine(port, byteArrayData)
-        time.sleep(5)
 
 
 rs485.CLOSE_PORT_AFTER_EACH_CALL = True
@@ -203,9 +126,10 @@ if __name__ == "__main__":
     gv.Lnf = Ln.preparePATHs(False)
 
     usbDevice = sys.argv[1]
+    slaveAddr = sys.argv[2]
 
     try:
-        startMaster(usbDevice)
+        startMaster(usbDevice, slave=slaveAddr)
         # writeLoop2(usbDevice)
 
     except (KeyboardInterrupt) as key:

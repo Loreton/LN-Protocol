@@ -14,7 +14,7 @@
 const byte myADDR       = 1;
 const char *devName     = "[Slave01]";
 int nLoops              = 0;
-bool fDEBUG             = true;
+
 unsigned long timeOUT   = 10000;
 
 // --------------------
