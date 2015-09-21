@@ -1,3 +1,11 @@
+#include <Arduino.h>
+#include <VirtualWire.h>                // RX-Default D11  TX-Default D12 TX_Enable_pin D10
+#include <LnFunctions.h>                // D2X(dest, val, 2), printHex()
+void setup();
+void loop();
+void RXprocess();
+void readDigitalPin(byte slaveAddress, byte pinNO);
+#line 1 "src/LnProtocolMaster.ino"
 /* FILE:    MXFS03V_433MHZ_MODULE_HCMODU0007_TRANSMIT_EXAMPLE.pde
    DATE:    03/03/13
    VERSION: 0.1
@@ -39,10 +47,10 @@ __asm volatile ("nop");
 
 //Include the VirtualWire library
 #define DR3100x                         // altro tipo di trasmitter
-#include <VirtualWire.h>                // RX-Default D11  TX-Default D12 TX_Enable_pin D10
+//#include <VirtualWire.h>                // RX-Default D11  TX-Default D12 TX_Enable_pin D10
 
 #define _I_AM_ARDUINO_NANO_
-#include <LnFunctions.h>                // D2X(dest, val, 2), printHex()
+//#include <LnFunctions.h>                // D2X(dest, val, 2), printHex()
 
 #define     MAX_BufferSize 200
 

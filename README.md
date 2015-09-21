@@ -14,8 +14,7 @@ Sintassi generica dei comandi string Master to Slave:
 
     02                                                                          - STX
     XX                                                                          - Slave Address
-        CT                                                                      - Commnad Type
-        SC                                                                      - subCommnad
+        Command                                                                 - Commnad
             ; 01 xx                                                             - readPin       - pinNumber
             ; 02 xx                                                             - readRelè      - releNumber
             ; 03 xx                                                             - readLED       - ledNumber
