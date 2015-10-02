@@ -8,7 +8,7 @@
     thisDir=$(cd $(dirname "$thisDir"); pwd -P)/$(basename "$thisDir")        # GET AbsolutePath
     baseDir=${thisDir%/.*}                                                      # Remove /. finale (se esiste)
     parentDir=${baseDir%/bin}                                               # Remove /bin finale (se esiste)
-    echo $parentDir
+    # echo $parentDir
     MAIN_PY="$baseDir/__main__.py"
     MAIN_ZIP="$baseDir/LN-Protocol.zip"
 

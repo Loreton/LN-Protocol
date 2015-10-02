@@ -33,12 +33,13 @@ import  prjPackage.LnRs485  as rs485
 
 
 # gv                  = GlobalVars          # shortCut alle GlobalVars
-gv                  = Ln.GlobalVars          # shortCut alle GlobalVars
-gv.Ln               = Ln                  # Funzioni
-gv.prot             = LnClass()
-gv.prot.STX           = 0x02
-gv.prot.ETX           = 0x03
-
+gv                          = Ln.GlobalVars          # shortCut alle GlobalVars
+gv.Ln                       = Ln                  # Funzioni
+gv.prot                     = LnClass()
+gv.prot.MASTER_ADDRESS      = 0
+gv.prot.STX                 = 0x02
+gv.prot.ETX                 = 0x03
+gv.rcvedMSG                 = LnClass()
 # xx = GlobalVars.LnClass()
 
 
@@ -112,14 +113,6 @@ def RS485_setupMaster(usbDevPath):
     Master.serial.STX      = gv.prot.STX
     Master.serial.ETX      = gv.prot.ETX
 
-    # slaveADDR = 0x01
-    # slaveADDR = int(slave)
-
-    # data = bytearray()
-    # data.append(slaveADDR)   # Address
-    # data.append(0x11)
-    # data.append(0x12)
-    # data = Master.writeData(data, fDEBUG=True)
     return Master
 
 
@@ -127,22 +120,63 @@ def RS485_setupMaster(usbDevPath):
 # ##########################################################################
 # # VW_sendMSG()
 # ##########################################################################
-def VW_sendMSG(gv, slaveADDR):
+def VW_sendMSG(gv, destAddr):
 
     data = bytearray()
-    data.append(gv.prot.STX)   # STX
-    data.append(slaveADDR)   # Address
+    data.append(gv.prot.STX)                        # STX
+    data.append(destAddr)                           # destAddress
+    data.append(gv.prot.MASTER_ADDRESS)             # sourceAddress
     data.append(0x11)
     data.append(0x12)
-    data.append(gv.prot.ETX)   # ETX
-    # data = Master.writeData(data, fDEBUG=True)
+    data.append(gv.prot.ETX)                        # ETX
 
-
-    # tx.put("Hello World #{}!".format(msg))
     gv.VW.tx.put(data)
     while not gv.VW.tx.ready(): time.sleep(0.1)
 
-    return
+
+# ##########################################################################
+# # VW_getMSG()
+# # se attivato subi dopo un invio, rilegge il messaggio inviato da se stesso.
+# ##########################################################################
+def VW_getMSG(gv):
+
+    data = bytearray()
+
+    while gv.VW.rx.ready():
+        for c in gv.VW.rx.get():
+            data.append(c)
+            # print("{0:02X} ".format(c), end='')    # python3
+
+    if   not data:
+        return None
+
+    gv.rcvedMSG.STX         = data[0]
+    gv.rcvedMSG.destAddr    = data[1]
+    gv.rcvedMSG.srcAddr     = data[2]
+    gv.rcvedMSG.data        = data[3:-1]
+    gv.rcvedMSG.ETX         = data[-1]
+
+    for c in data: print("{0:02X} ".format(c), end='')
+    print()
+
+    if gv.rcvedMSG.STX !=  gv.prot.STX:
+        print('Il byte di STX non è valido {0:02X} '.format(data[0]))
+        return None
+
+    elif gv.rcvedMSG.ETX !=  gv.prot.ETX:
+        print('Il byte di ETX non è valido {0:02X} '.format(data[-1]))
+        return None
+
+    elif gv.rcvedMSG.srcAddr ==  gv.prot.MASTER_ADDRESS:
+        print('Ricevuto messaggio inviato da me stesso.')
+        return None
+
+    elif gv.rcvedMSG.destAddr !=  gv.prot.MASTER_ADDRESS:
+        print('Destination Address is non Master Address {0:02X} '.format(gv.rcvedMSG.destAddr))
+        return None
+
+    return data
+
 
 # ##########################################################################
 # # RS485_sendMSG()
@@ -261,9 +295,21 @@ if __name__ == "__main__":
     # pollingVirtualWire(gv)
     # RS485_sendMSG(gv, 0xFF)
     VW_sendMSG(gv, 0xFF)
-    VW_sendMSG(gv, 0xFF)
-    VW_sendMSG(gv, 0xFF)
-    VW_sendMSG(gv, 0xFF)
+    '''
+    '''
+        # ------------------------------
+        # - Wait for responses
+        # ------------------------------
+    TIMEOUT = 100
+    while TIMEOUT > 0:
+        data = VW_getMSG(gv)
+        if data:
+            for c in data:
+                print("{0:02X} ".format(c), end='')
+            print()
+
+        TIMEOUT -= 1
+
 
 
 
