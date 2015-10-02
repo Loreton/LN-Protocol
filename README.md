@@ -14,6 +14,7 @@ Nel caso di Wireless RaspBerry si deve appoggiare ad un Arduino locale che provv
 Sintassi generica dei comandi string Master to Slave:
 
     02                                                                          - STX
+    FF                                                                          - Slave Address FF - Broadcast
     XX                                                                          - Slave Address
         Command                                                                 - Commnad
             ; 01 xx                                                             - readPin       - pinNumber

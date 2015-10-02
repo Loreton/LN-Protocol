@@ -35,6 +35,9 @@ import  prjPackage.LnRs485  as rs485
 # gv                  = GlobalVars          # shortCut alle GlobalVars
 gv                  = Ln.GlobalVars          # shortCut alle GlobalVars
 gv.Ln               = Ln                  # Funzioni
+gv.prot             = LnClass()
+gv.prot.STX           = 0x02
+gv.prot.ETX           = 0x03
 
 # xx = GlobalVars.LnClass()
 
@@ -85,8 +88,9 @@ def startSlave(usbDevPath):
     slave01 = rs485.Instrument(usbDevPath, 1, rs485.MODE_ASCII)  # port name, slave address (in decimal)
     # slave01.serial.baudrate = 19200
     slave01.serial.baudrate = 9600
-    slave01.serial.STX      = 0x02
-    slave01.serial.ETX      = 0x03
+    slave01.serial.STX      = gv.prot
+    slave01.serial.STX      = gv.prot.STX
+    slave01.serial.ETX      = gv.prot.ETX
     data = slave01.readData(fDEBUG=False)
 
     return data
@@ -95,17 +99,18 @@ def startSlave(usbDevPath):
 
 
 # ##########################################################################
-# # setupRS485(usbDevPath)
+# # RS485_setupMaster(usbDevPath)
 # ##########################################################################
-def setupRS485(usbDevPath):
+def RS485_setupMaster(usbDevPath):
 
     rs485.CLOSE_PORT_AFTER_EACH_CALL = True
 
     Master = rs485.Instrument(usbDevPath, 0, rs485.MODE_ASCII)  # port name, slave address (in decimal)
     # Master.serial.baudrate = 19200
     Master.serial.baudrate = 9600
-    Master.serial.STX      = 0x02
-    Master.serial.ETX      = 0x03
+    Master.serial.STX      = gv.prot
+    Master.serial.STX      = gv.prot.STX
+    Master.serial.ETX      = gv.prot.ETX
 
     # slaveADDR = 0x01
     # slaveADDR = int(slave)
@@ -115,8 +120,40 @@ def setupRS485(usbDevPath):
     # data.append(0x11)
     # data.append(0x12)
     # data = Master.writeData(data, fDEBUG=True)
+    return Master
 
 
+
+# ##########################################################################
+# # VW_sendMSG()
+# ##########################################################################
+def VW_sendMSG(gv, slaveADDR):
+
+    data = bytearray()
+    data.append(gv.prot.STX)   # STX
+    data.append(slaveADDR)   # Address
+    data.append(0x11)
+    data.append(0x12)
+    data.append(gv.prot.ETX)   # ETX
+    # data = Master.writeData(data, fDEBUG=True)
+
+
+    # tx.put("Hello World #{}!".format(msg))
+    gv.VW.tx.put(data)
+    while not gv.VW.tx.ready(): time.sleep(0.1)
+
+    return
+
+# ##########################################################################
+# # RS485_sendMSG()
+# ##########################################################################
+def RS485_sendMSG(gv, slaveADDR):
+    data = bytearray()
+    data.append(slaveADDR)   # Address
+    data.append(0x11)
+    data.append(0x12)
+    data = Master.writeData(data, fDEBUG=True)
+    return
 
 import time
 
@@ -145,9 +182,34 @@ def setupVirtualWire(gv, stop=False):
         gv.VW.rx = vw.rx(gv.VW.pi, RX_pin, BPS) # Specify Pi, rx gpio, and baud.
         gv.VW.tx = vw.tx(gv.VW.pi, TX_pin, BPS) # Specify Pi, tx gpio, and baud.
 
-        # return vw
+#########################################
+# # pollingVirtualWire()
+#########################################
+def pollingVirtualWire(gv):
+    tx = gv.VW.tx
+    msg = 0
+    start = time.time()
 
+    while not tx.ready(): time.sleep(0.1)
 
+    # time.sleep(0.2)
+    # tx.put([48, 49, 65, ((msg>>6)&0x3F)+32, (msg&0x3F)+32])
+    # while not tx.ready(): time.sleep(0.1)
+    # time.sleep(0.2)
+
+    tx.put("Hello World #{}!".format(msg))
+    while not tx.ready(): time.sleep(0.1)
+
+    '''
+    while rx.ready():
+     # print("".join(chr (c) for c in rx.get()))
+     for c in rx.get():
+        # print("{0:02X}".format(c)),          # python2
+        print("{0:02X} ".format(c), end='')    # python3
+
+     print()
+
+    '''
 
 
 
@@ -181,8 +243,11 @@ if __name__ == "__main__":
         sys.exit()
 
 
+        # ------------------------------
+        # - Inizializzazione
+        # ------------------------------
     try:
-        setupRS485(usbDevPath)
+        Master = RS485_setupMaster(usbDevPath)
         setupVirtualWire(gv)
 
     except (KeyboardInterrupt) as key:
@@ -190,7 +255,21 @@ if __name__ == "__main__":
         sys.exit()
 
 
+        # ------------------------------
+        # - Polling Broadcast
+        # ------------------------------
+    # pollingVirtualWire(gv)
+    # RS485_sendMSG(gv, 0xFF)
+    VW_sendMSG(gv, 0xFF)
+    VW_sendMSG(gv, 0xFF)
+    VW_sendMSG(gv, 0xFF)
+    VW_sendMSG(gv, 0xFF)
 
+
+
+        # ------------------------------
+        # - Chiusura Applicazione
+        # ------------------------------
     setupVirtualWire(gv, stop=True)
     sys.exit()
 

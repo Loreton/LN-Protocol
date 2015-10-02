@@ -5,6 +5,7 @@ bool ifMaster(void);
 void loop();
 void loopSLAVE();
 void loopMASTER();
+uint8_t chekForRequest();
 uint8_t getResponse(int mSecTIMEOUT);
 void readDigitalPin(byte slaveAddress, byte pinNO);
 #line 1 "src/LnProtocolMaster.ino"
@@ -109,8 +110,11 @@ void loop() {
 //# - loopSLAVE
 //#####################################################
 void loopSLAVE() {
-    Serial.println("      waiting for request: ");
-    getResponse(5000);
+
+    while (true) {
+        chekForRequest();
+        delay(10);
+    }
 }
 
 //#####################################################
@@ -133,6 +137,31 @@ void loopMASTER() {
 
 }
 
+
+//#####################################################
+//# chekForRequest
+//#####################################################
+uint8_t chekForRequest() {
+    byte RxMsg[MAX_BufferSize];
+    byte RxBufferSize=MAX_BufferSize;
+    uint8_t RECEIVED_FLAG = 0;
+
+        // Non-blocking
+    RECEIVED_FLAG = vw_get_message(RxMsg, &RxBufferSize);
+
+    if (RECEIVED_FLAG) {
+        digitalWrite(LED, true); // Flash a light to show received good message
+
+        // -----------------------------------------------------
+        // - Message with a good checksum received, dump it.
+        // -----------------------------------------------------
+        Serial.print("\r\nGOT: "); printHex(RxMsg, RxBufferSize, "\r\n");
+
+        digitalWrite(LED, false);
+    }
+
+    return RECEIVED_FLAG;
+}
 
 //#####################################################
 //# getResponse
@@ -160,7 +189,7 @@ uint8_t getResponse(int mSecTIMEOUT) {
         }
         else {
             delay(sleepVAL);
-            Serial.print("              still waiting for: ");Serial.print(mSecTIMEOUT);Serial.println(" mSec");
+            // Serial.print("              still waiting for: ");Serial.print(mSecTIMEOUT);Serial.println(" mSec");
         }
         mSecTIMEOUT -= sleepVAL;
     }
