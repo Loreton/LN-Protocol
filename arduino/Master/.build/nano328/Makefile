@@ -208,6 +208,12 @@ include .build/nano328/arduino/Tone.d
 
 
 
+.build/nano328/src/readDigitalPin.o : src/readDigitalPin.cpp
+	@echo [93msrc/readDigitalPin.cpp[0m
+	@mkdir -p .build/nano328/src
+	@/usr/bin/avr-g++ -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=101 -I/usr/share/arduino/hardware/arduino/cores/arduino -ffunction-sections -fdata-sections -g -Os -w -I/usr/share/arduino/hardware/arduino/variants/eightanaloginputs -I/usr/share/arduino/libraries/LnFunctions -I/usr/share/arduino/libraries/VirtualWire115 -I/usr/share/arduino/libraries/VirtualWire115/util -I/usr/share/arduino/libraries/VirtualWire115/doc -I/usr/share/arduino/hardware/arduino/cores/arduino -fno-exceptions  -o $@ -c src/readDigitalPin.cpp
+include .build/nano328/src/readDigitalPin.d
+
 .build/nano328/src/LnProtocolMaster.o : .build/nano328/src/LnProtocolMaster.cpp
 	@echo [93msrc/LnProtocolMaster.cpp[0m
 	@mkdir -p .build/nano328/src
@@ -220,7 +226,7 @@ include .build/nano328/src/LnProtocolMaster.d
 
 
 
-.build/nano328/firmware.elf : .build/nano328/src/LnProtocolMaster.o .build/nano328/LnFunctions/libLnFunctions.a .build/nano328/VirtualWire115/libVirtualWire115.a .build/nano328/arduino/libarduino.a
+.build/nano328/firmware.elf : .build/nano328/src/readDigitalPin.o .build/nano328/src/LnProtocolMaster.o .build/nano328/LnFunctions/libLnFunctions.a .build/nano328/VirtualWire115/libVirtualWire115.a .build/nano328/arduino/libarduino.a
 	@echo [92mLinking firmware.elf[0m
 	@/usr/bin/avr-gcc -mmcu=atmega328p -Wl,-Os -Wl,--gc-sections -o $@ $^ -lm
 

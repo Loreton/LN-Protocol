@@ -31,32 +31,9 @@ REASON WHATSOEVER.
 */
 
 
-// BOF preprocessor bug prevent - insert me on top of your arduino-code
-// From: http://www.a-control.de/arduino-fehler/?lang=en
-#if 1
-__asm volatile ("nop");
-#endif
+#define _I_AM_MAIN_
+#include "LnProtocolMaster.h"
 
-//Include the VirtualWire library
-#define DR3100x                         // altro tipo di trasmitter
-#include <VirtualWire.h>                // RX-Default D11  TX-Default D12 TX_Enable_pin D10
-
-#define _I_AM_ARDUINO_NANO_
-#include <LnFunctions.h>                // D2X(dest, val, 2), printHex()
-
-#define     MAX_BufferSize 200
-
-void readDigitalPin(byte a, byte b);
-
-    // --- Digital IO pin that will be used for sending data to the transmitter
-const int   RX_433MHz_Pin    = D02;   // D2
-const int   TX_433MHz_Pin    = D04;   // D4
-const int   LED              = D13;  // D13
-
-
-uint8_t     RECEIVED_FLAG     = 0;
-bool        I_AM_MASTER       = true;
-byte        counter           = 0;   // contatore per messaggi inviati
 
 
 
@@ -76,64 +53,111 @@ void setup() {
         vw_set_ptt_pin(TX_433MHz_Enable_pin);
     #endif
 
-    // vw_setup(10000);                // Bits per sec
-    vw_setup(2000);                // Bits per sec
+    vw_setup(BITS_PER_SEC);
     vw_rx_start();                      // Start the receiver PLL running
 
     pinMode(LED, OUTPUT);
-    if (I_AM_MASTER)
-        Serial.print("I am 433MHz MASTER\r\n");
-    else
-        Serial.print("I am 433MHz SLAVE\r\n");
+
+
+
+}
+//#####################################################
+//# - ifMaster()
+//#####################################################
+bool ifMaster(void) {
+bool I_AM_MASTER    = false;
+bool prevFLAG       = ! I_AM_MASTER;
+
+    // Serial.println(I_AM_MASTER);
+        // eventuale change del ruolo
+    if (I_AM_MASTER != prevFLAG) {
+        prevFLAG = I_AM_MASTER;
+
+        if (I_AM_MASTER) {
+            Serial.print("I am 433MHz MASTER\r\n");
+        }
+        else {
+            Serial.print("I am 433MHz SLAVE\r\n");
+        }
+    }
+
+    // Serial.println(I_AM_MASTER);
+    return I_AM_MASTER;
 }
 
 //#####################################################
 //# - Main program
 //#####################################################
 void loop() {
-    if (I_AM_MASTER) {
-        // TXprocess();
-        readDigitalPin(2, 5);
-        delay(1000);
-        RXprocess();
-        delay(3000);
-    }
+    if (ifMaster())
+        loopMASTER();
+    else
+        loopSLAVE();
+}
 
-    else {
-        RXprocess();
-        if (RECEIVED_FLAG == true) {
-            delay(1000);
-            // TXprocess();
-        }
+//#####################################################
+//# - loopSLAVE
+//#####################################################
+void loopSLAVE() {
+    Serial.println("      waiting for request: ");
+    getResponse(5000);
+}
+
+//#####################################################
+//# - loopMASTER
+//#####################################################
+void loopMASTER() {
+    byte slaveAddr = 2;
+    byte pinNO = 5;
+    // uint8_t RECEIVED_FLAG;
+
+
+    readDigitalPin(slaveAddr, pinNO);
+    delay(1000); // wait for turn-around
+    Serial.println("      waiting for response: ");
+    uint8_t RECEIVED_FLAG = getResponse(5000);
+    if (RECEIVED_FLAG == true) {
+        Serial.println("Processamento della risposta");
     }
+    delay(1000);
+
 }
 
 
 //#####################################################
-//# RXprocess
+//# getResponse
 //#####################################################
-void RXprocess() {
+uint8_t getResponse(int mSecTIMEOUT) {
+    int sleepVAL = 500;   // mSec
     byte RxMsg[MAX_BufferSize];
     byte RxBufferSize=MAX_BufferSize;
+    uint8_t RECEIVED_FLAG = 0;
 
+    while (mSecTIMEOUT > 0) {
+            // Non-blocking
+        RECEIVED_FLAG = vw_get_message(RxMsg, &RxBufferSize);
+        if (RECEIVED_FLAG) {
 
-        // Non-blocking
-    uint8_t RECEIVED_FLAG = vw_get_message(RxMsg, &RxBufferSize);
-    if (RECEIVED_FLAG) {
-        byte i;
+            digitalWrite(LED, true); // Flash a light to show received good message
 
-        digitalWrite(LED, true); // Flash a light to show received good message
+            // -----------------------------------------------------
+            // - Message with a good checksum received, dump it.
+            // -----------------------------------------------------
+            Serial.print("GOT: "); printHex(RxMsg, RxBufferSize, "\r\n");
 
-        // -----------------------------------------------------
-        // - Message with a good checksum received, dump it.
-        // -----------------------------------------------------
-        Serial.print("GOT: "); printHex(RxMsg, RxBufferSize, "\r\n");
-
-        digitalWrite(LED, false);
+            digitalWrite(LED, false);
+            mSecTIMEOUT = 0;
+        }
+        else {
+            delay(sleepVAL);
+            Serial.print("              still waiting for: ");Serial.print(mSecTIMEOUT);Serial.println(" mSec");
+        }
+        mSecTIMEOUT -= sleepVAL;
     }
+    return RECEIVED_FLAG;
 }
 
-
+#if 0
 //#####################################################
 // #  readDigitalPin()
 // #  REQ: STX ! MasterAddress  ! slaveAddress    !  readPin    ! numeroPIN
@@ -153,7 +177,7 @@ void readDigitalPin(byte slaveAddress, byte pinNO) {
     TxMsg [dataLen++] = pinNO;
     byte CRC8value    = LnCRC8(&TxMsg[1], dataLen); // skip del STXed ETX
     TxMsg [dataLen++] = CRC8value;
-    TxMsg [dataLen++]   = ETX;
+    TxMsg [dataLen++] = ETX;
 
         // Turn on the LED on pin LED to indicate that we are about to transmit data
     digitalWrite(LED, HIGH);
@@ -173,3 +197,4 @@ void readDigitalPin(byte slaveAddress, byte pinNO) {
     Serial.print("SENT: "); printHex(TxMsg, dataLen, "\r\n");
 
 }
+#endif

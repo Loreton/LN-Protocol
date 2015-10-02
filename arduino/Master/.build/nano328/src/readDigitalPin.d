@@ -1,4 +1,5 @@
-.build/nano328/src/LnProtocolMaster.d .build/nano328/src/LnProtocolMaster.o: .build/nano328/src/LnProtocolMaster.cpp \
+.build/nano328/src/readDigitalPin.d .build/nano328/src/readDigitalPin.o: src/readDigitalPin.cpp src/LnProtocolMaster.h \
+ /usr/share/arduino/libraries/VirtualWire115/VirtualWire.h \
  /usr/share/arduino/hardware/arduino/cores/arduino/Arduino.h \
  /usr/share/arduino/hardware/arduino/cores/arduino/binary.h \
  /usr/share/arduino/hardware/arduino/cores/arduino/WCharacter.h \
@@ -10,7 +11,4 @@
  /usr/share/arduino/hardware/arduino/cores/arduino/new.h \
  /usr/share/arduino/hardware/arduino/variants/eightanaloginputs/pins_arduino.h \
  /usr/share/arduino/hardware/arduino/variants/eightanaloginputs/../standard/pins_arduino.h \
- src/LnProtocolMaster.h \
- /usr/share/arduino/libraries/VirtualWire115/VirtualWire.h \
- /usr/share/arduino/libraries/LnFunctions/LnFunctions.h \
- /usr/share/arduino/libraries/LnFunctions/LnProtocol.h
+ /usr/share/arduino/libraries/LnFunctions/LnFunctions.h
