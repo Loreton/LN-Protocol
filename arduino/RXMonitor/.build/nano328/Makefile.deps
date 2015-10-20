@@ -1,0 +1,28 @@
+
+
+
+
+
+
+
+
+	
+
+
+
+.build/nano328/VirtualWire115/VirtualWire.d : /usr/share/arduino/libraries/VirtualWire115/VirtualWire.cpp
+	@mkdir -p .build/nano328/VirtualWire115
+	@/usr/bin/avr-gcc -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=101 -I/usr/share/arduino/hardware/arduino/cores/arduino -ffunction-sections -fdata-sections -g -Os -w -I/usr/share/arduino/hardware/arduino/variants/eightanaloginputs -I/usr/share/arduino/hardware/arduino/cores/arduino -I/usr/share/arduino/libraries/Stepper -I/usr/share/arduino/libraries/EEPROM -I/usr/share/arduino/libraries/VirtualWire115 -I/usr/share/arduino/libraries/VirtualWire115/util -I/usr/share/arduino/libraries/VirtualWire115/doc -I/usr/share/arduino/libraries/Ethernet -I/usr/share/arduino/libraries/Ethernet/utility -I/usr/share/arduino/libraries/MAX7219 -I/usr/share/arduino/libraries/RS485_protocol -I/usr/share/arduino/libraries/SD -I/usr/share/arduino/libraries/SD/utility -I/usr/share/arduino/libraries/SPI -I/usr/share/arduino/libraries/Firmata -I/usr/share/arduino/libraries/Wire -I/usr/share/arduino/libraries/Wire/utility -I/usr/share/arduino/libraries/LiquidCrystal -I/usr/share/arduino/libraries/SoftwareSerial -I/usr/share/arduino/libraries/Servo -I/usr/share/arduino/libraries/LnFunctions -I/usr/share/arduino/libraries/RCSwitch  -MM $^ > $@
+	
+	@printf ".build/nano328/VirtualWire115/VirtualWire.d .build/nano328/VirtualWire115/" | cat - $@ > $@~ && mv $@~ $@
+
+
+
+.build/nano328/VirtualWire115/dependencies.d : .build/nano328/VirtualWire115/VirtualWire.d
+	@echo [96mScanning dependencies of VirtualWire115[0m
+	@mkdir -p .build/nano328/VirtualWire115
+	@cat $^ > $@;
+
+all : .build/nano328/VirtualWire115/dependencies.d
+	@true
+

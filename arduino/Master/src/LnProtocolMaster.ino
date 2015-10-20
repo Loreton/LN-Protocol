@@ -65,7 +65,7 @@ void setup() {
 //# - ifMaster()
 //#####################################################
 bool ifMaster(void) {
-bool I_AM_MASTER    = false;
+bool I_AM_MASTER    = true;
 bool prevFLAG       = ! I_AM_MASTER;
 
     // Serial.println(I_AM_MASTER);

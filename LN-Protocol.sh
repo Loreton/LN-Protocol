@@ -1,16 +1,17 @@
 #!/bin/bash
 
-    isActive=$(ps -ef | grep pigiod | wc -l)
-    [[ "$isActive" != "1" ]] && sudo pigpiod -a1
+    isActive=$(ps -ef | grep pigpiod | grep -v grep | wc -l)
+    [[ "$isActive" -ne "1" ]] && sudo pigpiod -a1
 
 
     thisDir="$(dirname  "$(test -L "$0" && readlink "$0" || echo "$0")")"     # risolve anche eventuali LINK presenti sullo script
     thisDir=$(cd $(dirname "$thisDir"); pwd -P)/$(basename "$thisDir")        # GET AbsolutePath
     baseDir=${thisDir%/.*}                                                      # Remove /. finale (se esiste)
     parentDir=${baseDir%/bin}                                               # Remove /bin finale (se esiste)
-    # echo $parentDir
-    MAIN_PY="$baseDir/__main__.py"
-    MAIN_ZIP="$baseDir/LN-Protocol.zip"
+    pythonDir=${baseDir}/python                                               # Remove /bin finale (se esiste)
+    echo $parentDir
+    MAIN_PY="$pythonDir/__main__.py"
+    MAIN_ZIP="$pythonDir/LN-Protocol.zip"
 
     # parentDir="$(dirname $baseDir)"
     # sourceDir="${parentDir}/SOURCE"

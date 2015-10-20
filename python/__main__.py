@@ -43,6 +43,15 @@ gv.rcvedMSG                 = LnClass()
 # xx = GlobalVars.LnClass()
 
 
+BYTE_STX            = 0
+BYTE_MsgNO_LOW      = 1
+BYTE_MsgNO_HIGH     = 2
+BYTE_DestADDR       = 3
+BYTE_SourceADDR     = 4
+BYTE_StartOfMsg     = 5
+
+
+
 
 __author__   = 'loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
@@ -68,21 +77,6 @@ if sys.version > '3':    long = int
 ##############################
 ## Modbus instrument object ##
 ##############################
-
-
-#### L.N. ##########################
-# Handling BigEndian words
-# http://www.digi.com/wiki/developer/index.php/How_to_create_Modbus/RTU_request_in_Python
-####################################
-def u16_to_bestr( u):
-    """Given word, return as big-endian binary string"""
-    u = (int(u) & 0xFFFF)
-    return( chr(u>>8) + chr(u&0xFF) )
-
-def bestr_to_u16( st):
-    """Given big-endian binary string, return bytes[0-1] as int"""
-    return( (ord(st[0])<<8) + ord(st[1]))
-
 
 
 def startSlave(usbDevPath):
@@ -116,66 +110,177 @@ def RS485_setupMaster(usbDevPath):
     return Master
 
 
-
+messageNumber = 0
 # ##########################################################################
 # # VW_sendMSG()
+# #     destAddr = destination devAddress
+# #     msg      = messaggio da inviare (bytearray())
 # ##########################################################################
-def VW_sendMSG(gv, destAddr):
+def VW_sendMSG(gv, destAddr, msg):
+    import struct
+    global messageNumber
 
-    data = bytearray()
+    if isinstance(msg, str):
+        # print ('is str')
+        baData = bytearray(map(ord, msg))
+        # oppure:
+            # data = bytearray()
+            # data.extend(map(ord, msg))
+    elif isinstance(msg, list):
+        print ('is list - NOT implemented.')
+        sys.exit()
+    elif isinstance(msg, bytes):
+        print ('is bytes - NOT implemented.')
+        sys.exit()
+    elif isinstance(msg, bytearray):
+        # print ('is bytearray')
+        baData = msg
+    else:
+        print (type(msg), len(msg), ' - NOT implemented.')
+        sys.exit()
+
+    dataLen = len(baData)
+
+    #@TODO
+        # big-endian
+        # --- https://docs.python.org/3.3/library/struct.html
+        # --- Use sys.byteorder to check the endianness of your system.
+        # --- struct.pack_into('>H', y, 0, 2);
+    messageNumber += 1                              # Numero del messaggio che stiamo inviando 2 bytes
+    msgNO = struct.pack('>H', messageNumber);       # convertiamo un numero (H=2bytes) (>=big-endian) in bytes[]
+
+
+    data = bytearray()                              # creazione dell'Array da inviare
     data.append(gv.prot.STX)                        # STX
+    data.extend(msgNO)                              # numero SEQ del Messaggio
     data.append(destAddr)                           # destAddress
     data.append(gv.prot.MASTER_ADDRESS)             # sourceAddress
-    data.append(0x11)
-    data.append(0x12)
+    data.extend(baData)                             # Dati da inviare
     data.append(gv.prot.ETX)                        # ETX
 
+
+
+    # print("\n{0:<10}".format('Sending:'), end='' )
+    # print (' '.join('{:02x}'.format(c) for c in data))
+    # print( )
+    printHexMsg(data, prefix='Sending:')
+
+
     gv.VW.tx.put(data)
-    while not gv.VW.tx.ready(): time.sleep(0.1)
+
+        # WAIT for completing SEND
+    while not gv.VW.tx.ready():
+        time.sleep(0.1)
+
+
+
+def printHexMsg(data, prefix=''):
+
+    if data:
+        print("\n{0:<10}".format(prefix), end='' )
+        print (' '.join('{:02X}'.format(c) for c in data))
+        # print( )
+
+        TextOfMsg = ' '.join('{:02X}'.format(c) for c in data[BYTE_StartOfMsg:-1])
+
+        print("      STX           : {0:02X}".format(data[0]))
+        print("      MSG_NO        : {0:02X} {1:02X}".format(data[BYTE_MsgNO_LOW], data[BYTE_MsgNO_HIGH]))
+        print("      from --> to   : {0:02X} {1:02X}".format(data[BYTE_SourceADDR], data[BYTE_DestADDR]))
+        print("      Messaggio     : {0}".format(TextOfMsg))
+        print("      ETX           : {0:02X}".format(data[-1]))
+
+        print()
+
 
 
 # ##########################################################################
 # # VW_getMSG()
 # # se attivato subi dopo un invio, rilegge il messaggio inviato da se stesso.
 # ##########################################################################
-def VW_getMSG(gv):
+def VW_getMSG_OK(gv, Timeout):
 
-    data = bytearray()
 
-    while gv.VW.rx.ready():
-        for c in gv.VW.rx.get():
-            data.append(c)
-            # print("{0:02X} ".format(c), end='')    # python3
+    start = time.time()
+    currTime = time.time()-start
 
-    if   not data:
-        return None
+    while currTime < Timeout:
 
-    gv.rcvedMSG.STX         = data[0]
-    gv.rcvedMSG.destAddr    = data[1]
-    gv.rcvedMSG.srcAddr     = data[2]
-    gv.rcvedMSG.data        = data[3:-1]
+        currTime = time.time()-start
+        while gv.VW.rx.ready():
+            print("\nReceived {0:3.2f}:".format(currTime), end='')
+            for c in gv.VW.rx.get():
+                print("{0:02X} ".format(c), end='')    # python3
+
+            print()
+
+        # time.sleep(0.1)
+
+    return
+
+# ##########################################################################
+# # VW_getMSG()
+# # se attivato subi dopo un invio, rilegge il messaggio inviato da se stesso.
+# ##########################################################################
+def checkMsgValidity(gv, data):
+
+    gv.rcvedMSG.STX         = data[BYTE_STX]
+    gv.rcvedMSG.msgNO       = data[BYTE_MsgNO_HIGH:BYTE_MsgNO_LOW]
+    gv.rcvedMSG.destAddr    = data[BYTE_DestADDR]
+    gv.rcvedMSG.srcAddr     = data[BYTE_SourceADDR]
+    gv.rcvedMSG.data        = data[BYTE_StartOfMsg:-1]
     gv.rcvedMSG.ETX         = data[-1]
-
-    for c in data: print("{0:02X} ".format(c), end='')
-    print()
 
     if gv.rcvedMSG.STX !=  gv.prot.STX:
         print('Il byte di STX non è valido {0:02X} '.format(data[0]))
-        return None
+        data = ''
 
     elif gv.rcvedMSG.ETX !=  gv.prot.ETX:
         print('Il byte di ETX non è valido {0:02X} '.format(data[-1]))
-        return None
+        data = ''
 
     elif gv.rcvedMSG.srcAddr ==  gv.prot.MASTER_ADDRESS:
-        print('Ricevuto messaggio inviato da me stesso.')
-        return None
+        print('ECHO received - Ricevuto messaggio inviato da me stesso.')
+        data = ''
 
     elif gv.rcvedMSG.destAddr !=  gv.prot.MASTER_ADDRESS:
-        print('Destination Address is non Master Address {0:02X} '.format(gv.rcvedMSG.destAddr))
-        return None
+        print('Destination Address is not Master Address {0:02X} '.format(gv.rcvedMSG.destAddr))
+        data = ''
+
+    else:
+        pass
+        # fullMSG     = ' '.join('{:02X}'.format(c) for c in data)
+        # TextOfMsg   = ' '.join('{:02X}'.format(c) for c in data[MSG_START:-1])
 
     return data
+
+# ##########################################################################
+# # VW_getMSG()
+# # se attivato subi dopo un invio, rilegge il messaggio inviato da se stesso.
+# ##########################################################################
+def VW_getMSG(gv, Timeout):
+
+
+    start = time.time()
+    currTime = time.time()-start
+
+
+
+    while currTime < Timeout:
+
+        data = bytearray()
+        currTime = time.time()-start
+        while gv.VW.rx.ready():
+            print("\nReceived {0:3.2f}:".format(currTime), end='')
+            while gv.VW.rx.ready():
+                for c in gv.VW.rx.get():
+                    data.append(c)
+                    # print("{0:02X} ".format(c), end='')    # python3
+
+
+            if checkMsgValidity(gv, data):
+                printHexMsg(data, prefix='')
+
+    return
 
 
 # ##########################################################################
@@ -196,14 +301,13 @@ import time
 # ##########################################################################
 def setupVirtualWire(gv, stop=False):
     import pigpio
-    import vw
-
+    # import vw
+    import vw_Loreto as vw
 
     if stop:
         gv.VW.rx.cancel()
         gv.VW.tx.cancel()
         gv.VW.pi.stop()
-        # return
 
     else:
         RX_pin  = 19        # GPIO19 - pin 35
@@ -215,6 +319,7 @@ def setupVirtualWire(gv, stop=False):
 
         gv.VW.rx = vw.rx(gv.VW.pi, RX_pin, BPS) # Specify Pi, rx gpio, and baud.
         gv.VW.tx = vw.tx(gv.VW.pi, TX_pin, BPS) # Specify Pi, tx gpio, and baud.
+
 
 #########################################
 # # pollingVirtualWire()
@@ -244,6 +349,149 @@ def pollingVirtualWire(gv):
      print()
 
     '''
+
+
+def itIsOK(gv):
+    start = time.time()
+    msg = 0
+    while (time.time()-start) < 300:
+
+        msg += 1
+
+        while not gv.VW.tx.ready():
+            time.sleep(3)
+            time.sleep(0.1)
+
+        strToSend = "Hello World #{}!".format(msg)
+        print("\nsending:", strToSend )
+        gv.VW.tx.put(strToSend)
+
+        while gv.VW.rx.ready():
+             # print("".join(chr (c) for c in rx.get()))
+            print("\nReceived:", end='')
+            for c in gv.VW.rx.get():
+                print("{0:02X} ".format(c), end='')    # python3
+                # print("{0:02X}".format(c)),          # python2
+
+        print()
+
+# #######################################################
+# #
+# #######################################################
+def itIsOK_Base(gv):
+    start = time.time()
+    msg = 0
+    while (time.time()-start) < 300:
+
+        msg += 1
+
+        while not gv.VW.tx.ready():
+            time.sleep(3)
+            time.sleep(0.1)
+
+        strToSend = "Hello World #{}!".format(msg)
+        print("\nsending:", strToSend )
+        gv.VW.tx.put(strToSend)
+
+        while gv.VW.rx.ready():
+             # print("".join(chr (c) for c in rx.get()))
+            print("\nReceived:", end='')
+            for c in gv.VW.rx.get():
+                print("{0:02X} ".format(c), end='')    # python3
+                # print("{0:02X}".format(c)),          # python2
+
+        print()
+
+#TODO: Sto lavorando a questa funzione. Devo scoprire la lunghezza massima dei dati che posso inviare.
+# #######################################################
+# #
+# #######################################################
+def itIsOK_Base1(gv, Timeout):
+    start = time.time()
+    msg = 0
+
+    while (time.time()-start) < Timeout:
+
+        msg += 1
+
+        while not gv.VW.tx.ready():
+            time.sleep(3)
+            time.sleep(0.1)
+
+        strToSend = "Hello World #{}!".format(msg)
+        print("\nsending:", strToSend )
+        gv.VW.tx.put(strToSend)
+
+        while gv.VW.rx.ready():
+             # print("".join(chr (c) for c in rx.get()))
+            print("\nReceived:", end='')
+            for c in gv.VW.rx.get():
+                print("{0:02X} ".format(c), end='')    # python3
+                # print("{0:02X}".format(c)),          # python2
+
+        print()
+
+
+# #######################################################
+# #
+# #######################################################
+def itIsOK_Base2(gv, Timeout):
+    msg = 0
+
+    msg += 1
+
+    while not gv.VW.tx.ready():
+        time.sleep(3)
+
+    msgToSend = "Loreto Loreto Loreto Loreto "  # NON funziona
+    msgToSend = "1234567890123456"                        # FUNZIONA dino a 16 caratteri dopo di che non riceviamo più
+    VW_sendMSG(gv, destAddr=0xFF, msg=msgToSend)
+    VW_getMSG(gv, Timeout)
+    '''
+    start = time.time()
+    currTime = time.time()-start
+
+    while currTime < Timeout:
+
+        currTime = time.time()-start
+        while gv.VW.rx.ready():
+            print("\nReceived {0:3.2f}:".format(currTime), end='')
+            for c in gv.VW.rx.get():
+                print("{0:02X} ".format(c), end='')    # python3
+
+            print()
+
+        # time.sleep(0.1)
+    '''
+
+# #######################################################
+# #
+# #######################################################
+def Test01(gv, Timeout):
+
+    msgToSend = [1,2,3,4,5,6,7,8]
+    msgToSend = bytes(10)
+    msgToSend = bytearray(10)
+    msgToSend = "Hello World !"
+    VW_sendMSG(gv, destAddr=0xFF, msg=msgToSend)
+
+    start = time.time()
+    msg = 0
+
+    while (time.time()-start) < Timeout:
+
+        while gv.VW.rx.ready():
+             # print("".join(chr (c) for c in rx.get()))
+            print("\nReceived:", end='')
+            for c in gv.VW.rx.get():
+                print("{0:02X} ".format(c), end='')    # python3
+                # print("{0:02X}".format(c)),          # python2
+            print()
+
+        Timeout -= 1
+        time.sleep(.1)
+
+    print()
 
 
 
@@ -288,28 +536,159 @@ if __name__ == "__main__":
         print ("Keybord interrupt has been pressed")
         sys.exit()
 
+    while True:
 
-        # ------------------------------
-        # - Polling Broadcast
-        # ------------------------------
-    # pollingVirtualWire(gv)
-    # RS485_sendMSG(gv, 0xFF)
-    VW_sendMSG(gv, 0xFF)
+        try:
+            # itIsOK_Base(gv)
+            # itIsOK_Base1(gv, 300)
+            itIsOK_Base2(gv, 10)
+            # Test01(gv, 300)
+            # sys.exit()
+
+        except (KeyboardInterrupt) as key:
+            print (key)
+            # choice      = input().strip()
+            # if choice.upper() == 'X': break
+            break
     '''
+
+
+    start = time.time()
+    msg = 0
+    while (time.time()-start) < 300:
+
+        msg += 1
+
+        while not gv.VW.tx.ready():
+            time.sleep(3)
+            time.sleep(0.1)
+
+        strToSend = "Hello World #{}!".format(msg)
+        print("\nsending:", strToSend )
+        gv.VW.tx.put(strToSend)
+
+        while gv.VW.rx.ready():
+             # print("".join(chr (c) for c in rx.get()))
+            print("\nReceived:", end='')
+            for c in gv.VW.rx.get():
+                print("{0:02X} ".format(c), end='')    # python3
+                # print("{0:02X}".format(c)),          # python2
+
+        print()
+    '''
+
+
+    '''
+
+    ---- Sembra OK '''
+
+
     '''
         # ------------------------------
-        # - Wait for responses
+        # - Broadcast Polling
         # ------------------------------
-    TIMEOUT = 100
-    while TIMEOUT > 0:
-        data = VW_getMSG(gv)
-        if data:
-            for c in data:
-                print("{0:02X} ".format(c), end='')
-            print()
 
-        TIMEOUT -= 1
+    while True:
+        try:
 
+            msgToSend = [1,2,3,4,5,6,7,8]
+            msgToSend = bytes(10)
+            msgToSend = bytearray(10)
+            msgToSend = "Hello World !"
+            VW_sendMSG(gv, destAddr=0xFF, msg=msgToSend)
+            time.sleep(0.2)
+
+                # ------------------------------
+                # - Wait for responses
+                # ------------------------------
+
+            # data = VW_getMSG(gv)
+
+                # ------------------------------
+                # - Wait for responses
+                # ------------------------------
+            start = time.time()
+            while (time.time()-start) < 5:      # numero di secondi
+                print('waiting....')
+                while gv.VW.rx.ready():
+                     # print("".join(chr (c) for c in rx.get()))
+                    # print("\n{0:<10}".format('Receiving:'), end='' )
+                    data = bytearray()
+                    for c in gv.VW.rx.get():
+                        data.append(c)
+                        print("{0:02X} ".format(c), end='')    # python3
+                        # print("{0:02X}".format(c)),          # python2
+                    print()
+                time.sleep(0.2)
+
+            # print()
+            # printHexMsg(data, prefix='received:')
+            # sys.exit()
+            # time.sleep(5)
+
+
+        except (KeyboardInterrupt) as key:
+            print (key)
+            # choice      = input().strip()
+            # if choice.upper() == 'X': break
+            break
+
+    '''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    '''
+        # ------------------------------
+        # - Broadcast Polling
+        # ------------------------------
+
+    while True:
+        try:
+
+            VW_sendMSG(gv, destAddr=0xFF)
+
+                # ------------------------------
+                # - Wait for responses
+                # ------------------------------
+            start = time.time()
+            while (time.time()-start) < 5:      # numero di secondi
+                # print (time.time()-start)
+
+                data = VW_getMSG(gv)
+                # if data:
+                #     for c in data:
+                #         print("{0:02X} ".format(c), end='')
+                #     print()
+
+                # time.sleep(0.2)
+            time.sleep(5)
+
+        except (KeyboardInterrupt) as key:
+            print (key)
+            # choice      = input().strip()
+            # if choice.upper() == 'X': break
+            break
+
+
+    '''
 
 
 
@@ -319,23 +698,5 @@ if __name__ == "__main__":
     setupVirtualWire(gv, stop=True)
     sys.exit()
 
-
-    while True:
-        try:
-            # key = str(getKey())
-            # print ("Key: x{0:02X}".format(key))
-
-            data = startSlave(usbDevPath)
-            print ("received data:", end=' ')
-            for ch in data:
-                print (" x{0:02X}".format(ch), end="")
-
-            print()
-
-        except (KeyboardInterrupt) as key:
-            print (key)
-            # choice      = input().strip()
-            # if choice.upper() == 'X': break
-            break
 
 
