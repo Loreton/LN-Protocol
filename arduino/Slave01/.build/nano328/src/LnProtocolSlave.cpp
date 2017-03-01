@@ -5,7 +5,7 @@ void setup();
 void loop();
 void printMsg(byte *data, byte len);
 uint8_t chekForRequest();
-void sendResponse(byte *msg, byte len);
+void sendResponse(int DELAY, byte *msg, byte len);
 #line 1 "src/LnProtocolSlave.ino"
 /* FILE:    MXFS03V_433MHZ_MODULE_HCMODU0007_TRANSMIT_EXAMPLE
    DATE:    O8/10/2015
@@ -100,10 +100,7 @@ void printMsg(byte *data, byte len) {
 
     Serial.print("      STX           :");  printHex(data[0],                   "\r\n");
     Serial.print("      MSG_NO        :");  printHex(&data[MSG_NO_L], 2,        "\r\n");
-    // Serial.print("      Source ADDR   :");  printHex(data[SRC_ADDR],            "\r\n");
-    Serial.print("      Source ADDR   :");  Serial.println(deviceName[data[SRC_ADDR]]);
-    // Serial.print("      Source ADDR   :");  printHex(data[DST_ADDR],            "\r\n");
-    Serial.print("      Dest ADDRESS  :");  Serial.println(deviceName[data[DST_ADDR]]);
+    Serial.print("      from --> to   :");  Serial.print(deviceName[data[SRC_ADDR]]);Serial.print(" --> ");Serial.println(deviceName[data[DST_ADDR]]);
     Serial.print("      Messaggio     :");  printHex(&data[MSG_START], len-6,   "\r\n");
     Serial.print("      ETX           :");  printHex(data[len-1],               "\r\n");
 }
@@ -141,8 +138,8 @@ uint8_t chekForRequest() {
                 Serial.println("\r\nRCVED:"); printMsg(RxMsg, receivedBytes);
         }
 
-        delay(2000*thisDevADDR);       // porima di rispondere aspetta un tempo che dipenda dal DevAddress
-        sendResponse(&RxMsg[MSG_START], receivedBytes);
+        // delay(2000*thisDevADDR);       // porima di rispondere aspetta un tempo che dipenda dal DevAddress
+        sendResponse(1000, &RxMsg[MSG_START], receivedBytes);
 
 
 
@@ -164,8 +161,9 @@ uint8_t chekForRequest() {
 // #  RSP: STX ! slaveAddress   ! masterAddress   !  readPin    ! numeroPIN, value
 // #
 //#####################################################
-void sendResponse(byte *msg, byte len) {
+void sendResponse(int DELAY, byte *msg, byte len) {
 
+    delay(DELAY*thisDevADDR);       // porima di rispondere aspetta un tempo che dipenda dal DevAddress
         // ---------------------------------------
         // - preparazione dati di ritorno
         // ---------------------------------------

@@ -9,7 +9,7 @@
     baseDir=${thisDir%/.*}                                                      # Remove /. finale (se esiste)
     parentDir=${baseDir%/bin}                                               # Remove /bin finale (se esiste)
     pythonDir=${baseDir}/python                                               # Remove /bin finale (se esiste)
-    echo $parentDir
+    # echo $parentDir
     MAIN_PY="$pythonDir/__main__.py"
     MAIN_ZIP="$pythonDir/LN-Protocol.zip"
 
