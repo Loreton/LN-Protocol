@@ -26,6 +26,7 @@ if __name__ == "__main__":
     Prj.name     = 'LnProtocol'
     Prj.prefix   = Prj.name
 
+        # decidiamo quale dict vogliamo usare
 
         # ===================================================
         # - per iniziare disabilitiamo il LOG
@@ -37,6 +38,8 @@ if __name__ == "__main__":
         # - SetUp dell'ambiente
         # ===================================================
     Prj.SetupEnv(gv, fDEBUG=False)
+    gv.LnDict = gv.Prj.LnDict     # Lnclass()
+    gv.LnDict = gv.Ln.LnDict      # DotMap()
 
 
         # ===================================================

@@ -30,3 +30,8 @@ from . LnFile.ReadWriteTextFile         import WriteTextFile
 from . LnFile.WriteCSVFile              import WriteCSVFile
 
 from . LnDevices.isUsbDevice              import  isUsbDevice
+
+from . LnString.LnCRC8                  import  strCheckSum
+from . LnString.LnCRC8                  import  hexCheckSum
+from . LnString.LnCRC8                  import  byteArrayCheckSum
+from . LnString.LnCRC8                  import  calculateCRC8

@@ -13,7 +13,11 @@ from . Setup.SetupLog               import  SetupLog
 from . Setup.ParseInput             import  ParseInput
 from . Setup.ImportLib              import  ImportLib
 
-from . RS_485.LnRs485
+
+
+from . import RS_485               as rs485     # import della directory
+from . RS_485                      import  LnRs485_Class as LnRs485 # import di un membro
+
 
 
 
