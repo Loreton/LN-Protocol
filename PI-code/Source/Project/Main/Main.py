@@ -37,7 +37,7 @@ def Main(gv, action):
         # = RS-485
         # ===================================================
     if gv.INPUT_PARAM.actionCommand.startswith('rs485.'):
-        LnRs485                        = gv.Prj.LnRs485   # short pointer alla classe
+        LnRs485                   = gv.Prj.LnRs485   # short pointer alla classe
         rs485                     = gv.LnDict()
         rs485.MASTER_ADDRESS      = 0
         rs485.STX                 = 0x02
@@ -63,10 +63,10 @@ def Main(gv, action):
             # ------------------------------
         try:
             # port = gv.Prj.LnRs485.Instrument(rs485.usbDevPath, 0, rs485.mode)  # port name, slave address (in decimal)
-            monitorPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 0)
+            monitorPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
             print ('... press ctrl-c to stop the process.')
             while True:
-                data = monitorPort.readData(fDEBUG=False)
+                data = monitorPort.readData(fDEBUG=True)
                 print ('...', data)
 
         except (KeyboardInterrupt) as key:

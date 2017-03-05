@@ -45,6 +45,7 @@ TIMEOUT  = 0.05
 """Default value for the timeout value in seconds (float)."""
 
 CLOSE_PORT_AFTER_EACH_CALL = False
+CLOSE_PORT_AFTER_EACH_CALL = True
 """Default value for port closure setting."""
 
 #####################
@@ -104,7 +105,7 @@ class Instrument():
         New in version 0.6.
         """
 
-        self.debug = False
+        self.debug = True
         """Set this to :const:'True' to print the communication details. Defaults to :const:'False'."""
 
         self.STX = int(0x02)
@@ -121,7 +122,14 @@ class Instrument():
         """
 
         if  self.close_port_after_each_call:
+            print('closing port...')
             self.serial.close()
+
+        print ('mode:                           {0}'.format(self._MODE_ASCII))
+        print ('STX:                            {0}'.format(self.STX))
+        print ('ETX:                            {0}'.format(self.ETX))
+        print ('CLOSE_PORT_AFTER_EACH_CALL:     {0}'.format(self.close_port_after_each_call))
+        print ('precalculate_read_size:         {0}'.format(self.precalculate_read_size))
 
     def __repr__(self):
         """String representation of the :class:'.Instrument' object."""
@@ -256,7 +264,7 @@ class Instrument():
     #######################################################################
     def readData(self, TIMEOUT=5, fDEBUG=False):
         """
-            - Lettura dati bsato sul protocollo:
+            - Lettura dati bssato sul protocollo:
             -     RS485 protocol library by Nick Gammon
             - STX - data - CRC - ETX
             - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
@@ -266,6 +274,7 @@ class Instrument():
         """
 
         if self.close_port_after_each_call:
+            print('openig port...')
             self.serial.open()
 
         chInt = 0
@@ -278,6 +287,7 @@ class Instrument():
             ch = self.serial.read(1)        # ch e' un bytes
             if ch == b'': continue
             chHex = binascii.hexlify(ch)
+            print('received byte {0}'.format(chHex))
             chInt = int(chHex, 16)
 
             # - save STX in buffer
@@ -291,7 +301,7 @@ class Instrument():
             if ch == b'': continue
             chHex = binascii.hexlify(ch)
             chInt = int(chHex, 16)
-            if fDEBUG: print ("Reading: {0} - {1:<10} - {2:<10} {3:<10} - {4:<10} {5:<10} ".format(type(ch), ch, type(chInt), chInt, type(chHex), chHex))
+            # if fDEBUG: print ("Reading: {0} - {1:<10} - {2:<10} {3:<10} - {4:<10} {5:<10} ".format(type(ch), ch, type(chInt), chInt, type(chHex), chHex))
             buffer.append(chInt)
 
         if self.close_port_after_each_call:
@@ -325,7 +335,7 @@ class Instrument():
             if ERROR:
                 return bytearray()
 
-            if fDEBUG: print ("complementedData: x{0:02X} + x{1:02X}".format(ch1, ch2), end="")
+            if fDEBUG: print ("     complementedData: x{0:02X} + x{1:02X}".format(ch1, ch2), end="")
                 # - check first byte
             ch1_HNibble = (ch1 >> 4) & 0x0F
             ch1_LNibble = ~ch1 & 0x0F
@@ -352,9 +362,9 @@ class Instrument():
 
         if fDEBUG:
             # print ("CRC received  : x%02X" % (CRC_received))
-            print ("CRC received  : x{0:02X}".format(CRC_received))
+            print ("    CRC received  : x{0:02X}".format(CRC_received))
             xx = self._calculateCRC8(retVal[:-1])
-            print ("CRC calculated: x{0:02X}".format(CRC_calculated))
+            print ("    CRC calculated: x{0:02X}".format(CRC_calculated))
             print ()
 
         return retVal[:-1]                      # Escludiamo il CRC
