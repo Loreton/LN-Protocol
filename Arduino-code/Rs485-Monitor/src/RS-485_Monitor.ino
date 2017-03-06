@@ -24,7 +24,6 @@ int  fRead ()               {return RS485.read (); }
 void setup() {
     Serial.begin(9600);
     RS485.begin (9600);
-    // pinMode (START_PIN, INPUT);
     pinMode (RS485_ENABLE_PIN, OUTPUT);  // driver output enable
     pinMode (LED_PIN, OUTPUT);  // built-in LED
 }
@@ -62,26 +61,34 @@ byte DEBUG_TxRxMsg [200] = "                                                    
 // #############################################################
 byte LnRcvMessage(unsigned long timeOUT) {
     // receive response
-    byte buf [10];
+    byte rxData [50];
 
-    byte rcvLen = recvMsg (fAvailable, fRead, buf, sizeof buf, timeOUT, DEBUG_TxRxMsg);
-    digitalWrite (LED_PIN, rcvLen == 0);  // turn on LED if error
+    byte rxDataLen = recvMsg (fAvailable, fRead, rxData, sizeof rxData, timeOUT, DEBUG_TxRxMsg);
+    digitalWrite (LED_PIN, rxDataLen == 0);  // turn on LED if error
 
 
     if (fDEBUG) {
         // char DEBUG_SentMsgLen = *DEBUG_sentMsg;           // byte 0
-        char DEBUG_TxRxLen = *DEBUG_TxRxMsg;           // byte 0
-        // Serial.print("\r\n[Monitor] - Comando  inviato : ");printHex(&DEBUG_sentMsg[1], DEBUG_SentMsgLen, "[STX ...data... CRC ETX]"); // contiene LEN STX ...data... ETX
-        Serial.print("\r\n[Monitor] - DEBUG Risposta ricevuta : ");printHex(&DEBUG_TxRxMsg[1], DEBUG_TxRxLen, " - [STX ...data... CRC ETX]"); // contiene LEN STX ...data... ETX
+        char DEBUG_RxLen = *DEBUG_TxRxMsg;           // byte 0
+        if (DEBUG_RxLen > 0) {
+            Serial.print("\r\n[Monitor] - DEBUG Risposta ricevuta : ");
+            printHex(&DEBUG_TxRxMsg[1], DEBUG_RxLen, " - [STX ...data... CRC ETX]");
+        }
+            Serial.print("\r\n[Monitor] - DEBUG No data received during: ");
+            Serial.print(timeOUT);
+            Serial.print("ms");
     }
 
-    // only send once per successful change
-    if (rcvLen > 0) {
-        Serial.print("\r\n[Monitor] - Risposta ricevuta       : ");printHex(buf, rcvLen, "");
-    } else {
-        Serial.print("\r\n[Monitor] - TIMEOUT waiting response. len=");printHex(buf, rcvLen, "");
+    else {
+        if (rxDataLen > 0) {
+            Serial.print("\r\n[Monitor] - Risposta ricevuta       : ");
+            printHex(rxData, rxDataLen, "");
+        } else {
+            Serial.print("\r\n[Monitor] - TIMEOUT waiting response. len=");
+            printHex(rxData, rxDataLen, "");
+        }
     }
-    return rcvLen;
+    return rxDataLen;
 }
 
 

@@ -1,0 +1,131 @@
+#!/bin/bash
+
+
+
+# viene solo caricata e verrà richiamata dai vari scripts
+function Esegui() {
+    cmd=$*
+    echo "executing: $cmd"
+    eval $cmd
+    rCode=$?
+    [[ ! "$rCode" == "0" ]] && echo "E R R O R    on $CMD" && exit $rCode
+}
+
+
+
+# ########################################################################
+# # Creazione dei LINK logici per inserire le directory con le librerie.
+# ########################################################################
+function createLibraryLink {
+
+    for dirName in $dirNames; do
+        sourceDir="${LORETO_LIB_DIR}/${dirName}"
+        linkDir="${Project_LIB_DIR}/${dirName}"
+
+         # ---- create new link
+        if [ -d "$sourceDir" ]; then
+            Esegui "sudo ln -s ${sourceDir} ${linkDir}"
+        else
+            echo "skipping      .....  $dirName"
+        fi
+    done
+
+}
+
+function clearLibraryLink {
+    echo "removing LINKs to my libraries"
+    for dirName in $dirNames; do
+        linkDir="${Project_LIB_DIR}/${dirName}"
+        if [ -L "$linkDir" ]; then
+            Esegui "sudo rm -f ${linkDir}";
+        fi
+    done
+
+}
+
+# ########################################################################
+# # M A I N
+# ########################################################################
+    thisDir="$(dirname  "$(test -L "$0" && readlink "$0" || echo "$0")")"     # risolve anche eventuali LINK presenti sullo script
+    thisDir=$(cd $(dirname "$thisDir"); pwd -P)/$(basename "$thisDir")        # GET AbsolutePath
+    scriptDir=${thisDir%/.*}
+
+    thisDir="$(test -L "$PWD" && readlink "$PWD" || echo "$PWD")"     # risolve anche eventuali LINK presenti sullo script
+    thisDir=$(cd $(dirname "$thisDir"); pwd -P)/$(basename "$thisDir")        # GET AbsolutePath
+    currentDir=${thisDir%/.*}
+
+
+    Project_LIB_DIR="$currentDir/lib"
+    LORETO_LIB_DIR="$scriptDir/LnLibraries"
+
+    echo
+    echo "      script  dir is: $scriptDir"
+    echo "      library dir is: $LORETO_LIB_DIR"
+    echo
+    echo "      current dir is: $currentDir"
+    echo "      prjLib  dir is: $Project_LIB_DIR"
+    echo
+
+
+    device=/dev/ttyUSBx
+    device=$2
+    action=$1
+
+
+    module='uno'
+    module='nano328'
+
+
+    if [[ ! -d $Project_LIB_DIR ]]; then
+        echo
+        echo "  ERROR directory: $Project_LIB_DIR doesn't exists."
+        echo
+        exit 1
+    fi
+
+    if [[ ! -d $LORETO_LIB_DIR ]]; then
+        echo
+        echo "  ERROR directory: $LORETO_LIB_DIR doesn't exists."
+        echo
+        exit 1
+    fi
+
+    if [[ ! "$action" =~ [cbus] ]]; then
+        echo "      immettere uno o più dei seguenti parametri:"
+        echo "          c = clean"
+        echo "          b = build"
+        echo "          u = upload"
+        echo "          s = serial read"
+        echo
+        exit
+    fi
+
+
+    dirNames='RCSwitch LnFunctions RS485_protocol VirtualWire115 MAX7219 Adafruit-ST7735-Library Adafruit_GFX'
+    dirNames='LnFunctions RS485_protocol'
+
+    if [[ "$action" =~ "c" ]]; then
+        echo "Cleaning project ....: $PWD"
+        Esegui "platformio run --target clean"
+    fi
+
+    if [[ "$action" =~ "b" ]]; then
+        clearLibraryLink
+        createLibraryLink
+        echo
+        echo "Building .... from dir: $PWD"
+        Esegui "platformio run --environment nano"
+    fi
+
+    if [[ "$action" =~ "u" ]]; then
+        [[ "$device" == "" ]] && echo "Enter USB port: ttyUSB0, ttyUSB1, ...." && exit
+        [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
+        Esegui "platformio run --target upload --upload-port $device"
+    fi
+
+
+    if [[ "$action" =~ "s" ]]; then
+        [[ "$device" == "" ]] && echo "Enter USB port: ttyUSB0, ttyUSB1, ...." && exit
+        [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
+        Esegui "platformio device monitor -p $device"
+    fi

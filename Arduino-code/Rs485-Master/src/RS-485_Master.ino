@@ -23,7 +23,9 @@ int  fAvailable ()          {return RS485.available (); }
 int  fRead ()               {return RS485.read (); }
 
 
-
+// ====================================================
+// = Setup()
+// ====================================================
 void setup() {
     Serial.begin(9600);
     RS485.begin (9600);
@@ -34,6 +36,9 @@ void setup() {
 
 
 
+// ====================================================
+// = Loop()
+// ====================================================
 void loop() {
     byte SLEEP_TIME=10;
     byte level = 0;
@@ -114,6 +119,7 @@ byte LnRcvMessage(unsigned long timeOUT) {
         // Serial.print("\r\n[Master] - Comando  inviato : ");printHex(&DEBUG_sentMsg[1], DEBUG_SentMsgLen, "[STX ...data... CRC ETX]"); // contiene LEN STX ...data... ETX
         Serial.print("\r\n[Master] - DEBUG Risposta ricevuta : ");printHex(&DEBUG_TxRxMsg[1], DEBUG_TxRxLen, " - [STX ...data... CRC ETX]"); // contiene LEN STX ...data... ETX
     }
+
 
     // only send once per successful change
     if (rcvLen > 0) {

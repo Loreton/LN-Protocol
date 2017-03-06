@@ -8,7 +8,10 @@ import time
 # Definizione delle porte
 ###############################################################
 
-def openRs232Port(devPort='/dev/ttyUSB0', baudRate=9600):
+def openRs232Port(portNO, baudRate=9600):
+    devPort = '/dev/ttyUSB{0}'.format(portNO)
+    print('Monitoring port: {0}'.format(devPort))
+
     port = serial.Serial(port=devPort,
             baudrate=baudRate,
             parity=serial.PARITY_NONE,
@@ -18,43 +21,66 @@ def openRs232Port(devPort='/dev/ttyUSB0', baudRate=9600):
         )
     return port
 
-# port0 = serial.Serial(port='/dev/ttyUSB0',
-#         baudrate=115200,
-#         parity=serial.PARITY_NONE,
-#         stopbits=serial.STOPBITS_ONE,
-#         bytesize=serial.EIGHTBITS,
-#         timeout = 6
-#     )
-
-# port1 = serial.Serial(port='/dev/ttyUSB1',
-#         baudrate=115200,
-#         parity=serial.PARITY_NONE,
-#         stopbits=serial.STOPBITS_ONE,
-#         bytesize=serial.EIGHTBITS,
-#         timeout = 6
-#     )
-
-# port2 = serial.Serial(port='/dev/ttyUSB2',
-#         baudrate=115200,
-#         parity=serial.PARITY_NONE,
-#         stopbits=serial.STOPBITS_ONE,
-#         bytesize=serial.EIGHTBITS,
-#         timeout = 6
-#     )
+            # rtscts=1,
 
 #######################################################################
 # Lettura di una riga con il presupposto che '\n' indica fine riga
 #######################################################################
-def readLine(port, address, trimNewLine=True):
-    line = port.readline()
-    if line:
-        if isinstance(line, bytes):
-            line = line.decode('utf-8')
-        byte0 = line[0]
-        if byte0 == address:
-            print ("{0} - Received: {1}".format(port.port, line))
-            if trimNewLine: line=line.strip('\n')
-            return line
+def readData(port, eod=b'\n'):
+    retVal = bytearray()
+    while True:
+        ch = port.read(1)
+        if ch:
+            print ("{0} - {1}".format(type(ch), ch))
+            retVal.append(ord(ch))
+            # if ch == b'\x03':
+            if ch == eod:
+                print ('TROVATO')
+                return retVal
+
+
+
+#######################################################################
+# Lettura di dati fino ad eod
+#######################################################################
+codeType = 'utf8'
+STX = b'\x02'
+ETX = b'\x03'
+def LnRs485_Monitor(port, eod=b'\n'):
+    while True:
+        print ('sono nel loop')
+        retData = readData(port, eod)
+        stx     = retData[0]
+        Address = retData[1]
+        dataLen = retData[2]
+        data    = retData[3:]
+        print ('stx:        {0:02x}'.format(stx))
+        print ('Address:    {0:02x}'.format(Address))
+        print ('dataLen:    {0:02x}'.format(dataLen))
+        # print ('data:       {0}'.format(data))
+        print ('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in retData)))
+        print ()
+        # sys.exit()
+        time.sleep(1)
+
+
+
+
+#######################################################################
+# Lettura di una riga con il presupposto che '\n' indica fine riga
+#######################################################################
+def readLine(port, eol='\n', trimNewLine=True):
+    while True:
+        line = port.readline()
+        if line:
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
+            byte0 = line[0]
+            # if byte0 == address:
+            if trimNewLine: line=line.strip(eol)
+            print ("{0} - {1}".format(port.port, line))
+            # print ()
+            # return line
 
 
 #######################################################################
@@ -67,24 +93,8 @@ def writeLine(port, data):
 
 
 
-#######################################################################
-# Lettura di una riga con il presupposto che '\n' indica fine riga
-#######################################################################
-def readData(port):
-    retVal = bytearray()
-    while True:
-        ch = port.read(1)
-        if ch:
-            print ("{0} - {1}".format(type(ch), ch))
-            retVal.append(ord(ch))
-            if ch == b'\x03':
-                print ('TROVATO')
-                return retVal
 
 
-codeType = 'utf8'
-STX = '\x02'
-ETX = '\x03'
 #######################################################################
 # Scrittura di chr sulla seriale
 #######################################################################
@@ -102,26 +112,6 @@ def writeData(port, Address, data):
 
 
 
-def Monitor(portNO):
-    devPort = '/dev/ttyUSB{0}'.format(portNO)
-    print('Monitoring port: {0}'.format(devPort))
-    port = openRs232Port(devPort, 9600)
-
-    while True:
-        print ('sono nel loop')
-        retData = readData(port)
-        stx     = retData[0]
-        Address = retData[1]
-        dataLen = retData[2]
-        data    = retData[3:]
-        print ('stx:        {0:02x}'.format(stx))
-        print ('Address:    {0:02x}'.format(Address))
-        print ('dataLen:    {0:02x}'.format(dataLen))
-        # print ('data:       {0}'.format(data))
-        print ('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in retData)))
-        print ()
-        # sys.exit()
-        time.sleep(1)
 
 
 def startSlave(Address):
@@ -146,13 +136,6 @@ def startSlave(Address):
 
 
 
-
-def Test(portNO):
-    devPort = '/dev/ttyUSB{0}'.format(portNO)
-    print('opening port: {0}'.format(devPort))
-    port = openRs232Port(devPort, 9600)
-    print('closing port: {0}'.format(devPort))
-    port.close()
 
 
 
@@ -179,10 +162,22 @@ def Master():
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         param = sys.argv[1]
-        if param.startswith('t'):  # t0, t1, t2, .. test - open/close the port
-            Test(param[1])
-        elif param.startswith('m'):  # m0, m1, m2, .. monitor - open/close the port
-            Monitor(param[1])
+        portNO = param[-1]
+
+        if param.startswith('test'):  # t0, t1, t2, .. test - open/close the port
+            port = openRs232Port(portNO, 9600)
+            print('closing port: {0}'.format(devPort))
+            port.close()
+
+
+
+        elif param.startswith('mon'):  # m0, m1, m2, .. monitor
+            port = openRs232Port(portNO, baudRate=9600)
+            LnRs485_Monitor(port, eod=ETX)
+
+        elif param.startswith('line'):  # r0, r1, r2, .. ReadData fino alla ricezione del EoD - EndOfData
+            port = openRs232Port(portNO, baudRate=9600)
+            readLine(port, eol='\n')
 
 
     sys.exit()
