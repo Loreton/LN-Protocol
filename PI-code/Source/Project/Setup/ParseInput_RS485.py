@@ -33,7 +33,7 @@ def ExecuteOptions(myParser, required=False):
 ####################################
 # -
 ####################################
-def Monitor(myParser, required):
+def UsbPort(myParser, required):
     mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
 
     myParser.add_argument( "-p", "--port",
@@ -44,6 +44,7 @@ def Monitor(myParser, required):
                             help=mandatory + LnColor.getYellow("""nome della porta USB da monitorare.
     [DEFAULT: None]
     """))
+
 
 
 ####################################

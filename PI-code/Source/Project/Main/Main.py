@@ -10,7 +10,7 @@
 import os, sys
 import datetime
 this_mod = sys.modules[__name__]
-
+import time
 
 
 
@@ -29,7 +29,7 @@ def Main(gv, action):
 
 
     fEXECUTE = gv.INPUT_PARAM.fEXECUTE
-    fDEBUG = gv.INPUT_PARAM.fDEBUG
+    fDEBUG   = gv.INPUT_PARAM.fDEBUG
 
 
 
@@ -41,7 +41,6 @@ def Main(gv, action):
         rs485                     = gv.LnDict()
         rs485.MASTER_ADDRESS      = 0
         rs485.STX                 = 0x02
-        rs485.ETX                 = 0x03
         rs485.ETX                 = 0x03
         rs485.usbDevPath          = gv.INPUT_PARAM.usbPort
         rs485.baudRate            = 9600
@@ -63,11 +62,47 @@ def Main(gv, action):
             # ------------------------------
         try:
             # port = gv.Prj.LnRs485.Instrument(rs485.usbDevPath, 0, rs485.mode)  # port name, slave address (in decimal)
-            monitorPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
+            # monitorPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
+            address = 5
+            print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
+            port = LnRs485.Instrument(rs485.usbDevPath, address, rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
+            port.serial.baudrate = rs485.baudRate
+            port.serial.STX      = rs485.STX
+            port.serial.ETX      = rs485.ETX
+
             print ('... press ctrl-c to stop the process.')
             while True:
                 data = monitorPort.readData(fDEBUG=True)
                 print ('...', data)
+
+        except (KeyboardInterrupt) as key:
+            print ("Keybord interrupt has been pressed")
+            sys.exit()
+
+
+    elif gv.INPUT_PARAM.actionCommand == 'rs485.send':
+            # ------------------------------
+            # - Inizializzazione
+            # ------------------------------
+        try:
+            address = 5
+            print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
+            port = LnRs485.Instrument(rs485.usbDevPath, address, rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
+            port.serial.baudrate = rs485.baudRate
+            port.serial.STX      = rs485.STX
+            port.serial.ETX      = rs485.ETX
+            # sendingPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
+            print ('... press ctrl-c to stop the process.')
+            index = 0
+            basedata = 'Loreto.'
+            while True:
+                index += 1
+                data = '[{0}.{1:04}]'.format(basedata, index)
+                line = '[{0}:{1:04}] - {2}'.format(rs485.usbDevPath, index, data)
+                print (line)
+                port.writeData('Loreto', fDEBUG=True)
+                time.sleep(5)
+
 
         except (KeyboardInterrupt) as key:
             print ("Keybord interrupt has been pressed")

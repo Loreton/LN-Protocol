@@ -13,6 +13,7 @@ import serial       # sudo pip3.4 install pyserial
 import struct
 import sys
 import time
+import inspect
 
 # Allow long also in Python3
 # http://python3porting.com/noconv.html
@@ -70,7 +71,31 @@ class Instrument():
 
     """
 
-    def __init__(self, port, slaveaddress, mode='ascii'):
+    def _internaLogger(self, package=None):
+        ##############################################################################
+        # - classe che mi permette di lavorare nel caso il logger non sia richiesto
+        ##############################################################################
+        class nullLogger():
+                def __init__(self, package=None, stackNum=1):
+                    pass
+                def info(self, data):
+                    self._print(data)
+                def debug(self, data):
+                    self._print(data)
+                def error(self, data):  pass
+                def warning(self, data):  pass
+
+                def _print(self, data):
+                    caller = inspect.stack()[4]
+                    dummy, programFile, lineNumber, funcName, lineCode, rest = caller
+                    if funcName == '<module>': funcName = '__main__'
+                    str = "[{FUNC:<20}:{LINENO}] - {DATA}".format(FUNC=funcName, LINENO=lineNumber, DATA=data)
+                    print (str)
+
+        return nullLogger()
+
+
+    def __init__(self, port, slaveaddress, mode='ascii', logger=None):
         self._MODE_ASCII = mode
         if port not in _SERIALPORTS or not _SERIALPORTS[port]:
             self.serial = _SERIALPORTS[port] = serial.Serial(port=port, baudrate=BAUDRATE, parity=PARITY, bytesize=BYTESIZE, stopbits=STOPBITS, timeout=TIMEOUT)
@@ -78,6 +103,12 @@ class Instrument():
             self.serial = _SERIALPORTS[port]
             if self.serial.port is None:
                 self.serial.open()
+
+        if logger:
+            self._setLogger = logger
+        else:
+            self._setLogger = self._internaLogger
+
         """The serial port object as defined by the pySerial module. Created by the constructor.
 
         Attributes:
@@ -147,64 +178,52 @@ class Instrument():
 
 
     def _calculateCRC8(self, byteArray_data):
-        result = 0
+        logger = self._setLogger(package=__name__)
+        retValue = 0
         for byte in byteArray_data:
-            # print ('byte: {0} - result {1}'.format( byte, result))
+            if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
+            logger.info ('byte: {0} - retValue {1}'.format( byte, retValue))
             b2 = byte
             if (byte < 0):
                 b2 = byte + 256
             for i in range(8):
-                odd = ((b2^result) & 1) == 1
-                result >>= 1
+                odd = ((b2^retValue) & 1) == 1
+                retValue >>= 1
                 b2 >>= 1
                 if (odd):
-                    result ^= 0x8C # this means crc ^= 140
+                    retValue ^= 0x8C # this means crc ^= 140
 
-        return result
+        return retValue
 
+    def getComplementedByte(self, char, fDEBUG=False):
+        logger = self._setLogger(package=__name__)
+        thisFunc = __name__.split('.')[-1]
+        if isinstance(char, str):
+            Byte = ord(char)            # onverte nel valore ascii
+        else:
+            Byte = char
 
-        # - send a byte complemented, repeated
-        # - only values sent would be (in hex):
-        # -   0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
-        # -   invia prima l'HighNibble e poi il LowNibble
-    def sendComplemented(self, what, fDEBUG=False):
-        if fDEBUG: print ("Sending: x{0:02X}".format(what))
-
-        # first nibble
-        c = what >> 4;
-        byteValue = (c << 4) | (c ^ 0x0F)
-        if fDEBUG: print ("  x{0:02X}".format(byteValue), end="")
-        self.serial.write(bytes(byteValue))
-
-        # second nibble
-        c = what & 0x0F;
-        byteValue = (c << 4) | (c ^ 0x0F)
-        if fDEBUG: print ("               x{0:02X}".format(byteValue))
-        self.serial.write(bytes(byteValue))
-
-        return byte1, byte2
-
-    def getComplemented(self, what, fDEBUG=False):
-        if fDEBUG: print ("Sending: x{0:02X}".format(what))
+        logger.debug ("[{0}] -  converting: x{1:02X}".format(thisFunc, Byte))
+        # if fDEBUG: print ("[{0}] -  converting: x{1:02X}".format(thisFunc, Byte))
 
         # first nibble
-        c = what >> 4;
+        c = Byte >> 4;
         byteValue = (c << 4) | (c ^ 0x0F)
         byte1 = byteValue
-        if fDEBUG: print ("               x{0:02X}".format(byte1))
+        logger.debug  ("               x{0:02X}".format( byte1))
 
         # second nibble
-        c = what & 0x0F;
+        c = Byte & 0x0F;
         byteValue = (c << 4) | (c ^ 0x0F)
         byte2 = byteValue
-        if fDEBUG: print ("               x{0:02X}".format(byte2))
+        logger.debug  ("               x{0:02X}".format(byte2))
 
         return byte1, byte2
 
 
     #######################################################################
     # - by Loreto
-    # - Lettura dati bsato sul protocollo:
+    # - Scrittura dati bsato sul protocollo:
     # -     RS485 protocol library by Nick Gammon
     # - STX - data - CRC - ETX
     # - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
@@ -223,13 +242,13 @@ class Instrument():
 
             # - Data
         for thisByte in data:
-            byte1, byte2 = self.getComplemented(thisByte, fDEBUG=True)
+            byte1, byte2 = self.getComplementedByte(thisByte, fDEBUG=True)
             dataToSend.append(byte1)
             dataToSend.append(byte2)
 
             # - CRC
         CRC_value  = self._calculateCRC8(data)
-        byte1, byte2 = self.getComplemented(CRC_value, fDEBUG=True)
+        byte1, byte2 = self.getComplementedByte(CRC_value, fDEBUG=True)
         dataToSend.append(byte1)
         dataToSend.append(byte2)
         # dataToSend.append(CRC_value)   # per generare un errore

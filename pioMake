@@ -71,11 +71,6 @@ function clearLibraryLink {
     device=$2
     action=$1
 
-
-    module='uno'
-    module='nano328'
-
-
     if [[ ! -d $Project_LIB_DIR ]]; then
         echo
         echo "  ERROR directory: $Project_LIB_DIR doesn't exists."

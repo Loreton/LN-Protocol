@@ -25,7 +25,8 @@ def ParseInput(gVars, args, programVersion=None):
             'conf'    : "edit configuration file"
             },
         'rs485': {
-            'monitor'     : "read-only the rs485 bus",
+            'monitor'   : "read-only from USB data formatted LnRs485-bus",
+            'send'      : "send data to   USB data formatted LnRs485-bus",
             },
         'virtualwire': {
             'monitor'      : ".....",
@@ -336,9 +337,10 @@ def RS485(myParser, action):
     rs485.ExecuteOptions(myParser, required=False)
 
     # print ('....', action)
-    if action.lower() in ['monitor']:
-        rs485.Monitor(myParser, required=True)
+    if action.lower() in ['monitor', 'send']:
+        rs485.UsbPort(myParser, required=True)
         pass
+
 
     else:
         print("""
