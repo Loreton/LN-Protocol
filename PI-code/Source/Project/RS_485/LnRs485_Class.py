@@ -141,6 +141,8 @@ class Instrument():
 
         self.STX = int(0x02)
         self.ETX = int(0x03)
+        self.STX = b'\x02'
+        self.ETX = b'\x03'
 
         self.close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL
         """If this is :const:'True', the serial port will be closed after each call. Defaults to :data:'CLOSE_PORT_AFTER_EACH_CALL'. To change it, set the value 'minimalmodbus.CLOSE_PORT_AFTER_EACH_CALL=True' ."""
@@ -177,48 +179,88 @@ class Instrument():
             )
 
 
+
     def _calculateCRC8(self, byteArray_data):
         logger = self._setLogger(package=__name__)
-        retValue = 0
+        crcValue = 0
         for byte in byteArray_data:
             if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
-            logger.info ('byte: {0} - retValue {1}'.format( byte, retValue))
+            logger.debug('byte: int:{0} hex: {0:02x} - crcValue int:{1} hex: {1:02x}'.format(byte, crcValue))
             b2 = byte
             if (byte < 0):
                 b2 = byte + 256
             for i in range(8):
-                odd = ((b2^retValue) & 1) == 1
-                retValue >>= 1
+                odd = ((b2^crcValue) & 1) == 1
+                crcValue >>= 1
                 b2 >>= 1
                 if (odd):
-                    retValue ^= 0x8C # this means crc ^= 140
+                    crcValue ^= 0x8C # this means crc ^= 140
 
-        return retValue
+        return crcValue
 
-    def getComplementedByte(self, char, fDEBUG=False):
+
+    # ---------------------------------------------
+    # - aaaa bbbb
+    # -     byte1 = aaaa !aaaa
+    # -     byte2 = bbbb !bbbb
+    # -     byte = byte1_HNibble * 16 + byte2_HNibble
+    # ---------------------------------------------
+    def _splitComplementedByte(self, byte):
         logger = self._setLogger(package=__name__)
-        thisFunc = __name__.split('.')[-1]
-        if isinstance(char, str):
-            Byte = ord(char)            # onverte nel valore ascii
-        else:
-            Byte = char
+        if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
 
-        logger.debug ("[{0}] -  converting: x{1:02X}".format(thisFunc, Byte))
-        # if fDEBUG: print ("[{0}] -  converting: x{1:02X}".format(thisFunc, Byte))
+        logger.debug ("converting: x{1:02X}".format(byte))
 
-        # first nibble
-        c = Byte >> 4;
+            # first nibble
+        c = byte >> 4;
         byteValue = (c << 4) | (c ^ 0x0F)
-        byte1 = byteValue
-        logger.debug  ("               x{0:02X}".format( byte1))
+        highNibble = byteValue
+        logger.debug  ("    x{0:02X}".format( highNibble))
 
-        # second nibble
-        c = Byte & 0x0F;
+            # second nibble
+        c = byte & 0x0F;
         byteValue = (c << 4) | (c ^ 0x0F)
-        byte2 = byteValue
-        logger.debug  ("               x{0:02X}".format(byte2))
+        lowNibble = byteValue
+        logger.debug  ("    x{0:02X}".format(lowNibble))
 
-        return byte1, byte2
+
+            # second two bytes
+        return highNibble, lowNibble
+
+
+
+
+    # ---------------------------------------------
+    # -     byte1 = aaaa !aaaa
+    # -     byte2 = bbbb !bbbb
+    # -     byte = byte1_HNibble * 16 + byte2_HNibble
+    # ---------------------------------------------
+    def _combineComplementedByte(self, byte1, byte2):
+        logger = self._setLogger(package=__name__)
+        if isinstance(byte1, str): byte1 = ord(byte1)            # onverte nel valore ascii
+        if isinstance(byte2, str): byte2 = ord(byte2)            # onverte nel valore ascii
+
+        logger.debug("complementedData: x{0:02X} + x{1:02X}".format(byte1, byte2))
+
+            # - check first byte
+        byte1_HighNibble = (byte1 >> 4) & 0x0F
+        byte1_LowNibble = ~byte1 & 0x0F
+        if byte1_LowNibble != byte1_HighNibble:
+            logger.error("byte1 nibbles corrupted: x{0:02X} + x{1:02X}".format(byte1_LowNibble, byte1_HighNibble))
+            return None
+
+            # - check second byte
+        byte2_HighNibble = (byte2 >> 4) & 0x0F
+        byte2_LowNibble = ~byte2 & 0x0F
+        if byte2_LowNibble != byte2_HighNibble:
+            logger.error("byte2 nibbles corrupted: x{0:02X} + x{1:02X}".format(byte2_LowNibble, byte2_HighNibble))
+            return None
+
+            # re-build real byte
+        realByte = byte1_HighNibble*16 + byte2_HighNibble
+        logger.debug("  resulting data BYTE: x{0:02X} char:{1}".format(realByte, chr(realByte)))
+
+        return realByte
 
 
     #######################################################################
@@ -227,12 +269,13 @@ class Instrument():
     # -     RS485 protocol library by Nick Gammon
     # - STX - data - CRC - ETX
     # - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
-    # -  byte complemented
+    # -  byte complemented (incluso il CRC)
     # -  only values sent would be (in hex):
     # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
     #######################################################################
     #@TODO: verifica che un bytearray possa essere inviato correttamente
-    def writeData(self, data, TIMEOUT=5, fDEBUG=False):
+    def writeData(self, data, TIMEOUT=5):
+        logger = self._setLogger(package=__name__)
 
         # preparaiamo il bytearray con i dati da inviare
         dataToSend=bytearray()
@@ -242,13 +285,13 @@ class Instrument():
 
             # - Data
         for thisByte in data:
-            byte1, byte2 = self.getComplementedByte(thisByte, fDEBUG=True)
+            byte1, byte2 = self._splitComplementedByte(thisByte)
             dataToSend.append(byte1)
             dataToSend.append(byte2)
 
             # - CRC
         CRC_value  = self._calculateCRC8(data)
-        byte1, byte2 = self.getComplementedByte(CRC_value, fDEBUG=True)
+        byte1, byte2 = self._splitComplementedByte(CRC_value)
         dataToSend.append(byte1)
         dataToSend.append(byte2)
         # dataToSend.append(CRC_value)   # per generare un errore
@@ -277,23 +320,45 @@ class Instrument():
         return
 
 
-
     #######################################################################
-    # - by Loreto
+    # - Lettura dati fino a EOD
+    # - Ritorna una bytearray di integer
     #######################################################################
-    def readData(self, TIMEOUT=5, fDEBUG=False):
-        """
-            - Lettura dati bssato sul protocollo:
-            -     RS485 protocol library by Nick Gammon
-            - STX - data - CRC - ETX
-            - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
-            -  byte complemented
-            -  only values sent would be (in hex):
-            -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
-        """
+    def _readBuffer_01(self):
+        logger = self._setLogger(package=__name__)
 
         if self.close_port_after_each_call:
-            print('openig port...')
+            logger.debug('openig port...')
+            self.serial.open()
+
+        buffer = bytearray()
+        while True:
+            ch = self.serial.read(1)       # ch e' un bytes
+            if ch == b'': continue
+
+            chHex = binascii.hexlify(ch)
+            chInt = int(chHex, 16)
+            logger.debug(  """     Received: {chTYPE} - char: {ordCH:<4} int:{intCH:5} hex:{hexCH:02x}
+                                """.format(chTYPE=type(ch), ordCH=chr(ord(ch)),  intCH=chInt, hexCH=chInt)
+                        )
+            buffer.append(chInt)
+
+            if ch == self.serial.ETX:
+                if self.close_port_after_each_call:
+                    logger.debug('closing port...')
+                    self.serial.close()
+
+                return buffer
+
+    #######################################################################
+    # - Lettura dati fino a EOD
+    # - Ritorna una bytearray di integer
+    #######################################################################
+    def _readBuffer_02(self):
+        logger = self._setLogger(package=__name__)
+
+        if self.close_port_after_each_call:
+            logger.debug('openig port...')
             self.serial.open()
 
         chInt = 0
@@ -306,8 +371,8 @@ class Instrument():
             ch = self.serial.read(1)        # ch e' un bytes
             if ch == b'': continue
             chHex = binascii.hexlify(ch)
-            print('received byte {0}'.format(chHex))
             chInt = int(chHex, 16)
+            logger.debug('STX byte received {0:02x}'.format(chInt))
 
             # - save STX in buffer
         buffer.append(chInt)
@@ -320,71 +385,78 @@ class Instrument():
             if ch == b'': continue
             chHex = binascii.hexlify(ch)
             chInt = int(chHex, 16)
-            # if fDEBUG: print ("Reading: {0} - {1:<10} - {2:<10} {3:<10} - {4:<10} {5:<10} ".format(type(ch), ch, type(chInt), chInt, type(chHex), chHex))
+                # - save byte in buffer
             buffer.append(chInt)
 
         if self.close_port_after_each_call:
+            logger.debug('closing port...')
             self.serial.close()
 
-            # ---------------------------------------------
-            # - print Received Data
-            # ---------------------------------------------
-        if fDEBUG:
-            print ("received Data:", end="")
-            for ch in buffer:
-                print (" x{0:02X}".format(ch), end="")
-            print ()
+        return buffer
+
+    #######################################################################
+    # - by Loreto
+    #######################################################################
+    def readData(self, TIMEOUT=5):
+        logger = self._setLogger(package=__name__)
+        """
+            - Lettura dati bssato sul protocollo:
+            -     RS485 protocol library by Nick Gammon
+            - STX - data - CRC - ETX
+            - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
+            -  byte complemented
+            -  only values sent would be (in hex):
+            -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
+        """
+
+        retData = self._readBuffer_01()
+        logger.debug('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in retData)))
 
 
-            # ---------------------------------------------
-            # --- verifica STX & ETX
-            # ---------------------------------------------
-        if buffer[0] != self.serial.STX or buffer[-1] != self.serial.ETX:
-            return bytearray()
-
-        retVal = bytearray()
-        ERROR  = False
+            # Prendiamo i dati fissi
+        startOfText     = retData[0]
+        endOfText       = retData[-1]
+        payLoadNibbled  = retData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
 
             # ---------------------------------------------
-            # - process payload
-            # - byte = ch1_HNibble * 16 + ch2_HNibble
+            # - ricostruzione dei bytes originari
+            # - byte = byte1_HighNibble*16 + byte2_HighNibble
             # ---------------------------------------------
-        xy = iter(buffer[1:-1])
+            # il trick che segue ci permette di prelevare due bytes alla volta
+        payLoad_crc = bytearray()
+        xy = iter(payLoadNibbled)
         for ch1, ch2 in zip(xy, xy):
-            if ERROR:
+            realByte = self._combineComplementedByte(ch1, ch2)
+            if not realByte:
                 return bytearray()
-
-            if fDEBUG: print ("     complementedData: x{0:02X} + x{1:02X}".format(ch1, ch2), end="")
-                # - check first byte
-            ch1_HNibble = (ch1 >> 4) & 0x0F
-            ch1_LNibble = ~ch1 & 0x0F
-            if ch1_LNibble != ch1_HNibble:
-                ERROR = True
-
-                # - check second byte
-            ch2_HNibble = (ch2 >> 4) & 0x0F
-            ch2_LNibble = ~ch2 & 0x0F
-            if ch2_LNibble != ch2_HNibble:
-                ERROR = True
-
-                # re-build real byte
-            realByte = ch1_HNibble*16 + ch2_HNibble
-            if fDEBUG: print ("    -   resulting data BYTE: x{0:02X}".format(realByte))
-            retVal.append(realByte)
+            else:
+                payLoad_crc.append(realByte)
 
 
-            # --- check CRC
-        CRC_received    = retVal[-1]
-        CRC_calculated  = self._calculateCRC8(retVal[:-1])
+            # -----------------------------------------------------------------------
+            # - Una volta ricostruidi i bytes origilali,
+            # - calcoliamo il CRC sui dati (ovviamento escluso il byte di CRC stesso)
+            # -----------------------------------------------------------------------
+        CRC_calculated  = self._calculateCRC8(payLoad_crc[:-1])
+
+            # ---------------------------------
+            # - check CRC (drop STX and ETX)
+            # ---------------------------------
+        CRC_received    = payLoad_crc[-1]
+        payLoad         = payLoad_crc[:-1]
+
+        logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
+        logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
+
         if not CRC_received == CRC_calculated:
-            return bytearray()
-
-        if fDEBUG:
-            # print ("CRC received  : x%02X" % (CRC_received))
+            logger.error('Il valore di CRC non coincide')
+            print ('ERROR: Il valore di CRC non coincide')
+            print ()
             print ("    CRC received  : x{0:02X}".format(CRC_received))
-            xx = self._calculateCRC8(retVal[:-1])
             print ("    CRC calculated: x{0:02X}".format(CRC_calculated))
             print ()
+            return bytearray()
 
-        return retVal[:-1]                      # Escludiamo il CRC
+        return payLoad
+
 

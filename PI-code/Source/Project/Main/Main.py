@@ -40,8 +40,8 @@ def Main(gv, action):
         LnRs485                   = gv.Prj.LnRs485   # short pointer alla classe
         rs485                     = gv.LnDict()
         rs485.MASTER_ADDRESS      = 0
-        rs485.STX                 = 0x02
-        rs485.ETX                 = 0x03
+        rs485.STX                 = b'\x02'
+        rs485.ETX                 = b'\x03'
         rs485.usbDevPath          = gv.INPUT_PARAM.usbPort
         rs485.baudRate            = 9600
         rs485.mode                = 'ascii'
@@ -72,8 +72,11 @@ def Main(gv, action):
 
             print ('... press ctrl-c to stop the process.')
             while True:
-                data = monitorPort.readData(fDEBUG=True)
-                print ('...', data)
+                retData = port.readData()
+                print ('received: Hex      {0}'.format(' '.join('{0:02x}'.format(x) for x in retData)))
+                print ('          Chr      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in retData)))
+                print()
+
 
         except (KeyboardInterrupt) as key:
             print ("Keybord interrupt has been pressed")
@@ -97,10 +100,10 @@ def Main(gv, action):
             basedata = 'Loreto.'
             while True:
                 index += 1
-                data = '[{0}.{1:04}]'.format(basedata, index)
-                line = '[{0}:{1:04}] - {2}'.format(rs485.usbDevPath, index, data)
+                dataToSend = '[{0}.{1:04}]'.format(basedata, index)
+                line = '[{0}:{1:04}] - {2}'.format(rs485.usbDevPath, index, dataToSend)
                 print (line)
-                port.writeData('Loreto', fDEBUG=True)
+                port.writeData(dataToSend, fDEBUG=True)
                 time.sleep(5)
 
 
