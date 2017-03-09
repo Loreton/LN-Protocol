@@ -5,7 +5,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nlroeto@gmail.com'
 
-__version__  = 'v2017-03-03_08.42.47'
+__version__  = 'v2017-03-09_09.02.35'
 __status__   = 'Beta'
 
 import os
@@ -60,7 +60,7 @@ MODE_ASCII = 'ascii'
 ##############################
 
 
-class Instrument():
+class LnRs485_Instrument():
 # class LnRs485():
     """Instrument class for talking to instruments (slaves) via the Modbus RTU protocol (via RS485 or RS232).
 
@@ -86,6 +86,8 @@ class Instrument():
                 def warning(self, data):  pass
 
                 def _print(self, data):
+                    pass
+                def _print_(self, data):
                     caller = inspect.stack()[4]
                     dummy, programFile, lineNumber, funcName, lineCode, rest = caller
                     if funcName == '<module>': funcName = '__main__'
@@ -139,10 +141,10 @@ class Instrument():
         self.debug = True
         """Set this to :const:'True' to print the communication details. Defaults to :const:'False'."""
 
-        self.STX = int(0x02)
-        self.ETX = int(0x03)
-        self.STX = b'\x02'
-        self.ETX = b'\x03'
+        self.bSTX = b'\x02'
+        self.bETX = b'\x03'
+        self.iSTX = self._byteToInt(self.bSTX)
+        self.iETX = self._byteToInt(self.bETX)
 
         self.close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL
         """If this is :const:'True', the serial port will be closed after each call. Defaults to :data:'CLOSE_PORT_AFTER_EACH_CALL'. To change it, set the value 'minimalmodbus.CLOSE_PORT_AFTER_EACH_CALL=True' ."""
@@ -159,8 +161,8 @@ class Instrument():
             self.serial.close()
 
         print ('mode:                           {0}'.format(self._MODE_ASCII))
-        print ('STX:                            {0}'.format(self.STX))
-        print ('ETX:                            {0}'.format(self.ETX))
+        print ('STX:                            {0}'.format(self.iSTX))
+        print ('ETX:                            {0}'.format(self.iETX))
         print ('CLOSE_PORT_AFTER_EACH_CALL:     {0}'.format(self.close_port_after_each_call))
         print ('precalculate_read_size:         {0}'.format(self.precalculate_read_size))
 
@@ -209,7 +211,8 @@ class Instrument():
         logger = self._setLogger(package=__name__)
         if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
 
-        logger.debug ("converting: x{1:02X}".format(byte))
+        # print ('....', type(byte), byte)
+        logger.debug ("converting: x{0:02X}".format(byte))
 
             # first nibble
         c = byte >> 4;
@@ -281,7 +284,7 @@ class Instrument():
         dataToSend=bytearray()
 
             # - STX
-        dataToSend.append(self.STX)
+        dataToSend.append(self.iSTX)
 
             # - Data
         for thisByte in data:
@@ -297,7 +300,7 @@ class Instrument():
         # dataToSend.append(CRC_value)   # per generare un errore
 
             # - ETX
-        dataToSend.append(self.ETX)
+        dataToSend.append(self.iETX)
 
 
 
@@ -317,7 +320,7 @@ class Instrument():
         if self.close_port_after_each_call:
             self.serial.close()
 
-        return
+        return dataToSend
 
 
     #######################################################################
@@ -343,7 +346,7 @@ class Instrument():
                         )
             buffer.append(chInt)
 
-            if ch == self.serial.ETX:
+            if ch == self.serial.bETX:
                 if self.close_port_after_each_call:
                     logger.debug('closing port...')
                     self.serial.close()
@@ -367,7 +370,7 @@ class Instrument():
             # ---------------------------------------------
             # - waiting for STX
             # ---------------------------------------------
-        while chInt != self.serial.STX:
+        while chInt != self.serial.bSTX:
             ch = self.serial.read(1)        # ch e' un bytes
             if ch == b'': continue
             chHex = binascii.hexlify(ch)
@@ -380,7 +383,7 @@ class Instrument():
             # ---------------------------------------------
             # - waiting for ETX
             # ---------------------------------------------
-        while chInt != self.serial.ETX:
+        while chInt != self.serial.bETX:
             ch = self.serial.read(1)        # ch e' un bytes
             if ch == b'': continue
             chHex = binascii.hexlify(ch)
@@ -409,14 +412,14 @@ class Instrument():
             -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
         """
 
-        retData = self._readBuffer_01()
-        logger.debug('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in retData)))
+        rowData = self._readBuffer_01()
+        logger.debug('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in rowData)))
 
 
             # Prendiamo i dati fissi
-        startOfText     = retData[0]
-        endOfText       = retData[-1]
-        payLoadNibbled  = retData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
+        startOfText     = rowData[0]
+        endOfText       = rowData[-1]
+        payLoadNibbled  = rowData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
 
             # ---------------------------------------------
             # - ricostruzione dei bytes originari
@@ -457,6 +460,145 @@ class Instrument():
             print ()
             return bytearray()
 
-        return payLoad
+        return payLoad, rowData
+
+
+
+    def _byteToInt(self, byte):
+        chHex = binascii.hexlify(byte)
+        chInt = int(chHex, 16)
+        return chInt
+
+
+
+
+
+
+
+
+# import os, sys
+# import datetime
+# this_mod = sys.modules[__name__]
+# import time
+
+class LnClass(): pass
+################################################################################
+# - M A I N
+# - Prevede:
+# -  2 - Controllo parametri di input
+# -  5 - Chiamata al programma principale del progetto
+################################################################################
+if __name__ == '__main__':
+    Syntax = """
+        Immettere:
+            action.usbPortNO.EoD [EOD=endOfData, default=10='\n']
+
+        es.:
+            monitor.0   : per monitorare la porta /dev/ttyUSB0
+            send.0      : per inviare messaggi sulla porta /dev/ttyUSB0
+    """
+
+
+
+    if len(sys.argv) > 1:
+        token = sys.argv[1].split('.')
+
+        if len(token) == 2:
+            action, portNO = sys.argv[1].split('.')
+            EOD = b'\x03'
+
+        elif len(token) == 3:
+            action, portNO, EOD = sys.argv[1].split('.')
+            iEOD = int(EOD)
+            EOD = bytes([iEOD])
+
+        else:
+            print (Sintax)
+            sys.exit()
+
+
+
+
+    LnRs485                = LnRs485_Instrument   # short pointer alla classe
+    rs485                  = LnClass()
+    rs485.MASTER_ADDRESS   = 0
+    rs485.bSTX             = b'\x02'
+    rs485.bETX             = b'\x03'
+    rs485.usbDevPath       = '/dev/ttyUSB{0}'.format(portNO)
+    rs485.baudRate         = 9600
+    rs485.mode             = 'ascii'
+
+    print('     .....action:', action)
+    print('     .....portNO:', portNO)
+    print('     .....EOD:   ', EOD)
+
+
+        # ===================================================
+        # = RS-485 port monitor
+        # ===================================================
+    if action == 'monitor':
+        print('Monitoring port: {0}'.format(rs485.usbDevPath))
+            # ------------------------------
+            # - Inizializzazione
+            # ------------------------------
+        try:
+            # port = gv.Prj.LnRs485.Instrument(rs485.usbDevPath, 0, rs485.mode)  # port name, slave address (in decimal)
+            # monitorPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
+            address = 5
+            print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
+            port = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
+            port.serial.baudrate = rs485.baudRate
+            port.serial.bSTX      = rs485.bSTX
+            port.serial.bETX      = rs485.bETX
+
+            print ('... press ctrl-c to stop the process.')
+            while True:
+                payLoad, rowData = port.readData()
+                print ('rowData (Hex):  {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
+                print ('payLoad (Hex):      {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
+                print ('payLoad (chr):      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))
+                print()
+
+
+        except (KeyboardInterrupt) as key:
+            print ("Keybord interrupt has been pressed")
+            sys.exit()
+
+
+    elif action == 'send':
+        print('Sending data to port: {0}'.format(rs485.usbDevPath))
+            # ------------------------------
+            # - Inizializzazione
+            # ------------------------------
+        try:
+            address = 5
+            print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
+            port = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
+            port.serial.baudrate = rs485.baudRate
+            port.serial.bSTX      = rs485.bSTX
+            port.serial.bETX      = rs485.bETX
+            # sendingPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
+            print ('... press ctrl-c to stop the process.')
+            index = 0
+            basedata = 'Loreto.'
+            while True:
+                index += 1
+                dataToSend  = '[{0}.{1:04}]'.format(basedata, index)
+                line        = '[{0}:{1:04}] - {2}'.format(rs485.usbDevPath, index, dataToSend)
+                print (line)
+                dataSent = port.writeData(dataToSend)
+                print ('sent (Hex): {0}'.format(' '.join('{0:02x}'.format(x) for x in dataSent)))
+                # print ('          Chr      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in dataSent)))
+                print()
+                time.sleep(5)
+
+
+        except (KeyboardInterrupt) as key:
+            print ("Keybord interrupt has been pressed")
+            sys.exit()
+
+
+    else:
+        print(gv.INPUT_PARAM.actionCommand, 'not available')
 
 
