@@ -431,7 +431,7 @@ class LnRs485_Instrument():
         for ch1, ch2 in zip(xy, xy):
             realByte = self._combineComplementedByte(ch1, ch2)
             if not realByte:
-                return bytearray()
+                return bytearray(), rowData
             else:
                 payLoad_crc.append(realByte)
 
@@ -458,7 +458,7 @@ class LnRs485_Instrument():
             print ("    CRC received  : x{0:02X}".format(CRC_received))
             print ("    CRC calculated: x{0:02X}".format(CRC_calculated))
             print ()
-            return bytearray()
+            return bytearray(), rowData
 
         return payLoad, rowData
 
@@ -555,8 +555,11 @@ if __name__ == '__main__':
             while True:
                 payLoad, rowData = port.readData()
                 print ('rowData (Hex):  {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
-                print ('payLoad (Hex):      {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
-                print ('payLoad (chr):      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))
+                if payLoad:
+                    print ('payLoad (Hex):      {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
+                    print ('payLoad (chr):      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))
+                else:
+                    print ('payLoad ERROR....')
                 print()
 
 
