@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 #
-# modified by Loreto:           2017-03-10_14.50.01
-# #####################################################
+#
 
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nlroeto@gmail.com'
 
-__version__  = 'v2017-03-09_09.02.35'
+__version__  = 'v2017-03-10_10.25.04'
 __status__   = 'Beta'
 
 import os
 import serial       # sudo pip3.4 install pyserial
+import struct
 import sys
+import time
 import inspect
+
+# Allow long also in Python3
+# http://python3porting.com/noconv.html
+if sys.version > '3':
+    import binascii
+    long = int
 
 
 
@@ -51,13 +58,11 @@ MODE_ASCII = 'ascii'
 ##############################
 ## Modbus instrument object ##
 ##############################
-
-
 # -----------------------------------------------------------------------
 # - con il gioco del complementedByte, gli unici byte che dovrebbero
 # - circolare sono i seguenti al di là dello STX ed ETX
 # -----------------------------------------------------------------------
-validBytesHex = [
+validBytes = [
                 '0x0F',
                 '0x1E',
                 '0x2D',
@@ -76,7 +81,6 @@ validBytesHex = [
                 '0xF0'
               ]
 
-
 class LnRs485_Instrument():
 # class LnRs485():
     """Instrument class for talking to instruments (slaves) via the Modbus RTU protocol (via RS485 or RS232).
@@ -87,6 +91,7 @@ class LnRs485_Instrument():
         * mode (str):           Mode selection. Can be MODE_RTU or MODE_ASCII!
 
     """
+
 
     def __init__(self, port, slaveaddress, mode='ascii', logger=None):
         self._MODE_ASCII = mode
@@ -113,7 +118,6 @@ class LnRs485_Instrument():
         else:
             self._setLogger = self._internaLogger
 
-        self._validBytes=bytearray([int(i, 16) for i in validBytesHex]) # creiamo un array di integer
         """The serial port object as defined by the pySerial module. Created by the constructor.
 
         Attributes:
@@ -144,9 +148,10 @@ class LnRs485_Instrument():
         self.debug = True
         """Set this to :const:'True' to print the communication details. Defaults to :const:'False'."""
 
-        self.STX = int('0x02', 16) # integer
-        self.ETX = int('0x03', 16) # integer
-        self.CRC = True
+        self.hSTX = '02'     # HEX value
+        self.hETX = '03'     # HEX value
+        self.STX = int(self.hSTX, 16) # integer
+        self.ETX = int(self.hSTX, 16) # integer
 
         self.close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL
         """If this is :const:'True', the serial port will be closed after each call. Defaults to :data:'CLOSE_PORT_AFTER_EACH_CALL'. To change it, set the value 'minimalmodbus.CLOSE_PORT_AFTER_EACH_CALL=True' ."""
@@ -163,15 +168,16 @@ class LnRs485_Instrument():
             self.serial.close()
 
         print ('mode:                           {0}'.format(self._MODE_ASCII))
-        print ('STX:                            0x{0:02x}'.format(self.STX))
-        print ('ETX:                            0x{0:02x}'.format(self.ETX))
+        print ('STX:                            {0:02x}'.format(self.STX))
+        print ('ETX:                            {0:02x}'.format(self.ETX))
         print ('CLOSE_PORT_AFTER_EACH_CALL:     {0}'.format(self.close_port_after_each_call))
         print ('precalculate_read_size:         {0}'.format(self.precalculate_read_size))
 
+
     def _internaLogger(self, package=None):
-        ##############################################################################
-        # - classe che mi permette di lavorare nel caso il logger non sia richiesto
-        ##############################################################################
+        '''
+            classe che mi permette di lavorare nel caso il logger non sia richiesto
+        '''
         class nullLogger():
                 def __init__(self, package=None, stackNum=1):
                     pass
@@ -294,130 +300,6 @@ class LnRs485_Instrument():
         return realByte
 
 
-
-    #######################################################################
-    # - Lettura dati fino a EndOfData
-    # - Ritorna una bytearray di integer
-    #######################################################################
-    def _readBuffer(self):
-        logger = self._setLogger(package=__name__)
-
-        if self.close_port_after_each_call:
-            logger.debug('openig port...')
-            self.serial.open()
-
-        buffer = bytearray()
-        chInt=-1
-        while chInt != self.ETX:
-            ch = self.serial.read(1)       # ch e' un bytes
-            if ch == b'': continue
-            chInt = int.from_bytes(ch, 'little')
-            buffer.append(chInt)
-            logger.debug( "Received: byte hex:{0:02x}".format(chInt) )
-
-        if self.close_port_after_each_call:
-            logger.debug('closing port...')
-            self.serial.close()
-
-        return buffer
-
-
-    #######################################################################
-    # - by Loreto
-    # - Lettura dati bsato sul protocollo:
-    # -     RS485 protocol library by Nick Gammon
-    # - STX - data - CRC - ETX
-    # - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
-    # -  byte complemented (incluso il CRC)
-    # -  only values sent would be (in hex):
-    # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
-    # -  Con il fatto che solo i byte di sopra possono essere inviati,
-    # -  il controllo su di essi forse fa venire meno il CRC e quindi
-    # -  l'ho inserito come flag
-    #
-    # - credo che questa funzione venga chiamata non direttamente da me
-    # - in quanto ho notato che non prende ulteriori parametri.
-    #######################################################################
-    def readData(self):
-        logger = self._setLogger(package=__name__)
-        CRC     = self.CRC
-
-        rowData = self._readBuffer()
-        logger.debug('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in rowData)))
-
-
-            # Prendiamo i dati fissi
-        if not rowData[0] == self.STX:
-            msg = 'ERROR: STX missed'
-            print(msg)
-            logger.error(msg)
-            return bytearray(), rowData
-
-        if not rowData[-1] == self.ETX:
-            msg = 'ERROR: ETX missed'
-            print(msg)
-            logger.error(msg)
-            return bytearray(), rowData
-
-
-            # ---------------------------------------------
-            # - ricostruzione dei bytes originari
-            # - byte = byte1_HighNibble*16 + byte2_HighNibble
-            # - si potrebbe usare la funzione _combineComplementedByte
-            # -    che provvede anche a fare la verifica che
-            # -    il secondo nibble sia il complemento del primo ma
-            # -    avendo verificato che il byte si trova nei self._validBytes
-            # ---------------------------------------------
-
-            # il trick che segue ci permette di prelevare due bytes alla volta
-        payLoad = bytearray()
-        payLoadNibbled  = rowData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
-        xy = iter(payLoadNibbled)
-        for byte1, byte2 in zip(xy, xy):
-
-                # re-build real byte
-            if byte1 in self._validBytes and byte2 in self._validBytes:
-                byte1_HighNibble = (byte1 >> 4) & 0x0F
-                byte2_HighNibble = (byte2 >> 4) & 0x0F
-                realByte = byte1_HighNibble*16 + byte2_HighNibble
-
-            else:
-                msg = 'ERROR: some byte corrupted byte1:{0:02x} byte2:{1:02x}'.format(byte1, byte2)
-                print(msg)
-                logger.error(msg)
-                return bytearray(), rowData
-
-            payLoad.append(realByte)
-
-
-            # -----------------------------------------------------------------------
-            # - Una volta ricostruidi i bytes origilali,
-            # - calcoliamo il CRC sui dati (ovviamento escluso il byte di CRC stesso)
-            # -----------------------------------------------------------------------
-
-        if CRC:
-            CRC_calculated  = self._calculateCRC8(payLoad[:-1])
-                # ---------------------------------
-                # - check CRC (drop STX and ETX)
-                # ---------------------------------
-            CRC_received    = payLoad[-1]
-            payLoad         = payLoad[:-1]
-
-            logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
-            logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
-
-            if not CRC_received == CRC_calculated:
-                logger.error('Il valore di CRC non coincide')
-                print ('ERROR: Il valore di CRC non coincide')
-                print ()
-                print ("    CRC received  : x{0:02X}".format(CRC_received))
-                print ("    CRC calculated: x{0:02X}".format(CRC_calculated))
-                print ()
-                return bytearray(), rowData
-
-        return payLoad, rowData
-
-
     #######################################################################
     # - by Loreto
     # - Scrittura dati bsato sul protocollo:
@@ -427,40 +309,32 @@ class LnRs485_Instrument():
     # -  byte complemented (incluso il CRC)
     # -  only values sent would be (in hex):
     # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
-    # -  Con il fatto che solo i byte di sopra possono essere inviati,
-    # -  il controllo su di essi forse fa venire meno il CRC  e quindi
-    # -  l'ho inserito come flag
-    #
-    # - credo che questa funzione venga chiamata non direttamente da me
-    # - in quanto ho notato che non prende ulteriori parametri.
     #######################################################################
-    def writeData(self, data):
+    #@TODO: verifica che un bytearray possa essere inviato correttamente
+    def writeData(self, data, TIMEOUT=5):
         logger = self._setLogger(package=__name__)
-        CRC     = self.CRC
 
-
-            # - preparaiamo il bytearray con i dati da inviare
+        # preparaiamo il bytearray con i dati da inviare
         dataToSend=bytearray()
 
-            # - STX nell'array
+            # - STX come intero
         dataToSend.append(self.STX)
 
-            # - Data nell'array
+            # - Data
         for thisByte in data:
             byte1, byte2 = self._splitComplementedByte(thisByte)
             dataToSend.append(byte1)
             dataToSend.append(byte2)
 
-            # - CRC nell'array
-        if CRC:
-            CRC_value    = self._calculateCRC8(data)
-            byte1, byte2 = self._splitComplementedByte(CRC_value)
-            dataToSend.append(byte1)
-            dataToSend.append(byte2)
-            # dataToSend.append(CRC_value)   # per generare un errore
+            # - CRC
+        CRC_value  = self._calculateCRC8(data)
+        byte1, byte2 = self._splitComplementedByte(CRC_value)
+        dataToSend.append(byte1)
+        dataToSend.append(byte2)
+        # dataToSend.append(CRC_value)   # per generare un errore
 
             # - ETX
-        dataToSend.append(self.ETX)
+        dataToSend.append(self.iETX)
 
 
 
@@ -470,6 +344,12 @@ class LnRs485_Instrument():
             # INVIO dati
         self.serial.write(dataToSend)
 
+        """
+            .... oppure
+        import struct
+        for byteVal in dataToSend:
+            self.serial.write(struct.pack('>B', byteVal))
+        """
 
         if self.close_port_after_each_call:
             self.serial.close()
@@ -477,7 +357,196 @@ class LnRs485_Instrument():
         return dataToSend
 
 
+    #######################################################################
+    # - Lettura dati fino a ETX ignorando STX
+    # - Ritorna una bytearray di integer
+    #######################################################################
+    def _readBuffer_01(self):
+        logger = self._setLogger(package=__name__)
 
+        if self.close_port_after_each_call:
+            logger.debug('openig port...')
+            self.serial.open()
+
+        buffer = bytearray()
+        # chInt = self.ETX  # default di partenza
+        while True:
+            ch = self.serial.read(1)       # ch e' un <<bytes>>
+            if ch == b'': continue
+
+            chInt = int.from_bytes(ch, 'little')
+            buffer.append(chInt)
+
+            logger.debug( "Received: byte hex:{0:02x}".format(chInt) )
+
+            if chInt == self.ETX:
+                logger.debug( "Received: byte hex:{0:02x}".format(chInt) )
+                break
+
+        if self.close_port_after_each_call:
+            logger.debug('closing port...')
+            self.serial.close()
+
+        return buffer
+
+    #######################################################################
+    # - Lettura dati fino a ETX verificando anche lo STX
+    # - Ritorna una bytearray di integer
+    #######################################################################
+    def _readBuffer_02(self):
+        logger = self._setLogger(package=__name__)
+
+        if self.close_port_after_each_call:
+            logger.debug('openig port...')
+            self.serial.open()
+
+        chInt = 0
+        buffer = bytearray()            # Creating an empty instance - e' un array di integer
+
+            # ---------------------------------------------
+            # - waiting for STX
+            # ---------------------------------------------
+        while chInt != self.STX:
+            ch = self.serial.read(1)        # ch e' un bytes
+            if ch == b'': continue
+            chInt = int.from_bytes(ch, 'little')
+            logger.debug('STX byte received {0:02x}'.format(chInt))
+
+            # - save STX in buffer
+        buffer.append(chInt)
+
+            # ---------------------------------------------
+            # - waiting for ETX
+            # ---------------------------------------------
+        while chInt != self.ETX:
+            ch = self.serial.read(1)        # ch e' un bytes
+            if ch == b'': continue
+            chInt = int.from_bytes(ch, 'little')
+                # - save byte in buffer
+            buffer.append(chInt)
+
+        if self.close_port_after_each_call:
+            logger.debug('closing port...')
+            self.serial.close()
+
+        return buffer
+
+    #######################################################################
+    # - by Loreto
+    #######################################################################
+    def readData(self, TIMEOUT=5):
+        logger = self._setLogger(package=__name__)
+        """
+            - Lettura dati bssato sul protocollo:
+            -     RS485 protocol library by Nick Gammon
+            - STX - data - CRC - ETX
+            - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
+            -  byte complemented
+            -  only values sent would be (in hex):
+            -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
+        """
+
+        rowData = self._readBuffer_01()
+        logger.debug('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in rowData)))
+        sys.exit()
+
+            # Prendiamo i dati fissi
+        startOfText     = rowData[0]
+        endOfText       = rowData[-1]
+        payLoadNibbled  = rowData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
+
+            # ---------------------------------------------
+            # - ricostruzione dei bytes originari
+            # - byte = byte1_HighNibble*16 + byte2_HighNibble
+            # ---------------------------------------------
+            # il trick che segue ci permette di prelevare due bytes alla volta
+        payLoad_crc = bytearray()
+        xy = iter(payLoadNibbled)
+        for ch1, ch2 in zip(xy, xy):
+            realByte = self._combineComplementedByte(ch1, ch2)
+            if not realByte:
+                return bytearray(), rowData
+            else:
+                payLoad_crc.append(realByte)
+
+
+            # -----------------------------------------------------------------------
+            # - Una volta ricostruidi i bytes origilali,
+            # - calcoliamo il CRC sui dati (ovviamento escluso il byte di CRC stesso)
+            # -----------------------------------------------------------------------
+        CRC_calculated  = self._calculateCRC8(payLoad_crc[:-1])
+
+            # ---------------------------------
+            # - check CRC (drop STX and ETX)
+            # ---------------------------------
+        CRC_received    = payLoad_crc[-1]
+        payLoad         = payLoad_crc[:-1]
+
+        logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
+        logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
+
+        if not CRC_received == CRC_calculated:
+            logger.error('Il valore di CRC non coincide')
+            print ('ERROR: Il valore di CRC non coincide')
+            print ()
+            print ("    CRC received  : x{0:02X}".format(CRC_received))
+            print ("    CRC calculated: x{0:02X}".format(CRC_calculated))
+            print ()
+            return bytearray(), rowData
+
+        return payLoad, rowData
+
+
+        # STX = '0x02'
+        #       iSTX = int(STX, 16)
+        # STX = '02'
+        #       bSTX = bytes.fromhex(STX)
+        #       iSTX = int.from_bytes(b'\x00\x10', byteorder='big')
+
+    def _intToBytes(self, intVal):
+        if intVal <= 255:               # int ('ff', 16)
+            value = i.to_bytes(1, byteorder='big')
+        elif intVal <= 65535:           # int ('ffff', 16)
+            value = i.to_bytes(2, byteorder='big')
+        elif intVal <= 16777215:        # int ('ffffff', 16)
+            value = i.to_bytes(3, byteorder='big')
+        # elif intVal <= (int('FFFFFFFF', 16))
+        #     value = i.to_bytes(4, byteorder='big')
+        else:
+            value = i.to_bytes(5, byteorder='big')
+
+        return value
+
+    # def _byteToInt(self, byte): return  bytes([i])
+    #     return int.from_bytes(byte, 'big')
+
+
+
+
+    def _byteToInt(self, byte):
+        chHex = binascii.hexlify(byte)
+        chInt = int(chHex, 16)
+        return chInt
+
+    def _byteToHex(self, byte):
+        chHex = binascii.hexlify(byte)
+        return chHex
+
+    def _hexToInt(self, hexData):
+        chInt = int(hexData, 16)
+        return chInt
+
+
+
+
+
+
+
+
+# import os, sys
+# import datetime
+# this_mod = sys.modules[__name__]
+# import time
 
 class LnClass(): pass
 ################################################################################
@@ -487,7 +556,6 @@ class LnClass(): pass
 # -  5 - Chiamata al programma principale del progetto
 ################################################################################
 if __name__ == '__main__':
-    import time
     Syntax = """
         Immettere:
             action.usbPortNO.EoD [EOD=endOfData, default=10='\n']
@@ -541,14 +609,18 @@ if __name__ == '__main__':
             # - Inizializzazione
             # ------------------------------
         try:
+            # port = gv.Prj.LnRs485.Instrument(rs485.usbDevPath, 0, rs485.mode)  # port name, slave address (in decimal)
+            # monitorPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
             address = 5
             print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
-            monPort = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
-            monport.serial.CRC       = False
+            port = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
+            port.serial.baudrate = rs485.baudRate
+            port.serial.bSTX      = rs485.bSTX
+            port.serial.bETX      = rs485.bETX
 
             print ('... press ctrl-c to stop the process.')
             while True:
-                payLoad, rowData = monPort.readData(CRC=False)
+                payLoad, rowData = port.readData()
                 print ('rowData (Hex):  {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
                 if payLoad:
                     print ('payLoad (Hex):      {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
@@ -571,10 +643,11 @@ if __name__ == '__main__':
         try:
             address = 5
             print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
-            wrPort = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
-            # - setting di alcuni parametri delle funzioni
-            # - me li ritrovo come self.PARAM
-            wrport.serial.CRC       = False
+            port = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
+            port.serial.baudrate = rs485.baudRate
+            port.serial.bSTX      = rs485.bSTX
+            port.serial.bETX      = rs485.bETX
+            # sendingPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
             print ('... press ctrl-c to stop the process.')
             index = 0
             basedata = 'Loreto.'
@@ -583,8 +656,9 @@ if __name__ == '__main__':
                 dataToSend  = '[{0}.{1:04}]'.format(basedata, index)
                 line        = '[{0}:{1:04}] - {2}'.format(rs485.usbDevPath, index, dataToSend)
                 print (line)
-                dataSent = wrPort.writeData(dataToSend, CRC=True)
+                dataSent = port.writeData(dataToSend)
                 print ('sent (Hex): {0}'.format(' '.join('{0:02x}'.format(x) for x in dataSent)))
+                # print ('          Chr      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in dataSent)))
                 print()
                 time.sleep(5)
 

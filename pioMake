@@ -67,7 +67,7 @@ function clearLibraryLink {
     echo
 
 
-    device=/dev/ttyUSBx
+    device=/dev//dev/ttyUSBx
     device=$2
     action=$1
 
@@ -113,14 +113,14 @@ function clearLibraryLink {
     fi
 
     if [[ "$action" =~ "u" ]]; then
-        [[ "$device" == "" ]] && echo "Enter USB port: ttyUSB0, ttyUSB1, ...." && exit
+        [[ "$device" == "" ]] && echo "Enter USB port: /dev/ttyUSB0, /dev/ttyUSB1, ...." && exit
         [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
         Esegui "platformio run --target upload --upload-port $device"
     fi
 
 
     if [[ "$action" =~ "s" ]]; then
-        [[ "$device" == "" ]] && echo "Enter USB port: ttyUSB0, ttyUSB1, ...." && exit
+        [[ "$device" == "" ]] && echo "Enter USB port: /dev/ttyUSB0, /dev/ttyUSB1, ...." && exit
         [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
         Esegui "platformio device monitor -p $device"
     fi

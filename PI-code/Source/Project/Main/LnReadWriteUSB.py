@@ -90,20 +90,22 @@ def writeLine(port, data):
 
 
 
-
-
 #######################################################################
 # Scrittura di chr sulla seriale
 #######################################################################
-def writeData(port, Address, data):
+def writeData(port, data, eod=b'\03'):
     xmitData = bytearray()
-    xmitData.extend(STX.encode(codeType))
-    xmitData.append(Address)
-    xmitData.append(len(data))
-    if isinstance(data, str):
-        data = data.encode(codeType)
-    xmitData.extend(data)
-    xmitData.extend(ETX.encode(codeType))
+    xmitData.append(2)
+    xmitData.append(99)
+    xmitData.append(100)
+    xmitData.append(101)
+    # xmitData.append(Address)
+    # xmitData.append(len(data))
+    # if isinstance(data, str):
+        # data = data.encode(codeType)
+    # xmitData.extend(data)
+    # xmitData.extend(ETX.encode(codeType))
+    xmitData.append(3)
     print ("{0} - Sending data:  {1}".format(port.port, xmitData))
     port.write(xmitData)
 
@@ -313,6 +315,10 @@ if __name__ == '__main__':
         elif what in ['wline']:
             port = openRs232Port(portNO, baudRate=9600)
             writeLine(port, data='Invio dati....')
+
+        elif what in ['wdata']:
+            port = openRs232Port(portNO, baudRate=9600)
+            writeData(port, data='Invio dati....')
 
         elif what in ['rdata']:
             port = openRs232Port(portNO, baudRate=9600)

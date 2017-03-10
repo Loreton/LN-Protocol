@@ -2,7 +2,7 @@
 #include <LnFunctions.h>                //  D2X(dest, val, 2)
 // char * rvcvdByte = "0";
 // void printChar(byte data, cha);
-void printHex(const byte *data, const byte len, const char * suffixLine) {
+void printHex(const byte *data, const byte len, const char *suffixLine) {
     byte i;
     for (i=0; i<len; i++) {
         printHex(data[i], " ");
@@ -19,7 +19,7 @@ void printHex(const byte data) {
     Serial.print(strBuff);
 }
 
-void printHex(const byte data, const char * suffixLine) {
+void printHex(const byte data, const char *suffixLine) {
     D2X(strBuff, data, 2);
     Serial.print(strBuff);
     Serial.print(suffixLine);
