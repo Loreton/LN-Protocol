@@ -3,7 +3,7 @@ import sys
 import serial
 import time
 
-import binascii
+# import binascii
 
 ###############################################################
 # Definizione delle porte
@@ -37,22 +37,24 @@ def openRs232Port(portNO, baudRate=9600):
 # Lettura di una riga con il presupposto che '\n' indica fine riga
 # Ritorna una bytearray di integer
 #######################################################################
-def readDataInt(port, fPRINT=False, eod=b'\x0a'):
+def readDataInt(port, fPRINT=False, EOD=b'\x0a'):
     retVal = bytearray()
+
     while True:
         ch = port.read(1)       # ch e' un bytes
         if ch == b'': continue
+        chInt = int.from_bytes(ch, 'little')
+        # if fPRINT: print (  """     Received: {chTYPE} - char: {ordCH:<4} int:{intCH:5} hex:{hexCH:02x}
+        #                     """.format(chTYPE=type(ch), ordCH=chr(ord(ch)),  intCH=chInt, hexCH=chInt)
+        #             )
 
-        chHex = binascii.hexlify(ch)
-        chInt = int(chHex, 16)
-        if fPRINT: print (  """     Received: {chTYPE} - char: {ordCH:<4} int:{intCH:5} hex:{hexCH:02x}
-                            """.format(chTYPE=type(ch), ordCH=chr(ord(ch)),  intCH=chInt, hexCH=chInt)
-                    )
+        if fPRINT: print (  """     Received: hex:{hexCH:02x} int:{intCH:5} char: {ordCH:<4}
+            """.format(ordCH=chr(ord(ch)),  intCH=chInt, hexCH=chInt) )
+
         retVal.append(chInt)
 
-
-
-        if ch == eod:
+        # if ch == EOD or ch==b'':
+        if ch == EOD:
             return retVal
 
 
@@ -60,18 +62,14 @@ def readDataInt(port, fPRINT=False, eod=b'\x0a'):
 #######################################################################
 # Lettura di una riga con il presupposto che '\n' indica fine riga
 #######################################################################
-def readLine(port, eol='\n', trimNewLine=True):
+def readLine(port):
     while True:
         line = port.readline()
         if line:
             if isinstance(line, bytes):
                 line = line.decode('utf-8')
-            byte0 = line[0]
-            # if byte0 == address:
-            if trimNewLine: line=line.strip(eol)
             print ("{0} - {1}".format(port.port, line))
-            # print ()
-            # return line
+            return line
 
 #######################################################################
 # Scrittura  di una riga con il presupposto che '\n' indica fine riga
@@ -93,7 +91,7 @@ def writeLine(port, data):
 #######################################################################
 # Scrittura di chr sulla seriale
 #######################################################################
-def writeData(port, data, eod=b'\03'):
+def writeData(port, data, EOD=b'\03'):
     xmitData = bytearray()
     xmitData.append(2)
     xmitData.append(99)
@@ -111,18 +109,15 @@ def writeData(port, data, eod=b'\03'):
 
 
 #######################################################################
-# Lettura di dati fino ad eod
+# Lettura di dati fino ad EOD
 #######################################################################
 codeType = 'utf8'
 
-def LnRs485_Monitor(port, eod=ETX, fDEBUG=False):
+def LnRs485_Monitor(port, EOD=ETX, fDEBUG=False):
     while True:
             # leggiamo i dati dalla seriale
-        retData = readDataInt(port, fPRINT=False, eod=eod)
+        retData = readDataInt(port, EOD=EOD)
         print ('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in retData)))
-
-
-
 
             # Prendiamo i dati fissi
         startOfText     = retData[0]
@@ -265,7 +260,7 @@ def splitComplementedByte(byte, fDEBUG=False):
 if __name__ == '__main__':
     Syntax = ("""
         Immettere:
-        xxx.port.EOD   : action.usbPortNO.EoD [EOD=endOfData, default=10='\n']
+        xxx.port.EOD   : action.usbPortNO.EOD [EOD=endOfData, default=10='\n']
 
         rline.0.10   : read line dalla ttyUSB0 (loop)
         wline.0.10   : write line dalla ttyUSB0 (loop every 5 sec)
@@ -303,14 +298,17 @@ if __name__ == '__main__':
         elif what in ['r485']:
             port = openRs232Port(portNO, baudRate=9600)
             while True:
-                retData = LnRs485_Monitor(port, eod=EOD, fDEBUG=False)
+                retData = LnRs485_Monitor(port, EOD=EOD, fDEBUG=False)
+                print ('        from address: {0:02x} --> {0:02x}'.format(retData[0], retData[1]))
                 print ('received: Hex      {0}'.format(' '.join('{0:02x}'.format(x) for x in retData)))
                 print ('          Chr      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in retData)))
                 print()
 
         elif what in ['rline']:
             port = openRs232Port(portNO, baudRate=9600)
-            readLine(port, eol=EOD)
+            while True:
+                retData = readLine(port)
+                print ('read bytes: ({0:4})  {1}'.format(len(retData), ' '.join('{:02x}'.format(x) for x in retData)))
 
         elif what in ['wline']:
             port = openRs232Port(portNO, baudRate=9600)
@@ -323,8 +321,8 @@ if __name__ == '__main__':
         elif what in ['rdata']:
             port = openRs232Port(portNO, baudRate=9600)
             while True:
-                retData = readDataInt(port, fPRINT=False, eod=EOD)
-                print ('received:       {0}'.format(' '.join('{:02x}'.format(x) for x in retData)))
+                retData = readDataInt(port, fPRINT=False, EOD=EOD)
+                print ('read bytes: ({0:4})  {1}'.format(len(retData), ' '.join('{:02x}'.format(x) for x in retData)))
 
 
 

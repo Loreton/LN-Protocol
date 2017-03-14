@@ -45,6 +45,22 @@ def UsbPort(myParser, required):
     [DEFAULT: None]
     """))
 
+####################################
+# -
+####################################
+def Rs485Address(myParser, required):
+    mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
+
+    myDefault = None
+    myParser.add_argument( "-a", "--address",
+                            type=int,
+                            required=required,
+                            dest="rs485Address",
+                            default=myDefault,
+                            help=mandatory + LnColor.getYellow("""indirizzo del dispositivo RS-485 [1-254].
+    [DEFAULT: {0}]
+    """.format(myDefault)))
+
 
 
 ####################################

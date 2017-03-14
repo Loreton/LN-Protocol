@@ -182,10 +182,10 @@ class LnRs485_Instrument():
                 def error(self, data):  pass
                 def warning(self, data):  pass
 
-                def _print(self, data):
-                    pass
                 def _print_(self, data):
-                    caller = inspect.stack()[4]
+                    pass
+                def _print(self, data):
+                    caller = inspect.stack()[3]
                     dummy, programFile, lineNumber, funcName, lineCode, rest = caller
                     if funcName == '<module>': funcName = '__main__'
                     str = "[{FUNC:<20}:{LINENO}] - {DATA}".format(FUNC=funcName, LINENO=lineNumber, DATA=data)
@@ -313,7 +313,7 @@ class LnRs485_Instrument():
             if ch == b'': continue
             chInt = int.from_bytes(ch, 'little')
             buffer.append(chInt)
-            logger.debug( "Received: byte hex:{0:02x}".format(chInt) )
+            logger.debug( "Received: byte hex: {0:02x}... waiting for {1:02x}".format(chInt, self.ETX) )
 
         if self.close_port_after_each_call:
             logger.debug('closing port...')
@@ -342,8 +342,10 @@ class LnRs485_Instrument():
         logger = self._setLogger(package=__name__)
         CRC     = self.CRC
 
+        print (CRC)
         rowData = self._readBuffer()
         logger.debug('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in rowData)))
+        print('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in rowData)))
 
 
             # Prendiamo i dati fissi
@@ -488,7 +490,7 @@ class LnClass(): pass
 ################################################################################
 if __name__ == '__main__':
     import time
-    Syntax = """
+    Sintax = """
         Immettere:
             action.usbPortNO.EoD [EOD=endOfData, default=10='\n']
 
@@ -514,6 +516,9 @@ if __name__ == '__main__':
         else:
             print (Sintax)
             sys.exit()
+    else:
+        print (Sintax)
+        sys.exit()
 
 
 
@@ -544,11 +549,11 @@ if __name__ == '__main__':
             address = 5
             print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
             monPort = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
-            monport.serial.CRC       = False
+            monPort.CRC = True
 
             print ('... press ctrl-c to stop the process.')
             while True:
-                payLoad, rowData = monPort.readData(CRC=False)
+                payLoad, rowData = monPort.readData()
                 print ('rowData (Hex):  {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
                 if payLoad:
                     print ('payLoad (Hex):      {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
@@ -574,7 +579,7 @@ if __name__ == '__main__':
             wrPort = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
             # - setting di alcuni parametri delle funzioni
             # - me li ritrovo come self.PARAM
-            wrport.serial.CRC       = False
+            wrport.CRC       = False
             print ('... press ctrl-c to stop the process.')
             index = 0
             basedata = 'Loreto.'

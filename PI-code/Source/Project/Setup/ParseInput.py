@@ -337,8 +337,13 @@ def RS485(myParser, action):
     rs485.ExecuteOptions(myParser, required=False)
 
     # print ('....', action)
-    if action.lower() in ['monitor', 'send']:
+    if action.lower() in ['monitor']:
         rs485.UsbPort(myParser, required=True)
+        pass
+
+    if action.lower() in ['send']:
+        rs485.UsbPort(myParser, required=True)
+        rs485.Rs485Address(myParser, required=True)
         pass
 
 

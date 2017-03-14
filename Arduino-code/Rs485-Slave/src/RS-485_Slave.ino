@@ -44,6 +44,10 @@ void setup() {
 
 
 void loop() {
+    delay(5*1000);
+}
+
+void loop_() {
     byte SLEEP_TIME=10;
     byte level = 0;
     int timeOut = 10000;

@@ -100,10 +100,23 @@ def Main(gv, action):
             # sendingPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
             print ('... press ctrl-c to stop the process.')
             index = 0
+
+            # gli indirizzi li impostimmo come integer.
+            # li convertiamo in bytes e poi di nuovo in integer per avere
+            # il valore hex
+            sourceAddr  = bytes([0]) # MASTER
+            destAddr    = bytes([gv.INPUT_PARAM.rs485Address])
+            sourceAddr  = int.from_bytes(sourceAddr, 'little')
+            destAddr    = int.from_bytes(destAddr, 'little')
+            print ('sourceAddr: {0:02x}'.format(sourceAddr))
+            print ('destAddr:   {0:02x}'.format(destAddr))
+            #@TODO: verificare che gli indirizzi escano come byte e non come integer
+            sys.exit()
+
             basedata = 'Loreto.'
             while True:
                 index += 1
-                dataToSend = '[{0}.{1:04}]'.format(basedata, index)
+                dataToSend = '{sADDR}{dADDR}{DATA}.{INX:04}'.format(sADDR=sourceAddr, dADDR=destAddr, DATA=basedata, INX=index)
                 line = '[{0}:{1:04}] - {2}'.format(rs485.usbDevPath, index, dataToSend)
                 print (line)
                 dataSent = port.writeData(dataToSend)
