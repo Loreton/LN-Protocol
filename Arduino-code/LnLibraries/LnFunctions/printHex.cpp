@@ -28,6 +28,16 @@ void printHex(const byte data, const char *suffixLine) {
 }
 
 
+void LnPrintStrHex(const char *prefix, byte value, const char *suffix) {
+    D2X(strBuff, value, 2);
+    Serial.print(prefix);
+    Serial.print(strBuff);
+    Serial.print(suffix);
+
+}
+
+
+
 
 #if 0
 void serialHex_OK(const byte *data, const byte len, char * suffixLine) {

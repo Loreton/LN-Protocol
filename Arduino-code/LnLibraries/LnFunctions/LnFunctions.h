@@ -54,10 +54,12 @@
     void D2X(char * Dest, unsigned int Valore, char size);      // deve essere D2X.cpp
 
     void printHex(const byte data);
-    void printHex(const uchar data,         const char * endStr);
-    void printHex(const uchar *data,  const byte len,     const char * endStr);
+    void printHex(const uchar data,   const char * endStr);
+    void printHex(const uchar *data,  const byte len,     const char *endStr="");
     byte LnCRC8(const byte *data,     byte len);
 
+    void LnPrint(const char *data1, const char *data2="", const char *data3="");
+    void LnPrintStrHex(const char *prefix, byte value, const char *suffix="");
     // definizione delle callBack Functions
     // typedef void    (*sendComplemented_CB)  (const byte what);                  // read a byte from serial port
     // typedef void    (*sendMessage_CB)       (const byte *data, byte dataLen);        // Send a Message

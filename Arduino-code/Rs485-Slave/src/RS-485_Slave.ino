@@ -30,10 +30,21 @@ byte DEBUG_TxRxMsg [200] = "                                                    
 byte rxData         [60];
 
 byte myEEpromAddress;        // who we are
+
+
+// the data we broadcast to each other device
+// struct {
+//     byte sourceAddress;
+//     byte destAddress;
+//     char data[60];
+// }  rxData1;
+
+
+
+
 byte myAddress  = 0;
 byte myAddress0 = 0;
 byte myAddress1 = 0;
-
 
 //python3.4 -m serial.tools.list_ports
 void setup() {
@@ -49,26 +60,27 @@ void setup() {
     // pinMode(Addr1,  INPUT);  // set pullup on analog
 
     myEEpromAddress = EEPROM.read (0);
+    delay(5*1000);
 
-    loop_DisplayAddress();
+    // loop_DisplayAddress();
+    Serial.print(F("EEprom Address    : "));Serial.println(myEEpromAddress);
+    // LnPrint("EEprom Address    : ", "ciao");
 }
 
 
 
 void loop_DisplayAddress() {
-    delay(5*1000);
     myAddress0 = digitalRead(Addr0);
-    Serial.print("Porta Addr0: ");       Serial.println(myAddress0);
+    Serial.print(F("Porta Addr0: "));       Serial.println(myAddress0);
 
     myAddress1 = digitalRead(Addr1);
-    Serial.print("Porta Addr1: ");       Serial.println(myAddress1);
+    Serial.print(F("Porta Addr1: "));       Serial.println(myAddress1);
 
 
     byte value0 = 0.5 + pow(2, 0);
     byte value1 = 0.5 + pow(2, 1);
     myAddress = myAddress1*value1 + myAddress0*value0;
-    Serial.print("Indirizzo di porta: ");Serial.println(myAddress);
-    Serial.print("EEprom Address    : ");Serial.println(myEEpromAddress);
+    Serial.print(F("Indirizzo di porta: "));Serial.println(myAddress);
     Serial.println("");
 
 }
@@ -80,8 +92,6 @@ void loop() {
 
 
     for (level=0; level<=255; level++) {
-        // Serial.println("");
-
         byte rxDataLen = recvMsg (fAvailable, fRead, rxData, sizeof(rxData), timeOut, DEBUG_TxRxMsg);
 
         processDebugMessage();
@@ -89,9 +99,9 @@ void loop() {
             processRxMessage(rxDataLen);
         }
         else {
-            Serial.print("Nessuna risposta ricevuta in un tempo di: ");
+            Serial.print(F("Nessuna risposta ricevuta in un tempo di: "));
             Serial.print(timeOut);
-            Serial.println("mS");
+            Serial.println(F("mS"));
         }
     }
 }
@@ -108,9 +118,9 @@ void loop() {
 void processDebugMessage() {
 
     if (DEBUG_TxRxMsg[0] > 0) {
-        Serial.println("\r\n[Slave] - DEBUG Risposta ricevuta : ");
-        Serial.print("   ");
-        Serial.print("(");Serial.print(DEBUG_TxRxMsg[0]);Serial.print(") - ");
+        Serial.println(F("\r\n[Slave] - DEBUG Risposta ricevuta : "));
+        Serial.print(F("   "));
+        Serial.print(F("("));Serial.print(DEBUG_TxRxMsg[0]);Serial.print(F(") - "));
         printHex(&DEBUG_TxRxMsg[1], DEBUG_TxRxMsg[0], ""); // contiene LEN STX ...data... ETX
     }
 
@@ -124,8 +134,16 @@ void processDebugMessage() {
 void processRxMessage(byte rxDataLen) {
 
     // only send once per successful change
-    Serial.print("\r\n[Slave] - Risposta ricevuta       : ");
+    Serial.print(F("\r\n[Slave] - Risposta ricevuta       : "));
     printHex(rxData, rxDataLen, "");
+
+    // we cannot receive a message from ourself
+    // someone must have given two devices the same address
+    // if (rxData1.sourceAddress == myEEpromAddress) {
+    //     digitalWrite (ERROR_PIN, HIGH);
+    //     Serial.print(F("\r\n[Slave] - messaggio inviato con il mio sourceAddress"));
+    // }  // can't receive our address
+
 
     return;
 }
@@ -152,12 +170,12 @@ bool fDEBUG             = true;
     if (fDEBUG) {
         // char DEBUG_SentMsgLen = *DEBUG_sentMsg;           // byte 0
         char DEBUG_TxRxLen = *DEBUG_TxRxMsg;           // byte 0
-        // Serial.print("\r\n[Master] - Comando  inviato : ");printHex(&DEBUG_sentMsg[1], DEBUG_SentMsgLen, "[STX ...data... CRC ETX]"); // contiene LEN STX ...data... ETX
-        Serial.print("\r\n[Master] - DEBUG Comando  inviato  : ");
+        // Serial.print(F("\r\n[Master] - Comando  inviato : ");printHex(&DEBUG_sentMsg[1], DEBUG_SentMsgLen, "[STX ...data... CRC ETX]"); // contiene LEN STX ...data... ET)X
+        Serial.print(F("\r\n[Master] - DEBUG Comando  inviato  : "));
         printHex(&DEBUG_TxRxMsg[1], DEBUG_TxRxLen, " - [STX ...data... CRC ETX]"); // contiene LEN STX ...data... ETX
     }
     else {
-        Serial.print("\r\n[Master] - Comando  inviato        : ");printHex(txData, txDataLen, "");
+        Serial.print(F("\r\n[Master] - Comando  inviato        : "));printHex(txData, txDataLen, "");
     }
 
 }
