@@ -22,9 +22,6 @@ import inspect
 # Several instrument instances can share the same serialport
 _SERIALPORTS = {}
 
-BAUDRATE = 115200
-BAUDRATE = 19200
-"""Default value for the baudrate in Baud (int)."""
 
 PARITY   = serial.PARITY_NONE
 """Default value for the parity. See the pySerial module for documentation. Defaults to serial.PARITY_NONE"""
@@ -38,8 +35,8 @@ STOPBITS = 1
 TIMEOUT  = 0.05
 """Default value for the timeout value in seconds (float)."""
 
-CLOSE_PORT_AFTER_EACH_CALL = False
-CLOSE_PORT_AFTER_EACH_CALL = True
+# CLOSE_PORT_AFTER_EACH_CALL = False
+# CLOSE_PORT_AFTER_EACH_CALL = True
 """Default value for port closure setting."""
 
 #####################
@@ -88,13 +85,13 @@ class LnRs485_Instrument():
 
     """
 
-    def __init__(self, port, slaveaddress, mode='ascii', logger=None):
+    def __init__(self, port, slaveaddress, mode='ascii', baudrate=9600, logger=None):
         self._MODE_ASCII = mode
         if port not in _SERIALPORTS or not _SERIALPORTS[port]:
             try:
                 self.serial = _SERIALPORTS[port] = serial.Serial(
                                                     port=port,
-                                                    baudrate=BAUDRATE,
+                                                    baudrate=baudrate,
                                                     parity=PARITY,
                                                     bytesize=BYTESIZE,
                                                     stopbits=STOPBITS,
@@ -148,8 +145,8 @@ class LnRs485_Instrument():
         self.ETX = int('0x03', 16) # integer
         self.CRC = True
 
-        self.close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL
-        """If this is :const:'True', the serial port will be closed after each call. Defaults to :data:'CLOSE_PORT_AFTER_EACH_CALL'. To change it, set the value 'minimalmodbus.CLOSE_PORT_AFTER_EACH_CALL=True' ."""
+        self.close_port_after_each_call = True
+        """If this is :const:'True', the serial port will be closed after each call. """
 
         self.precalculate_read_size = True
         """If this is :const:'False', the serial port reads until timeout
@@ -162,11 +159,10 @@ class LnRs485_Instrument():
             print('closing port...')
             self.serial.close()
 
-        print ('mode:                           {0}'.format(self._MODE_ASCII))
-        print ('STX:                            0x{0:02x}'.format(self.STX))
-        print ('ETX:                            0x{0:02x}'.format(self.ETX))
-        print ('CLOSE_PORT_AFTER_EACH_CALL:     {0}'.format(self.close_port_after_each_call))
-        print ('precalculate_read_size:         {0}'.format(self.precalculate_read_size))
+
+
+
+
 
     def _internaLogger(self, package=None):
         ##############################################################################
@@ -196,25 +192,46 @@ class LnRs485_Instrument():
 
     def __repr__(self):
         """String representation of the :class:'.Instrument' object."""
-        return "{}.{}<id=0x{:x}, address={}, mode={}, close_port_after_each_call={}, precalculate_read_size={}, debug={}, serial={}>".format(
-            self.__module__,
-            self.__class__.__name__,
-            id(self),
-            self.address,
-            self.mode,
-            self.close_port_after_each_call,
-            self.precalculate_read_size,
-            self.debug,
-            self.serial,
+        return """{MOD}.{CLASS}
+            <class-id                  = 0x{ID:x},
+            address                    = {ADDRESS},
+            mode                       = {MODE},
+            close_port_after_each_call = {CPAEC},
+            precalculate_read_size     = {PRS},
+            debug                      = {DEBUG},
+            STX                        = 0x{STX:02x},
+            ETX                        = 0x{ETX:02x},
+            CRC                        = {CRC},
+            serial-id                  = {SERIAL},
+                >""".format(
+                        MOD=self.__module__,
+                        CLASS=self.__class__.__name__,
+                        ID=id(self),
+                        ADDRESS=self.address,
+                        MODE=self.mode,
+                        CPAEC=self.close_port_after_each_call,
+                        PRS=self.precalculate_read_size,
+                        DEBUG=self.debug,
+                        SERIAL=self.serial,
+                        STX=self.STX,
+                        ETX=self.ETX,
+                        CRC=self.CRC
             )
 
+    # def displayPortParameters(self):
+    #     print ('mode:                           {0}'.format(self._MODE_ASCII))
+    #     print ('STX:                            0x{0:02x}'.format(self.STX))
+    #     print ('ETX:                            0x{0:02x}'.format(self.ETX))
+    #     print ('CLOSE_PORT_AFTER_EACH_CALL:     {0}'.format(self.close_port_after_each_call))
+    #     print ('precalculate_read_size:         {0}'.format(self.precalculate_read_size))
+    #     print ('CRC:                            {0}'.format(self.CRC))
 
 
     def _calculateCRC8(self, byteArray_data):
         logger = self._setLogger(package=__name__)
         crcValue = 0
         for byte in byteArray_data:
-            if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
+            # if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
             logger.debug('byte: int:{0} hex: {0:02x} - crcValue int:{1} hex: {1:02x}'.format(byte, crcValue))
             b2 = byte
             if (byte < 0):
@@ -237,10 +254,11 @@ class LnRs485_Instrument():
     # ---------------------------------------------
     def _splitComplementedByte(self, byte):
         logger = self._setLogger(package=__name__)
-        if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
+        logger.debug ("byte to be converted: {0} - type: {1}".format(byte, type(byte)))
+        # if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
 
         # print ('....', type(byte), byte)
-        logger.debug ("converting: x{0:02X}".format(byte))
+        # logger.debug ("converting: x{0:02X}".format(byte))
 
             # first nibble
         c = byte >> 4;
@@ -268,8 +286,8 @@ class LnRs485_Instrument():
     # ---------------------------------------------
     def _combineComplementedByte(self, byte1, byte2):
         logger = self._setLogger(package=__name__)
-        if isinstance(byte1, str): byte1 = ord(byte1)            # onverte nel valore ascii
-        if isinstance(byte2, str): byte2 = ord(byte2)            # onverte nel valore ascii
+        # if isinstance(byte1, str): byte1 = ord(byte1)            # onverte nel valore ascii
+        # if isinstance(byte2, str): byte2 = ord(byte2)            # onverte nel valore ascii
 
         logger.debug("complementedData: x{0:02X} + x{1:02X}".format(byte1, byte2))
 
@@ -340,9 +358,8 @@ class LnRs485_Instrument():
     #######################################################################
     def readData(self):
         logger = self._setLogger(package=__name__)
-        CRC     = self.CRC
 
-        print (CRC)
+
         rowData = self._readBuffer()
         logger.debug('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in rowData)))
         print('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in rowData)))
@@ -397,7 +414,7 @@ class LnRs485_Instrument():
             # - calcoliamo il CRC sui dati (ovviamento escluso il byte di CRC stesso)
             # -----------------------------------------------------------------------
 
-        if CRC:
+        if self.CRC:
             CRC_calculated  = self._calculateCRC8(payLoad[:-1])
                 # ---------------------------------
                 # - check CRC (drop STX and ETX)
@@ -438,7 +455,6 @@ class LnRs485_Instrument():
     #######################################################################
     def writeData(self, data):
         logger = self._setLogger(package=__name__)
-        CRC     = self.CRC
 
 
             # - preparaiamo il bytearray con i dati da inviare
@@ -454,7 +470,7 @@ class LnRs485_Instrument():
             dataToSend.append(byte2)
 
             # - CRC nell'array
-        if CRC:
+        if self.CRC:
             CRC_value    = self._calculateCRC8(data)
             byte1, byte2 = self._splitComplementedByte(CRC_value)
             dataToSend.append(byte1)
@@ -529,7 +545,7 @@ if __name__ == '__main__':
     rs485.bSTX             = b'\x02'
     rs485.bETX             = b'\x03'
     rs485.usbDevPath       = '/dev/ttyUSB{0}'.format(portNO)
-    rs485.baudRate         = 9600
+    # rs485.baudRate         = 9600
     rs485.mode             = 'ascii'
 
     print('     .....action:', action)

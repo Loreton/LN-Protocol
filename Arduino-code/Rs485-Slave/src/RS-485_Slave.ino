@@ -3,12 +3,13 @@
 
 */
 #include <LnFunctions.h>                //  D2X(dest, val, 2), printHex
-#include <RS485_protocol.h>
-#include <RS485_non_blocking.h>
+#include <LnRS485_protocol.h>
+#include <LnRS485_non_blocking.h>
 #include <SoftwareSerial.h>
 
 #include "RS-485_Slave.h"                      //  pin definitions
 
+#include <EEPROM.h>
 
 
 
@@ -27,37 +28,65 @@ int  fRead ()               {return RS485.read (); }
 -------------------- */
 byte DEBUG_TxRxMsg [200] = "                                                                ";   // gli faccio scrivere il messaggio inviato con relativo CRC
 byte rxData         [60];
-// bool fDEBUG             = false;
-bool fDEBUG             = true;
+
+byte myEEpromAddress;        // who we are
+byte myAddress  = 0;
+byte myAddress0 = 0;
+byte myAddress1 = 0;
 
 
-
-
-
+//python3.4 -m serial.tools.list_ports
 void setup() {
+
     Serial.begin(9600);
     RS485.begin (9600);
     pinMode (RS485_ENABLE_PIN, OUTPUT);  // driver output enable
     pinMode (LED_PIN, OUTPUT);          // built-in LED
+
+    pinMode(Addr0,  INPUT_PULLUP);  // set pullup on analog
+    pinMode(Addr1,  INPUT_PULLUP);  // set pullup on analog
+    // pinMode(Addr0,  INPUT);  // set pullup on analog
+    // pinMode(Addr1,  INPUT);  // set pullup on analog
+
+    myEEpromAddress = EEPROM.read (0);
+
+    loop_DisplayAddress();
 }
 
 
+
+void loop_DisplayAddress() {
+    delay(5*1000);
+    myAddress0 = digitalRead(Addr0);
+    Serial.print("Porta Addr0: ");       Serial.println(myAddress0);
+
+    myAddress1 = digitalRead(Addr1);
+    Serial.print("Porta Addr1: ");       Serial.println(myAddress1);
+
+
+    byte value0 = 0.5 + pow(2, 0);
+    byte value1 = 0.5 + pow(2, 1);
+    myAddress = myAddress1*value1 + myAddress0*value0;
+    Serial.print("Indirizzo di porta: ");Serial.println(myAddress);
+    Serial.print("EEprom Address    : ");Serial.println(myEEpromAddress);
+    Serial.println("");
+
+}
 
 void loop() {
-    delay(5*1000);
-}
+    byte SLEEP_TIME =10;
+    byte level      = 0;
+    int timeOut     = 10000;
 
-void loop_() {
-    byte SLEEP_TIME=10;
-    byte level = 0;
-    int timeOut = 10000;
 
     for (level=0; level<=255; level++) {
         // Serial.println("");
 
-        if (readMessage(timeOut)) {
-            // Serial.print("\r\n[Slave] - Working on response data. Sleeping for ");
-            // Serial.print(SLEEP_TIME, DEC);
+        byte rxDataLen = recvMsg (fAvailable, fRead, rxData, sizeof(rxData), timeOut, DEBUG_TxRxMsg);
+
+        processDebugMessage();
+        if (rxDataLen) {
+            processRxMessage(rxDataLen);
         }
         else {
             Serial.print("Nessuna risposta ricevuta in un tempo di: ");
@@ -71,41 +100,41 @@ void loop_() {
 
 
 
+// bool fDEBUG             = false;
 
 // #############################################################
 // #
 // #############################################################
-byte readMessage(unsigned long timeOUT) {
-    // receive response
+void processDebugMessage() {
 
-    byte rxDataLen = recvMsg (fAvailable, fRead, rxData, sizeof(rxData), timeOUT, DEBUG_TxRxMsg);
-
-    if (fDEBUG) { // print del buffer di DEBUG con tutti i dati ricevuti
-        if (DEBUG_TxRxMsg[0] > 0) {
-            Serial.println("\r\n[Slave] - DEBUG Risposta ricevuta : ");
-            Serial.print("   ");
-            Serial.print("(");Serial.print(DEBUG_TxRxMsg[0]);Serial.print(") - ");
-            printHex(&DEBUG_TxRxMsg[1], DEBUG_TxRxMsg[0], ""); // contiene LEN STX ...data... ETX
-        }
+    if (DEBUG_TxRxMsg[0] > 0) {
+        Serial.println("\r\n[Slave] - DEBUG Risposta ricevuta : ");
+        Serial.print("   ");
+        Serial.print("(");Serial.print(DEBUG_TxRxMsg[0]);Serial.print(") - ");
+        printHex(&DEBUG_TxRxMsg[1], DEBUG_TxRxMsg[0], ""); // contiene LEN STX ...data... ETX
     }
 
-    else {
-        // only send once per successful change
-        if (rxDataLen > 0) {
-            Serial.print("\r\n[Slave] - Risposta ricevuta       : ");
-            printHex(rxData, rxDataLen, "");
-        } else {
-            Serial.print("\r\n[Slave] - TIMEOUT waiting response. len=");
-            printHex(rxData, rxDataLen, "");
-        }
-    }
-    return rxDataLen;
+    return;
+}
+
+
+// #############################################################
+// #
+// #############################################################
+void processRxMessage(byte rxDataLen) {
+
+    // only send once per successful change
+    Serial.print("\r\n[Slave] - Risposta ricevuta       : ");
+    printHex(rxData, rxDataLen, "");
+
+    return;
 }
 
 // #############################################################
 // #
 // #############################################################
 void sendMessage(const byte data) {
+bool fDEBUG             = true;
     // assemble message
     byte txData [] = {
                 1,    // device 1

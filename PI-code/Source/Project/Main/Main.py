@@ -37,15 +37,17 @@ def Main(gv, action):
         # = RS-485
         # ===================================================
     if gv.INPUT_PARAM.actionCommand.startswith('rs485.'):
-        LnRs485                   = gv.Prj.LnRs485.LnRs485_Instrument   # short pointer alla classe
-        # LnRs485                   = gv.Prj.LnRs485.LnRs485   # short pointer alla classe
-        rs485                     = gv.LnDict()
-        rs485.MASTER_ADDRESS      = 0
-        rs485.bSTX                 = b'\x02'
-        rs485.bETX                 = b'\x03'
-        rs485.usbDevPath          = gv.INPUT_PARAM.usbPort
-        rs485.baudRate            = 9600
-        rs485.mode                = 'ascii'
+        LnRs485                             = gv.Prj.LnRs485.LnRs485_Instrument   # short pointer alla classe
+        # LnRs485                             = gv.Prj.LnRs485.LnRs485   # short pointer alla classe
+        rs485                               = gv.LnDict()
+        rs485.MASTER_ADDRESS                = 0
+        rs485.STX                           = int('0x02', 16)
+        rs485.ETX                           = int('0x03', 16)
+        rs485.usbDevPath                    = gv.INPUT_PARAM.usbPort
+        rs485.baudRate                      = 9600
+        rs485.mode                          = 'ascii'
+        rs485.CRC                           = True
+        rs485.close_port_after_each_call    = True
 
         if fDEBUG:rs485.printTree()
 
@@ -64,18 +66,22 @@ def Main(gv, action):
         try:
             address = 5
             print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
-            port = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
-            port.serial.baudrate = rs485.baudRate
-            port.serial.bSTX      = rs485.bSTX
-            port.serial.bETX      = rs485.bETX
+            port = LnRs485(port=rs485.usbDevPath, slaveaddress=address, baudrate=rs485.baudRate, mode=rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
+            port.STX                        = rs485.STX
+            port.ETX                        = rs485.ETX
+            port.CRC                        = rs485.CRC
+            port.close_port_after_each_call = rs485.close_port_after_each_call
+
+            print(port.__repr__())
 
             print ('... press ctrl-c to stop the process.')
             while True:
                 payLoad, rowData = port.readData()
                 print ('rowData (Hex):  {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
                 if payLoad:
+                    print ('fields       :      SA DA data')
                     print ('payLoad (Hex):      {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
-                    print ('payLoad (chr):      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))
+                    print ('payLoad (chr):        {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))
                 else:
                     print ('payLoad ERROR....')
                 print()
@@ -93,30 +99,35 @@ def Main(gv, action):
         try:
             address = 5
             print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
-            port = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
-            port.serial.baudrate = rs485.baudRate
-            port.serial.bSTX      = rs485.bSTX
-            port.serial.bETX      = rs485.bETX
-            # sendingPort = gv.Prj.rs485.SetupPort(gv.Prj.LnRs485, rs485, 5)
-            print ('... press ctrl-c to stop the process.')
-            index = 0
+            port = LnRs485(port=rs485.usbDevPath, slaveaddress=address, baudrate=rs485.baudRate, mode=rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
+            port.STX                        = rs485.STX
+            port.ETX                        = rs485.ETX
+            port.CRC                        = rs485.CRC
+            port.close_port_after_each_call = rs485.close_port_after_each_call
 
-            # gli indirizzi li impostimmo come integer.
-            # li convertiamo in bytes e poi di nuovo in integer per avere
-            # il valore hex
+            print(port.__repr__())
+            print ('... press ctrl-c to stop the process.')
+
+
             sourceAddr  = bytes([0]) # MASTER
             destAddr    = bytes([gv.INPUT_PARAM.rs485Address])
             sourceAddr  = int.from_bytes(sourceAddr, 'little')
             destAddr    = int.from_bytes(destAddr, 'little')
-            print ('sourceAddr: {0:02x}'.format(sourceAddr))
-            print ('destAddr:   {0:02x}'.format(destAddr))
-            #@TODO: verificare che gli indirizzi escano come byte e non come integer
-            sys.exit()
+            print ('sourceAddr: x{0:02x}'.format(sourceAddr))
+            print ('destAddr:   x{0:02x}'.format(destAddr))
 
             basedata = 'Loreto.'
+            index = 0
             while True:
                 index += 1
-                dataToSend = '{sADDR}{dADDR}{DATA}.{INX:04}'.format(sADDR=sourceAddr, dADDR=destAddr, DATA=basedata, INX=index)
+                dataStr = '{DATA}.{INX:04}'.format(DATA=basedata, INX=index)
+
+                dataToSend = bytearray()
+                dataToSend.append(sourceAddr)
+                dataToSend.append(destAddr)
+                for x in dataStr:
+                    dataToSend.append(ord(x))
+
                 line = '[{0}:{1:04}] - {2}'.format(rs485.usbDevPath, index, dataToSend)
                 print (line)
                 dataSent = port.writeData(dataToSend)

@@ -336,12 +336,12 @@ def RS485(myParser, action):
     rs485.SetGlobals(C, gv.Ln)
     rs485.ExecuteOptions(myParser, required=False)
 
-    # print ('....', action)
+    # print ('....', action.lower())
     if action.lower() in ['monitor']:
         rs485.UsbPort(myParser, required=True)
-        pass
 
-    if action.lower() in ['send']:
+
+    elif action.lower() in ['send']:
         rs485.UsbPort(myParser, required=True)
         rs485.Rs485Address(myParser, required=True)
         pass
@@ -349,7 +349,7 @@ def RS485(myParser, action):
 
     else:
         print("""
-            Action: {0} non prevista.
+            Action: [{0}] non prevista.
             valori previsti sono:
             """.format(action)
             )
