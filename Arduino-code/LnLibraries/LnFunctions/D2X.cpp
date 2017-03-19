@@ -1,6 +1,7 @@
 
 void D2X(char * Dest, unsigned int Valore, char size) {
-char *HexStr = "0123456789ABCDEF";
+// 2017-03-19 18.30.11 from char *HexStr = "0123456789ABCDEF"; to char HexStr[] = "0123456789ABCDEF";
+char HexStr[] = "0123456789ABCDEF";
 const char Base = 16;                        /* Base dei numeri HEX            */
 unsigned int NewVal;
 unsigned int Resto;

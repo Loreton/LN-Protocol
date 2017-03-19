@@ -52,6 +52,7 @@ coverage.xml
 # Loreto
 .build/
 # Arduino/
+*.o
 
 # platfomio
 

@@ -4,7 +4,7 @@
 */
 #include <LnFunctions.h>                //  D2X(dest, val, 2), printHex
 #include <LnRS485_protocol.h>
-#include <LnRS485_non_blocking.h>
+// #include <LnRS485_non_blocking.h>
 #include <SoftwareSerial.h>
 
 #include "RS-485_Slave.h"                      //  pin definitions
@@ -17,8 +17,8 @@ SoftwareSerial RS485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
 // callback routines
 void fWrite(const byte what) {RS485.write (what); }
-int  fAvailable ()          {return RS485.available (); }
-int  fRead ()               {return RS485.read (); }
+int  fAvailable ()           {return RS485.available (); }
+int  fRead ()                {return RS485.read (); }
 
 
 /* --------------------
@@ -31,14 +31,15 @@ byte rxData         [60];
 
 byte myEEpromAddress;        // who we are
 
-
+/*
 // the data we broadcast to each other device
-// struct {
-//     byte sourceAddress;
-//     byte destAddress;
-//     char data[60];
-// }  rxData1;
-
+struct {
+    byte sourceAddress;
+    byte destAddress;
+    char txRxData[60];
+    char debugData[200] = "                                                                ";
+}  rxData1;
+*/
 
 
 
@@ -86,7 +87,7 @@ void loop_DisplayAddress() {
 }
 
 void loop() {
-    byte SLEEP_TIME =10;
+    // byte SLEEP_TIME =10;
     byte level      = 0;
     int timeOut     = 10000;
 
