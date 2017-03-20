@@ -317,7 +317,7 @@ class LnRs485_Instrument():
     # - Lettura dati fino a EndOfData
     # - Ritorna una bytearray di integer
     #######################################################################
-    def _readBuffer(self):
+    def _readBufferOK(self):
         logger = self._setLogger(package=__name__)
 
         if self.close_port_after_each_call:
@@ -338,6 +338,46 @@ class LnRs485_Instrument():
             self.serial.close()
 
         return buffer
+
+
+    #######################################################################
+    # - Lettura dati da StartOfData fino a EndOfData
+    # - Ritorna una bytearray di integer
+    #######################################################################
+    def _readBuffer(self):
+        logger = self._setLogger(package=__name__)
+
+        if self.close_port_after_each_call:
+            logger.debug('openig port...')
+            self.serial.open()
+
+        buffer = bytearray()
+
+        chInt=-1
+        while chInt != self.STX:
+            ch = self.serial.read(1)       # ch e' un bytes
+            if ch == b'': continue
+            chInt = int.from_bytes(ch, 'little')
+
+
+        buffer.append(chInt)
+        logger.debug( "Received: STX")
+        chInt=-1
+        while chInt != self.ETX:
+            ch = self.serial.read(1)       # ch e' un bytes
+            if ch == b'': continue
+            chInt = int.from_bytes(ch, 'little')
+            buffer.append(chInt)
+            logger.debug( "Received: byte hex: {0:02x}... waiting for {1:02x}".format(chInt, self.ETX) )
+
+        if self.close_port_after_each_call:
+            logger.debug('closing port...')
+            self.serial.close()
+
+        return buffer
+
+
+
 
 
     #######################################################################

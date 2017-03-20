@@ -75,13 +75,15 @@ def Main(gv, action):
             print(port.__repr__())
 
             print ('... press ctrl-c to stop the process.')
+
             while True:
+                print( '--- monitoring: {0}'.format(rs485.usbDevPath))
                 payLoad, rowData = port.readData()
-                print ('rowData (Hex):  {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
+                print ('rowData (Hex):   {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
                 if payLoad:
-                    print ('fields       :      SA DA data')
-                    print ('payLoad (Hex):      {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
-                    print ('payLoad (chr):        {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))
+                    print ('fields       :   SA DA data')
+                    print ('payLoad (Hex):   {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
+                    print ('payLoad (chr):     {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))
                 else:
                     print ('payLoad ERROR....')
                 print()
