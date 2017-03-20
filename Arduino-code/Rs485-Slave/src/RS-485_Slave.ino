@@ -11,14 +11,21 @@
 
 #include <EEPROM.h>
 
+char myVersion[] = "2017-03-20 07.45.44";
 
-
-SoftwareSerial RS485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
+SoftwareSerial serialRs485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
 // callback routines
-void fWrite(const byte what) {RS485.write (what); }
-int  fAvailable ()           {return RS485.available (); }
-int  fRead ()                {return RS485.read (); }
+void fWrite(const byte what)   {       serialRs485.write (what); }
+int  fAvailable()              {return serialRs485.available (); }
+int  fRead()                   {return serialRs485.read (); }
+
+// void fWrite(const byte what)  {Serial.write (what); }
+// int fAvailable()              {return Serial.available (); }
+// int fRead()                   {return Serial.read (); }
+
+
+
 
 
 /* --------------------
@@ -51,7 +58,7 @@ byte myAddress1 = 0;
 void setup() {
 
     Serial.begin(9600);
-    RS485.begin (9600);
+    serialRs485.begin (9600);
     pinMode (RS485_ENABLE_PIN, OUTPUT);  // driver output enable
     pinMode (LED_PIN, OUTPUT);          // built-in LED
 
@@ -64,8 +71,8 @@ void setup() {
     delay(5*1000);
 
     // loop_DisplayAddress();
-    Serial.print(F("EEprom Address    : "));Serial.println(myEEpromAddress);
-    // LnPrint("EEprom Address    : ", "ciao");
+    Serial.print(F("this Version   : "));Serial.println(myVersion);
+    Serial.print(F("EEprom Address : "));Serial.println(myEEpromAddress);
 }
 
 

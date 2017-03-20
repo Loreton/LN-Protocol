@@ -91,7 +91,7 @@ byte c;
 
 // send a message of "length" bytes (max 255) to other end
 // put STX at start, ETX at end, and add CRC
-char TxCount = 0;                       // by Loreto
+byte TxCount = 0;                       // by Loreto
 void sendMsg (WriteCallback fSend, const byte * data, const byte length, byte *DEBUG_TxMsg) {
 
     TxCount = 0;
@@ -147,22 +147,21 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
     while (millis () - start_time < timeout) {
         if (fAvailable () > 0) {
-            byte inByte = fRead ();
+            byte inByte = fRead();
+            printHexPDS("received: ", inByte);
 
             DEBUG_RxMsg[++RxCount] = inByte;         // by Loreto
             switch (inByte) {
 
                 case STX:   // start of text
-                    // Serial.print("\n\r");printHex(inByte, "  STX received\r\n");
                     have_stx = true;
                     have_etx = false;
                     input_pos = 0;
                     first_nibble = true;
-                    start_time = millis ();  // reset timeout period
+                    start_time = millis();  // reset timeout period
                     break;
 
                 case ETX:   // end of text
-                    // printHex(inByte, "  ETX received\r\n");
                     if (SET_CRC_BEFORE_ETX == true) {
                         /*
                             il byte precedente dovrebbe essere il CRC.
@@ -206,11 +205,11 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                 case 0xD2:
                 case 0xE1:
                 case 0xF0:
-                    // wait until packet officially starts
                     if (!have_stx)
                       break;
 
                     // check byte is in valid form (4 bits followed by 4 bits complemented)
+                    // non c'è ragione in quanto appartiene sicuramente ad uno dei byte del case-
                     if ((inByte >> 4) != ((inByte & 0x0F) ^ 0x0F) )
                         return LN_RCV_BADCHAR;  // bad character
 
@@ -245,7 +244,8 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     break;
 
                 default:
-                    Serial.print("\n\r");printHex(inByte, "  unknown byte\r\n");
+                    printHexPDS("unexpexted byte: ", inByte);
+                    // Serial.print(inByte, HEX); Serial.print(" unexpected byte.\r\n");
                     break;
 
             }  // end of switch

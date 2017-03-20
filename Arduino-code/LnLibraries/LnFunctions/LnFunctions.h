@@ -54,8 +54,10 @@
     void D2X(char * Dest, unsigned int Valore, char size);      // deve essere D2X.cpp
 
     void printHex(const byte data);
-    void printHex(const uchar data,   const char * endStr);
-    void printHex(const uchar *data,  const byte len,     const char *endStr="");
+    void printHex(const uchar data,         const char * endStr);
+    void printHex(const uchar *data,        const byte len,         const char *endStr="");
+    void printHexPDS(const char *prefixStr, const byte data,        const char *suffixStr="\r\n");
+
     byte LnCRC8(const byte *data,     byte len);
 
     void LnPrint(const char *data1, const char *data2="", const char *data3="");
