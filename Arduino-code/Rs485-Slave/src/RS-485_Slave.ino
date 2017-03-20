@@ -57,7 +57,7 @@ byte myAddress1 = 0;
 //python3.4 -m serial.tools.list_ports
 void setup() {
 
-    Serial.begin(9600);
+    Serial.begin(9600);             // SERIAL_8N1 (the default)
     serialRs485.begin (9600);
     pinMode (RS485_ENABLE_PIN, OUTPUT);  // driver output enable
     pinMode (LED_PIN, OUTPUT);          // built-in LED
@@ -94,6 +94,17 @@ void loop_DisplayAddress() {
 }
 
 void loop() {
+
+    while(!serialRs485.available());
+    while (serialRs485.available() > 0) {
+        byte inByte = serialRs485.read();
+        printHexPDS("received: ", inByte);
+        delay(1);
+    }
+}
+
+
+void loop_() {
     // byte SLEEP_TIME =10;
     byte level      = 0;
     int timeOut     = 10000;

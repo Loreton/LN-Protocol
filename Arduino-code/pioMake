@@ -117,7 +117,7 @@ function clearLibraryLink {
     if [[ "$action" =~ "u" ]]; then
         [[ "$device" == "" ]] && echo "Enter USB port: /dev/ttyUSB0, /dev/ttyUSB1, ...." && exit
         [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
-        Esegui "platformio run --target upload --upload-port $device"
+        Esegui "platformio run --verbose --target upload --upload-port $device"
     fi
 
 

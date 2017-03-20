@@ -134,7 +134,6 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
     {
 
     byte RxCount = 0;
-    unsigned long start_time = millis ();
 
     bool have_stx = false;
 
@@ -145,12 +144,13 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
     byte current_byte;
     DEBUG_RxMsg[0] = 0;     // initialize il counter a 0
 
-    while (millis () - start_time < timeout) {
+    unsigned long start_time = millis();
+    while ((millis() - start_time) < timeout) {
         if (fAvailable () > 0) {
             byte inByte = fRead();
-            printHexPDS("received: ", inByte);
 
             DEBUG_RxMsg[++RxCount] = inByte;         // by Loreto
+            printHexPDS("received: ", inByte);
             switch (inByte) {
 
                 case STX:   // start of text
@@ -170,13 +170,6 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                         byte CRCpos = input_pos;      // dovrebbe puntare al CRC
                         byte CRC8calc = crc8(data, input_pos-1); // verificato
                         byte CRC8rcvd = data[CRCpos-1];
-                        // ---- DEBUG
-                        // data[0] = CRC8calc;
-                        // data[1] = CRC8rcvd;
-                        // data[2] = data[CRCpos-1];
-                        // data[3] = data[CRCpos-2];
-                        // return 2;
-                        // ---- DEBUG
 
                         DEBUG_RxMsg[0] = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
                         if (CRC8calc != CRC8rcvd)
@@ -245,7 +238,6 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
                 default:
                     printHexPDS("unexpexted byte: ", inByte);
-                    // Serial.print(inByte, HEX); Serial.print(" unexpected byte.\r\n");
                     break;
 
             }  // end of switch

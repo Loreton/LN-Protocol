@@ -23,11 +23,11 @@ import inspect
 _SERIALPORTS = {}
 
 
-PARITY   = serial.PARITY_NONE
-"""Default value for the parity. See the pySerial module for documentation. Defaults to serial.PARITY_NONE"""
-
 BYTESIZE = 8
 """Default value for the bytesize (int)."""
+
+PARITY   = serial.PARITY_NONE
+"""Default value for the parity. See the pySerial module for documentation. Defaults to serial.PARITY_NONE"""
 
 STOPBITS = 1
 """Default value for the number of stopbits (int)."""
