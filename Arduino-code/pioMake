@@ -114,10 +114,12 @@ function clearLibraryLink {
         Esegui "platformio run --environment nano"
     fi
 
+    VERBOSE='--verbose'
+    VERBOSE=''
     if [[ "$action" =~ "u" ]]; then
         [[ "$device" == "" ]] && echo "Enter USB port: /dev/ttyUSB0, /dev/ttyUSB1, ...." && exit
         [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
-        Esegui "platformio run --verbose --target upload --upload-port $device"
+        Esegui "platformio run $VERBOSE --target upload --upload-port $device"
     fi
 
 

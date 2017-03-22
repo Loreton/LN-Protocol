@@ -31,22 +31,33 @@ int  fRead()                   {return serialRs485.read (); }
 /* --------------------
     mi serve per verificare i dati e l'ordine con cui sono
     stati inviati inclusi STX, CRC, ETX
-    DEBUG_TxRxMsg[0] contiene lunghezza dei dati
+
+    DEBUG_data[]    contiene row data
+    DEBUG_data[0]   contiene lunghezza dei dati, 255 per disabilitare il DEBUG
 -------------------- */
-byte DEBUG_TxRxMsg [200] = "                                                                ";   // gli faccio scrivere il messaggio inviato con relativo CRC
-byte rxData         [60];
+
+// byte DEBUG_data [200] = "                                                                ";   // gli faccio scrivere il messaggio inviato con relativo CRC
+#define MAX_MSG_SIZE            50
+#define MAX_DEBUG_SIZE          2       // 2*MAX_MSG_SIZE per abilitarlo oppure limitarlo a 2
+
+byte rxData[MAX_MSG_SIZE];
+byte DEBUG_data[MAX_DEBUG_SIZE];
+byte fDEBUG;
+
+
 
 byte myEEpromAddress;        // who we are
 
-/*
+
 // the data we broadcast to each other device
 struct {
     byte sourceAddress;
     byte destAddress;
-    char txRxData[60];
-    char debugData[200] = "                                                                ";
+    char data[MAX_MSG_SIZE];
+    char debugData[2];
+    byte fDEBUG;
 }  rxData1;
-*/
+
 
 
 
@@ -56,6 +67,12 @@ byte myAddress1 = 0;
 
 //python3.4 -m serial.tools.list_ports
 void setup() {
+    DEBUG_data[0] = 255;
+    if (DEBUG_data[0] == 255)
+        fDEBUG = false;
+    else
+        fDEBUG = true;
+
 
     Serial.begin(9600);             // SERIAL_8N1 (the default)
     serialRs485.begin (9600);
@@ -73,6 +90,7 @@ void setup() {
     // loop_DisplayAddress();
     Serial.print(F("this Version   : "));Serial.println(myVersion);
     Serial.print(F("EEprom Address : "));Serial.println(myEEpromAddress);
+
 }
 
 
@@ -93,7 +111,7 @@ void loop_DisplayAddress() {
 
 }
 
-void loop() {
+void loop_AAA() {
 
     while(!serialRs485.available());
     while (serialRs485.available() > 0) {
@@ -104,14 +122,14 @@ void loop() {
 }
 
 
-void loop_() {
+void loop() {
     // byte SLEEP_TIME =10;
     byte level      = 0;
     int timeOut     = 10000;
 
 
     for (level=0; level<=255; level++) {
-        byte rxDataLen = recvMsg (fAvailable, fRead, rxData, sizeof(rxData), timeOut, DEBUG_TxRxMsg);
+        byte rxDataLen = recvMsg (fAvailable, fRead, rxData, sizeof(rxData), timeOut, DEBUG_data);
 
         processDebugMessage();
         if (rxDataLen) {
@@ -136,11 +154,14 @@ void loop_() {
 // #############################################################
 void processDebugMessage() {
 
-    if (DEBUG_TxRxMsg[0] > 0) {
-        Serial.println(F("\r\n[Slave] - DEBUG Risposta ricevuta : "));
-        Serial.print(F("   "));
-        Serial.print(F("("));Serial.print(DEBUG_TxRxMsg[0]);Serial.print(F(") - "));
-        printHex(&DEBUG_TxRxMsg[1], DEBUG_TxRxMsg[0], ""); // contiene LEN STX ...data... ETX
+    if (fDEBUG) {
+
+        if (DEBUG_data[0] > 0) {
+            Serial.println(F("\r\n[Slave] - DEBUG Risposta ricevuta : "));
+            Serial.print(F("   "));
+            Serial.print(F("("));Serial.print(DEBUG_data[0]);Serial.print(F(") - "));
+            printHex(&DEBUG_data[1], DEBUG_data[0], ""); // contiene LEN STX ...data... ETX
+        }
     }
 
     return;
@@ -171,7 +192,7 @@ void processRxMessage(byte rxDataLen) {
 // #
 // #############################################################
 void sendMessage(const byte data) {
-bool fDEBUG             = true;
+
     // assemble message
     byte txData [] = {
                 1,    // device 1
@@ -183,15 +204,15 @@ bool fDEBUG             = true;
         // send to RS-485 bus
     char txDataLen = sizeof(txData);
     digitalWrite(RS485_ENABLE_PIN, HIGH);               // enable sending
-    sendMsg(fWrite, txData, sizeof(txData), DEBUG_TxRxMsg);
+    sendMsg(fWrite, txData, sizeof(txData), DEBUG_data);
     digitalWrite(RS485_ENABLE_PIN, LOW);                // disable sending
 
     if (fDEBUG) {
         // char DEBUG_SentMsgLen = *DEBUG_sentMsg;           // byte 0
-        char DEBUG_TxRxLen = *DEBUG_TxRxMsg;           // byte 0
+        char DEBUG_TxRxLen = *DEBUG_data;           // byte 0
         // Serial.print(F("\r\n[Master] - Comando  inviato : ");printHex(&DEBUG_sentMsg[1], DEBUG_SentMsgLen, "[STX ...data... CRC ETX]"); // contiene LEN STX ...data... ET)X
         Serial.print(F("\r\n[Master] - DEBUG Comando  inviato  : "));
-        printHex(&DEBUG_TxRxMsg[1], DEBUG_TxRxLen, " - [STX ...data... CRC ETX]"); // contiene LEN STX ...data... ETX
+        printHex(&DEBUG_data[1], DEBUG_TxRxLen, " - [STX ...data... CRC ETX]"); // contiene LEN STX ...data... ETX
     }
     else {
         Serial.print(F("\r\n[Master] - Comando  inviato        : "));printHex(txData, txDataLen, "");

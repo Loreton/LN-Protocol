@@ -8,6 +8,16 @@
     #endif
 
 
+    // the data we broadcast to each other device
+    struct {
+        byte sourceAddress;
+        byte destAddress;
+        byte data[MAX_MSG_SIZE];
+        byte debugData[2];
+        byte fDEBUG;
+    }  rxData1;
+
+
 
 
     typedef void (*WriteCallback)  (const byte what);   // send a byte to serial port
@@ -17,12 +27,13 @@
     void sendMsg (WriteCallback fSend,
                   const byte * data,
                   const byte length,
-                  byte *DEBUG_TxRxMsg);
+                  byte *DEBUG_TxRxMsg=NULL);
 
     byte recvMsg (AvailableCallback fAvailable, ReadCallback fRead,
                   byte * data,
                   const byte length,
                   unsigned long timeout,   // come default aveva = 500 by Loreto
-                  byte *DEBUG_TxRxMsg);
+                  byte *DEBUG_TxRxMsg=NULL,
+                  rxData1 rxData);
 
 #endif

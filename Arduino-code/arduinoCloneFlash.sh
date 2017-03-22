@@ -84,8 +84,8 @@ function verifyCode() {
 ##############################
 CONFIG_FILE='/home/pi/.platformio/packages/tool-avrdude/avrdude.conf'
 fileName='/tmp/firmwareUSB1.hex'
-fromDEV="/dev/ttyUSB1"
-  toDEV="/dev/ttyUSB3"
+fromDEV="/dev/ttyUSB0"
+  toDEV="/dev/ttyUSB1"
 
     readFrom    $fromDEV
     writeTo     $toDEV

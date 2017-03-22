@@ -19,7 +19,7 @@
 
 Modifiche di Loreto:
     - Spostato il CRC prima del byte di ETX
-    - inserita la variabile DEBUG_TxMsg per ritornare il messaggio ricevuto oppure trasmesso e verificarne il contenuto.
+    - inserita la variabile DEBUG_TxData per ritornare il messaggio ricevuto oppure trasmesso e verificarne il contenuto.
       Anche il valore di ritorno è stato portato da 0 ad 1 per permettere di analizzare il contenuto.
 
 
@@ -52,6 +52,7 @@ Modifiche di Loreto:
 // const byte ETX = '\03';
 const byte STX = 0x02;
 const byte ETX = 0x03;
+// byte fDEBUG     = false;
 
 const bool  SET_CRC_BEFORE_ETX = true;    // by Loreto
 
@@ -91,31 +92,40 @@ byte c;
 
 // send a message of "length" bytes (max 255) to other end
 // put STX at start, ETX at end, and add CRC
-byte TxCount = 0;                       // by Loreto
-void sendMsg (WriteCallback fSend, const byte * data, const byte length, byte *DEBUG_TxMsg) {
+void sendMsg (WriteCallback fSend, const byte * data, const byte length, byte *DEBUG_TxData) {
+    byte fDEBUG = false;
+    byte TxCount = 0;
 
-    TxCount = 0;
+    if (DEBUG_TxData[0] == 255) {
+        fDEBUG = false;
+    }
+    else {
+        fDEBUG = true;
+        DEBUG_TxData[++TxCount] = STX;         // by Loreto
+        Serial.println("\r\n\r\n...siamo in Tx-DEBUG mode!");
+    }
+
     byte CRC8value = crc8 (data, length);       // by Loreto
 
     fSend (STX);  // STX
-    DEBUG_TxMsg[++TxCount] = STX;         // by Loreto
+
     for (byte i = 0; i < length; i++) {
         sendComplemented (fSend, data [i]);
-        DEBUG_TxMsg[++TxCount] = data[i];         // by Loreto
+        if (fDEBUG) DEBUG_TxData[++TxCount] = data[i];         // by Loreto
     }
 
     if (SET_CRC_BEFORE_ETX == true) {
         sendComplemented (fSend, CRC8value);  // by Loreto - inserito prima del ETX
-        DEBUG_TxMsg[++TxCount] = CRC8value;       // by Loreto
+        if (fDEBUG) DEBUG_TxData[++TxCount] = CRC8value;       // by Loreto
         fSend (ETX);
-        DEBUG_TxMsg[++TxCount] = ETX;             // by Loreto
+        if (fDEBUG) DEBUG_TxData[++TxCount] = ETX;             // by Loreto
     } else {
         fSend (ETX);
-        DEBUG_TxMsg[++TxCount] = ETX;             // by Loreto
+        if (fDEBUG) DEBUG_TxData[++TxCount] = ETX;             // by Loreto
         sendComplemented (fSend, CRC8value);
-        DEBUG_TxMsg[++TxCount] = CRC8value;       // by Loreto
+        if (fDEBUG) DEBUG_TxData[++TxCount] = CRC8value;       // by Loreto
     }
-    DEBUG_TxMsg[0] = TxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
+    if (fDEBUG) DEBUG_TxData[0] = TxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
 
 
 }  // end of sendMsg
@@ -130,27 +140,41 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
               byte * data,                    // buffer to receive into
               const byte length,              // maximum buffer size
               unsigned long timeout,          // milliseconds before timing out
-              byte *DEBUG_RxMsg)
-    {
+              byte *DEBUG_RxData) {
 
     byte RxCount = 0;
-
     bool have_stx = false;
+    byte fDEBUG;
+
+    if (DEBUG_RxData[0] == 255) {
+        fDEBUG = false;
+    }
+    else {
+        fDEBUG = true;
+        DEBUG_RxData[0] = 0;     // initialize il counter a 0
+        Serial.println("\r\n\r\n...siamo in Rx-DEBUG mode!");
+        Serial.println(sizeof(DEBUG_RxData));
+    }
+
+
+
 
     // variables below are set when we get an STX
     bool have_etx;
     byte input_pos;
     bool first_nibble;
     byte current_byte;
-    DEBUG_RxMsg[0] = 0;     // initialize il counter a 0
+
 
     unsigned long start_time = millis();
     while ((millis() - start_time) < timeout) {
         if (fAvailable () > 0) {
             byte inByte = fRead();
 
-            DEBUG_RxMsg[++RxCount] = inByte;         // by Loreto
-            printHexPDS("received: ", inByte);
+            if (fDEBUG) {
+                DEBUG_RxData[++RxCount] = inByte;         // by Loreto
+                printHexPDS("received: ", inByte);
+            }
             switch (inByte) {
 
                 case STX:   // start of text
@@ -171,7 +195,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                         byte CRC8calc = crc8(data, input_pos-1); // verificato
                         byte CRC8rcvd = data[CRCpos-1];
 
-                        DEBUG_RxMsg[0] = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
+                        if (fDEBUG) DEBUG_RxData[0] = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
                         if (CRC8calc != CRC8rcvd)
                             return LN_RCV_BADCRC;  // bad crc
                         return input_pos-1;  // return received length escludendo il byte di CRC
@@ -223,7 +247,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
                       // if we have the ETX this must be the CRC
                     if (have_etx) {
-                        DEBUG_RxMsg[0] = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
+                        if (fDEBUG) DEBUG_RxData[0] = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
                         if (crc8 (data, input_pos) != current_byte)
                             return LN_RCV_BADCRC;  // bad crc
                         return input_pos;  // return received length
