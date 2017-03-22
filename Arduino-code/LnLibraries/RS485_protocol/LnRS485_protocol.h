@@ -7,15 +7,18 @@
       #include "WConstants.h"
     #endif
 
+    #define MAX_MSG_SIZE2            50
 
     // the data we broadcast to each other device
-    struct {
+    typedef struct  {
         byte sourceAddress;
         byte destAddress;
-        byte data[MAX_MSG_SIZE];
-        byte debugData[2];
-        byte fDEBUG;
-    }  rxData1;
+        byte data[MAX_MSG_SIZE2];
+        byte debugData[MAX_MSG_SIZE2];
+        const byte buffLen = MAX_MSG_SIZE2;
+        unsigned long timeout = 0;
+        byte fDEBUG = false;
+    }  RXTX_DATA, *pRXTX_DATA;
 
 
 
@@ -29,11 +32,18 @@
                   const byte length,
                   byte *DEBUG_TxRxMsg=NULL);
 
-    byte recvMsg (AvailableCallback fAvailable, ReadCallback fRead,
+    byte recvMsg_OK (AvailableCallback fAvailable, ReadCallback fRead,
                   byte * data,
                   const byte length,
                   unsigned long timeout,   // come default aveva = 500 by Loreto
-                  byte *DEBUG_TxRxMsg=NULL,
-                  rxData1 rxData);
+                  byte *DEBUG_TxRxMsg=NULL);
+
+    byte recvMsg (  AvailableCallback fAvailable,
+                    ReadCallback fRead,
+                    RXTX_DATA *rxData);
+                    // byte * data,
+                    // const byte length,
+                    // unsigned long timeout,   // come default aveva = 500 by Loreto
+                    // byte *DEBUG_TxRxMsg,
 
 #endif

@@ -48,19 +48,6 @@ byte fDEBUG;
 
 byte myEEpromAddress;        // who we are
 
-
-// the data we broadcast to each other device
-struct {
-    byte sourceAddress;
-    byte destAddress;
-    char data[MAX_MSG_SIZE];
-    char debugData[2];
-    byte fDEBUG;
-}  rxData1;
-
-
-
-
 byte myAddress  = 0;
 byte myAddress0 = 0;
 byte myAddress1 = 0;
@@ -121,15 +108,22 @@ void loop_AAA() {
     }
 }
 
+RXTX_DATA rx;
 
 void loop() {
     // byte SLEEP_TIME =10;
     byte level      = 0;
     int timeOut     = 10000;
 
+    rx.sourceAddress = 0;
+    rx.destAddress = 0;
+    rx.fDEBUG = false;
+    // rx.buffLen = sizeof(rx.data);
+    rx.timeout = 10000;
 
     for (level=0; level<=255; level++) {
-        byte rxDataLen = recvMsg (fAvailable, fRead, rxData, sizeof(rxData), timeOut, DEBUG_data);
+        // byte rxDataLen = recvMsg (fAvailable, fRead, rxData, sizeof(rxData), timeOut, DEBUG_data);
+        byte rxDataLen = recvMsg (fAvailable, fRead, &rx);
 
         processDebugMessage();
         if (rxDataLen) {
@@ -156,11 +150,11 @@ void processDebugMessage() {
 
     if (fDEBUG) {
 
-        if (DEBUG_data[0] > 0) {
+        if (rx.debugData[0] > 0) {
             Serial.println(F("\r\n[Slave] - DEBUG Risposta ricevuta : "));
             Serial.print(F("   "));
-            Serial.print(F("("));Serial.print(DEBUG_data[0]);Serial.print(F(") - "));
-            printHex(&DEBUG_data[1], DEBUG_data[0], ""); // contiene LEN STX ...data... ETX
+            Serial.print(F("("));Serial.print(rx.debugData[0]);Serial.print(F(") - "));
+            printHex(&rx.debugData[1], rx.debugData[0], ""); // contiene LEN STX ...data... ETX
         }
     }
 
@@ -175,11 +169,11 @@ void processRxMessage(byte rxDataLen) {
 
     // only send once per successful change
     Serial.print(F("\r\n[Slave] - Risposta ricevuta       : "));
-    printHex(rxData, rxDataLen, "");
+    printHex(rx.data, rxDataLen, "");
 
     // we cannot receive a message from ourself
     // someone must have given two devices the same address
-    // if (rxData1.sourceAddress == myEEpromAddress) {
+    // if (RXTX_DATA.sourceAddress == myEEpromAddress) {
     //     digitalWrite (ERROR_PIN, HIGH);
     //     Serial.print(F("\r\n[Slave] - messaggio inviato con il mio sourceAddress"));
     // }  // can't receive our address
