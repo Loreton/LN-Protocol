@@ -52,15 +52,11 @@ byte myAddress  = 0;
 byte myAddress0 = 0;
 byte myAddress1 = 0;
 
+RXTX_DATA rx;
+
 //python3.4 -m serial.tools.list_ports
 void setup() {
-    DEBUG_data[0] = 255;
-    if (DEBUG_data[0] == 255)
-        fDEBUG = false;
-    else
-        fDEBUG = true;
-
-
+    rx.fDEBUG = false;
     Serial.begin(9600);             // SERIAL_8N1 (the default)
     serialRs485.begin (9600);
     pinMode (RS485_ENABLE_PIN, OUTPUT);  // driver output enable
@@ -108,55 +104,57 @@ void loop_AAA() {
     }
 }
 
-RXTX_DATA rx;
 
 void loop() {
-    // byte SLEEP_TIME =10;
-    byte level      = 0;
-    int timeOut     = 10000;
-
-    rx.sourceAddress = 0;
-    rx.destAddress = 0;
-    rx.fDEBUG = false;
-    // rx.buffLen = sizeof(rx.data);
     rx.timeout = 10000;
 
-    for (level=0; level<=255; level++) {
-        // byte rxDataLen = recvMsg (fAvailable, fRead, rxData, sizeof(rxData), timeOut, DEBUG_data);
-        byte rxDataLen = recvMsg (fAvailable, fRead, &rx);
+    byte rCode = recvMsg (fAvailable, fRead, &rx);
 
-        processDebugMessage();
-        if (rxDataLen) {
-            processRxMessage(rxDataLen);
-        }
-        else {
-            Serial.print(F("Nessuna risposta ricevuta in un tempo di: "));
-            Serial.print(timeOut);
-            Serial.println(F("mS"));
-        }
+    if (rCode > 0) {
+        displayErrorMessage(rCode, &rx);
+        displayDebugMessage(&rx);
+        rx.fDEBUG=true;                     // varrà per il prossimo giro
     }
+    else if (rx.fDEBUG == true)  {
+        displayDebugMessage(&rx);
+        displayRxMessage(&rx);
+    }
+    else if (rx.rcvdBytes == 0) {
+        Serial.print(F("\r\nNessuna risposta ricevuta in un tempo di: "));
+        Serial.print(rx.timeout);
+        Serial.println(F("mS"));
+    }
+    else
+        displayRxMessage(&rx);
+
 }
 
 
 
 
 
-// bool fDEBUG             = false;
 
 // #############################################################
 // #
 // #############################################################
-void processDebugMessage() {
+void displayErrorMessage(byte rCode, RXTX_DATA *ptr) {
+    Serial.print(F("\r\n[Slave] - ERROR: "));
+    Serial.println(rCode);
+    return;
+}
 
-    if (fDEBUG) {
+// #############################################################
+// #
+// #############################################################
+void displayDebugMessage(RXTX_DATA *pRx) {
 
-        if (rx.debugData[0] > 0) {
-            Serial.println(F("\r\n[Slave] - DEBUG Risposta ricevuta : "));
-            Serial.print(F("   "));
-            Serial.print(F("("));Serial.print(rx.debugData[0]);Serial.print(F(") - "));
-            printHex(&rx.debugData[1], rx.debugData[0], ""); // contiene LEN STX ...data... ETX
-        }
+    if (pRx->nDebugBytes > 0) {
+        Serial.println(F("\r\n[Slave] - DEBUG Risposta ricevuta : "));
+        Serial.print(F("   "));
+        Serial.print(F("("));Serial.print(pRx->nDebugBytes);Serial.print(F(") - "));
+        printHex(pRx->debugData, pRx->nDebugBytes, ""); // contiene LEN STX ...data... ETX
     }
+
 
     return;
 }
@@ -165,11 +163,11 @@ void processDebugMessage() {
 // #############################################################
 // #
 // #############################################################
-void processRxMessage(byte rxDataLen) {
+void displayRxMessage(RXTX_DATA *pRx) {
 
     // only send once per successful change
     Serial.print(F("\r\n[Slave] - Risposta ricevuta       : "));
-    printHex(rx.data, rxDataLen, "");
+    printHex(pRx->data, pRx->rcvdBytes, "");
 
     // we cannot receive a message from ourself
     // someone must have given two devices the same address

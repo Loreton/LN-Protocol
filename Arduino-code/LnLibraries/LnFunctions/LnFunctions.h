@@ -15,12 +15,12 @@
 
     #define uchar unsigned char
 
-    #if defined(I_AM_RS485_PROTOCOL_CPP)
-        #define LN_RCV_ERROR      1
-        #define LN_RCV_BADCRC     1
-        #define LN_RCV_BADCHAR    1
-        #define LN_RCV_TIMEOUT    0
-    #endif
+    // #if defined(I_AM_RS485_PROTOCOL_CPP)
+    //     #define LN_RCV_ERROR      1
+    //     #define LN_RCV_BADCRC     1
+    //     #define LN_RCV_BADCHAR    1
+    //     #define LN_RCV_TIMEOUT    0
+    // #endif
 
 // ARDUINO NANO
 // #if defined(_I_AM_ARDUINO_NANO_)  // non funziona - viene ignorato
