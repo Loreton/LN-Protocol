@@ -108,7 +108,7 @@ void loop() {
         displayDebugMessage(&RxTx);
         displayRxMessage(&RxTx);
     }
-    else if (RxTx.data[0] == 0) {
+    else if (RxTx.dataLen == 0) {
         Serial.print(F("\r\nNessuna risposta ricevuta in un tempo di: "));
         Serial.print(RxTx.timeout);
         Serial.println(F("mS"));
@@ -170,11 +170,11 @@ void displayDebugMessage(RXTX_DATA *pRx) {
 // #
 // #############################################################
 void displayRxMessage(RXTX_DATA *pRx) {
-    byte dataCounter = pRx->data[0];
+    // byte dataCounter = pRx->data[0];
 
     // only send once per successful change
     Serial.print(F("\r\n[Slave] - Risposta ricevuta       : "));
-    printHex(&pRx->data[1], dataCounter, "");
+    printHex(pRx->data, pRx->dataLen, "");
 
     // we cannot receive a message from ourself
     // someone must have given two devices the same address

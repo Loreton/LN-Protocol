@@ -25,10 +25,11 @@
 
     // the data we broadcast to each other device
     typedef struct  {
-        const byte      buffSize                = MAX_BUFF_SIZE;
+        // const byte      buffSize                = MAX_BUFF_SIZE;
         byte            data[MAX_BUFF_SIZE];        // byte[0] is counter
         byte            dataLen;                    // lunghezza dati Rx/Tx
         byte            rawData[MAX_BUFF_SIZE*2];   // byte[0] is counter
+        byte            rawDataLen;                    // lunghezza raw data
         unsigned long   timeout                 = 0;        // send/receive timeout
     }  RXTX_DATA, *pRXTX_DATA;
 

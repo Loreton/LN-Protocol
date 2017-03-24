@@ -62,6 +62,8 @@ static byte crc8(const byte *addr, byte len) {
     byte crc = 0;
     while (len--) {
         byte inbyte = *addr++;
+        // Serial.print( "[");Serial.print(len);Serial.print( "] - ");
+        // printHexPDS( "inbyte: ", inbyte);
         for (byte i = 8; i; i--) {
             byte mix = (crc ^ inbyte) & 0x01;
             crc >>= 1;
@@ -138,11 +140,6 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
     byte rawCounter  = 0;
     byte dataCounter = 0;
     byte buffSize    = sizeof(pRx->data);
-    pRx->data[0]     = dataCounter;   // inizializziamo counter
-    pRx->rawData[0]  = rawCounter;   // inizializziamo counter
-
-    // Serial.print("\r\ndata        size: ");Serial.println(sizeof(pRx->data));
-    // Serial.print("rawData size: ");Serial.println(sizeof(pRx->rawData));
 
     unsigned long start_time = millis();
 
@@ -157,22 +154,28 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                 case STX:   // start of text
                     have_stx        = true;
                     dataCounter     = 0;        // azzeriamo counter
+                    pRx->dataLen    = 0;
                     first_nibble    = true;
                     start_time      = millis();  // reset timeout period
                     break;
 
                 case ETX:   // end of text
-                    /*
-                        il byte precedente dovrebbe essere il CRC.
-                        verifichiamo che sia valido.
-                    */
+
+                    // --- eliminamo un counter perché incrementato a priori
+                    pRx->dataLen--;
 
                     // --- CRC dovrebbe essere l'ultimo byte prima dell'ETX
-                    CRC8rcvd = pRx->data[dataCounter];
+                    CRC8rcvd = pRx->data[pRx->dataLen];
 
-                    // --- calcolo del CRC senza il CRC e senza il byte[0]--> datacounter
-                    CRC8calc = crc8(&pRx->data[1], dataCounter-1);
-                    pRx->data[0]--;
+                    // --- calcolo del CRC senza il CRC
+                    CRC8calc = crc8(pRx->data, pRx->dataLen);
+
+
+                    // printHexPDS( "dataLen : ", pRx->dataLen);
+                    // printHexPDS( "CRC8rcvd: ", CRC8rcvd);
+                    // printHexPDS( "CRC8calc: ", CRC8calc);
+
+
                     if (CRC8calc != CRC8rcvd)
                         return LN_RCV_BADCRC;  // bad crc
                     else
@@ -217,13 +220,11 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     // printHexPDS( "      current_byte: ", current_byte);
 
                       // keep adding if not full
-                    if (dataCounter < buffSize) {
-                        pRx->data[++dataCounter] = current_byte;    // save byte
-                        pRx->data[0] = dataCounter;                 // update counter
-                    }
-                    else {
+                    if (dataCounter < buffSize)
+                        pRx->data[pRx->dataLen++] = current_byte;    // save byte
+                    else
                         return LN_RCV_OVERFLOW;  // overflow
-                    }
+
 
                     break;
 
