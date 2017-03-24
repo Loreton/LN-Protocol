@@ -40,8 +40,8 @@ int  fRead()                   {return serialRs485.read (); }
 #define MAX_MSG_SIZE            50
 #define MAX_DEBUG_SIZE          2       // 2*MAX_MSG_SIZE per abilitarlo oppure limitarlo a 2
 
-byte rxData[MAX_MSG_SIZE];
-byte DEBUG_data[MAX_DEBUG_SIZE];
+// byte rxData[MAX_MSG_SIZE];
+// byte DEBUG_data[MAX_DEBUG_SIZE];
 byte fDEBUG;
 
 
@@ -52,11 +52,12 @@ byte myAddress  = 0;
 byte myAddress0 = 0;
 byte myAddress1 = 0;
 // byte IAM[10];
-RXTX_DATA rx;
+RXTX_DATA RxTx;
+
 
 //python3.4 -m serial.tools.list_ports
 void setup() {
-    rx.fDEBUG = false;
+    // RxTx.fDEBUG = false;
     Serial.begin(9600);             // SERIAL_8N1 (the default)
     serialRs485.begin (9600);
     pinMode (RS485_ENABLE_PIN, OUTPUT);  // driver output enable
@@ -64,8 +65,6 @@ void setup() {
 
     pinMode(Addr0,  INPUT_PULLUP);  // set pullup on analog
     pinMode(Addr1,  INPUT_PULLUP);  // set pullup on analog
-    // pinMode(Addr0,  INPUT);  // set pullup on analog
-    // pinMode(Addr1,  INPUT);  // set pullup on analog
 
     myEEpromAddress = EEPROM.read (0);
     delay(5*1000);
@@ -74,8 +73,6 @@ void setup() {
     Serial.print(F("this Version   : "));Serial.println(myVersion);
     Serial.print(F("EEprom Address : "));Serial.println(myEEpromAddress);
 
-    // String IAM = String("Loreto") + String(myEEpromAddress); // occupa 1600 bytes circa
-    // sprintf(IAM, "%s%d", "Slave", myEEpromAddress);
 }
 
 
@@ -96,38 +93,28 @@ void loop_DisplayAddress() {
 
 }
 
-void loop_AAA() {
-
-    while(!serialRs485.available());
-    while (serialRs485.available() > 0) {
-        byte inByte = serialRs485.read();
-        printHexPDS("received: ", inByte);
-        delay(1);
-    }
-}
 
 
 void loop() {
-    rx.timeout = 10000;
+    RxTx.timeout = 10000;
 
-    byte rCode = recvMsg (fAvailable, fRead, &rx);
+    byte rCode = recvMsg (fAvailable, fRead, &RxTx);
 
     if (rCode > 0) {
-        displayErrorMessage(rCode, &rx);
-        displayDebugMessage(&rx);
-        rx.fDEBUG=true;                     // varrà per il prossimo giro
+        displayErrorMessage(rCode, &RxTx);
+        // displayDebugMessage(&rx);
     }
-    else if (rx.fDEBUG == true)  {
-        displayDebugMessage(&rx);
-        displayRxMessage(&rx);
+    else if (fDEBUG == true)  {
+        displayDebugMessage(&RxTx);
+        displayRxMessage(&RxTx);
     }
-    else if (rx.dataCounter == 0) {
+    else if (RxTx.data[0] == 0) {
         Serial.print(F("\r\nNessuna risposta ricevuta in un tempo di: "));
-        Serial.print(rx.timeout);
+        Serial.print(RxTx.timeout);
         Serial.println(F("mS"));
     }
     else
-        displayRxMessage(&rx);
+        displayRxMessage(&RxTx);
 
 }
 
@@ -140,11 +127,24 @@ void loop() {
 // #
 // #############################################################
 void displayErrorMessage(byte rCode, RXTX_DATA *ptr) {
+    byte nBytes;
     const char *rs485ErrMsg[] = {"", " - OVERFLOW"," - BAD-CRC"," - BAD-CHAR"," - TIMEOUT"};
+
     Serial.print(F("\r\n[Slave] - ERROR: "));
-    Serial.print(ptr->rCode);
+    Serial.print(rCode);
     Serial.println(rs485ErrMsg[rCode]);
-    // Serial.println(rs485ErrMsg[rCode]);
+
+    // display dei rawdata
+    nBytes = ptr->rawData[0];
+    Serial.print(F("\r\n raw->  ("));Serial.print(nBytes);Serial.print(F(") - "));
+    printHex(&ptr->rawData[1], nBytes, ""); // contiene LEN STX ...data... ETX
+
+    // display dei data
+    nBytes = ptr->data[0];
+    Serial.print(F("\r\n data-> ("));Serial.print(nBytes);Serial.print(F(") - "));
+    printHex(&ptr->data[1], nBytes, ""); // contiene solo dati
+
+
     return;
 }
 
@@ -152,12 +152,13 @@ void displayErrorMessage(byte rCode, RXTX_DATA *ptr) {
 // #
 // #############################################################
 void displayDebugMessage(RXTX_DATA *pRx) {
+    byte dataCounter = pRx->rawData[0];
 
-    if (pRx->rawCounter > 0) {
+    if (dataCounter > 0) {
         Serial.println(F("\r\n[Slave] - DEBUG Risposta ricevuta : "));
         Serial.print(F("   "));
-        Serial.print(F("("));Serial.print(pRx->rawCounter);Serial.print(F(") - "));
-        printHex(pRx->rawData, pRx->rawCounter, ""); // contiene LEN STX ...data... ETX
+        Serial.print(F("("));Serial.print(dataCounter);Serial.print(F(") - "));
+        printHex(&pRx->rawData[1], dataCounter, ""); // contiene LEN STX ...data... ETX
     }
 
 
@@ -169,10 +170,11 @@ void displayDebugMessage(RXTX_DATA *pRx) {
 // #
 // #############################################################
 void displayRxMessage(RXTX_DATA *pRx) {
+    byte dataCounter = pRx->data[0];
 
     // only send once per successful change
     Serial.print(F("\r\n[Slave] - Risposta ricevuta       : "));
-    printHex(pRx->data, pRx->dataCounter, "");
+    printHex(&pRx->data[1], dataCounter, "");
 
     // we cannot receive a message from ourself
     // someone must have given two devices the same address
@@ -188,32 +190,28 @@ void displayRxMessage(RXTX_DATA *pRx) {
 // #############################################################
 // #
 // #############################################################
-void sendMessage(const byte data) {
+void sendMessage(byte data[], byte dataLen) {
 
     // assemble message
-    byte txData [] = {
-                1,    // device 1
-                2,    // turn light on
-                data
-            };
+    RxTx.data[0] = dataLen+1;    // len + SA + DA
+    RxTx.data[1] = 1;    // SA
+    RxTx.data[2] = 2;    // DA
+
+    byte i2 = 3;
+    for (byte i = 0; i < dataLen; i++) {
+        RxTx.data[i2] = data[i];         // copiamo i dati nel buffer da inviare
+        i2++;
+    }
 
 
         // send to RS-485 bus
-    char txDataLen = sizeof(txData);
     digitalWrite(RS485_ENABLE_PIN, HIGH);               // enable sending
-    sendMsg(fWrite, txData, sizeof(txData), DEBUG_data);
+    sendMsg(fWrite, &RxTx);
     digitalWrite(RS485_ENABLE_PIN, LOW);                // disable sending
 
     if (fDEBUG) {
-        // char DEBUG_SentMsgLen = *DEBUG_sentMsg;           // byte 0
-        char DEBUG_TxRxLen = *DEBUG_data;           // byte 0
-        // Serial.print(F("\r\n[Master] - Comando  inviato : ");printHex(&DEBUG_sentMsg[1], DEBUG_SentMsgLen, "[STX ...data... CRC ETX]"); // contiene LEN STX ...data... ET)X
         Serial.print(F("\r\n[Master] - DEBUG Comando  inviato  : "));
-        printHex(&DEBUG_data[1], DEBUG_TxRxLen, " - [STX ...data... CRC ETX]"); // contiene LEN STX ...data... ETX
+        // printHexPDS(&RxTx.data[1], RxTx.data[0]);
     }
-    else {
-        Serial.print(F("\r\n[Master] - Comando  inviato        : "));printHex(txData, txDataLen, "");
-    }
-
 }
 

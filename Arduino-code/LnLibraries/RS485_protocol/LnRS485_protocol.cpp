@@ -58,7 +58,7 @@ const bool  SET_CRC_BEFORE_ETX = true;    // by Loreto
 
 
 // calculate 8-bit CRC
-static byte crc8 (const byte *addr, byte len) {
+static byte crc8(const byte *addr, byte len) {
     byte crc = 0;
     while (len--) {
         byte inbyte = *addr++;
@@ -73,10 +73,12 @@ static byte crc8 (const byte *addr, byte len) {
     return crc;
 }  // end of crc8
 
-// send a byte complemented, repeated
-// only values sent would be (in hex):
-//   0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
-//   invia prima l'HighNibble e poi il LowNibble
+// ###########################################################
+// - send a byte complemented, repeated
+// - only values sent would be (in hex):
+// -   0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
+// -   invia prima l'HighNibble e poi il LowNibble
+// ###########################################################
 void sendComplemented (WriteCallback fSend, const byte what) {
 byte c;
 
@@ -90,116 +92,92 @@ byte c;
 
 }  // end of sendComplemented
 
-// send a message of "length" bytes (max 255) to other end
-// put STX at start, ETX at end, and add CRC
-void sendMsg (WriteCallback fSend, const byte * data, const byte length, byte *DEBUG_TxData) {
-    byte fDEBUG = false;
-    byte TxCount = 0;
+// ###########################################################
+// - il primo byte di pTx->data è la lunghezza dei dati.
+// ###########################################################
+void sendMsg (WriteCallback fSend, RXTX_DATA *pTx) {
+    byte dataLen = pTx->data[0];
 
-    if (DEBUG_TxData[0] == 255) {
-        fDEBUG = false;
-    }
-    else {
-        fDEBUG = true;
-        DEBUG_TxData[++TxCount] = STX;         // by Loreto
-        Serial.println("\r\n\r\n...siamo in Tx-DEBUG mode!");
-    }
-
-    byte CRC8value = crc8 (data, length);       // by Loreto
+    byte CRC8value = crc8(&pTx->data[1], dataLen);   // calcoliamo il CRC
 
     fSend (STX);  // STX
 
-    for (byte i = 0; i < length; i++) {
-        sendComplemented (fSend, data [i]);
-        if (fDEBUG) DEBUG_TxData[++TxCount] = data[i];         // by Loreto
+    for (byte i = 1; i < dataLen; i++) {
+        sendComplemented (fSend, pTx->data[i]);
+        // pTx->rawData[++TxCount] = pTx->data[i];         // by Loreto
     }
 
-    if (SET_CRC_BEFORE_ETX == true) {
-        sendComplemented (fSend, CRC8value);  // by Loreto - inserito prima del ETX
-        if (fDEBUG) DEBUG_TxData[++TxCount] = CRC8value;       // by Loreto
-        fSend (ETX);
-        if (fDEBUG) DEBUG_TxData[++TxCount] = ETX;             // by Loreto
-    } else {
-        fSend (ETX);
-        if (fDEBUG) DEBUG_TxData[++TxCount] = ETX;             // by Loreto
-        sendComplemented (fSend, CRC8value);
-        if (fDEBUG) DEBUG_TxData[++TxCount] = CRC8value;       // by Loreto
-    }
-    if (fDEBUG) DEBUG_TxData[0] = TxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
-
+    sendComplemented (fSend, CRC8value);  // by Loreto - inserito prima del ETX
+    fSend (ETX);
 
 }  // end of sendMsg
 
 
-// receive a message, maximum "length" bytes, timeout after "timeout" milliseconds
-// if nothing received, or an error (eg. bad CRC, bad data) return 0
-// if nothing received, or an error (eg. bad CRC, bad data) return 1 (by Loreto per fare comunque il display dei dati ricevuti)
-// otherwise, returns length of received data
+// ###########################################################
+// - receive a message, maximum "length" bytes, timeout after "timeout" milliseconds
+// - if nothing received, or an error (eg. bad CRC, bad data) return 0
+// - if nothing received, or an error (eg. bad CRC, bad data) return 1 (by Loreto per fare comunque il display dei dati ricevuti)
+// - otherwise, returns length of received data
+// ###########################################################
 byte recvMsg (AvailableCallback fAvailable,   // return available count
               ReadCallback fRead,             // read one byte
               RXTX_DATA *pRx) {
 
-    byte RxCount = 0;
-    bool have_stx = false;
-    pRx->dataCounter  = 0;   // inizializziamo counter
-
-
-    if (pRx->fDEBUG == true) {
-        pRx->rawData[0] = 0;     // initialize il counter a 0
-        Serial.println("\r\n\r\n...siamo in Rx-DEBUG mode!");
-    }
+    bool have_stx   = false;
 
 
     // variables below are set when we get an STX
-    bool have_etx;
-    // byte dataCounter;
+
     bool first_nibble;
     byte current_byte;
 
 
+    byte CRC8calc ;
+    byte CRC8rcvd ;
+
+    byte rawCounter  = 0;
+    byte dataCounter = 0;
+    byte buffSize    = sizeof(pRx->data);
+    pRx->data[0]     = dataCounter;   // inizializziamo counter
+    pRx->rawData[0]  = rawCounter;   // inizializziamo counter
+
+    // Serial.print("\r\ndata        size: ");Serial.println(sizeof(pRx->data));
+    // Serial.print("rawData size: ");Serial.println(sizeof(pRx->rawData));
+
     unsigned long start_time = millis();
+
     while ((millis() - start_time) < pRx->timeout) {
         if (fAvailable () > 0) {
             byte inByte = fRead();
-
-            if (pRx->fDEBUG) {
-                pRx->rawData[++RxCount] = inByte;         // by Loreto
-                // printHexPDS("received: ", inByte);
-            }
+            pRx->rawData[++rawCounter] = inByte;         // by Loreto
+            pRx->rawData[0] = rawCounter;                   // update counter
 
             switch (inByte) {
 
                 case STX:   // start of text
                     have_stx        = true;
-                    have_etx        = false;
-                    pRx->dataCounter  = 0;        // azzeriamo counter
+                    dataCounter     = 0;        // azzeriamo counter
                     first_nibble    = true;
                     start_time      = millis();  // reset timeout period
                     break;
 
                 case ETX:   // end of text
-                    if (SET_CRC_BEFORE_ETX == true) {
-                        /*
-                            il byte precedente dovrebbe essere il CRC.
-                            verifichiamo che sia valido.
-                        */
-                        byte CRCpos   = pRx->dataCounter;      // dovrebbe puntare al CRC
-                        byte CRC8calc = crc8(pRx->data, pRx->dataCounter-1); // verificato
-                        byte CRC8rcvd = pRx->data[CRCpos-1];
+                    /*
+                        il byte precedente dovrebbe essere il CRC.
+                        verifichiamo che sia valido.
+                    */
 
-                        if (pRx->fDEBUG)
-                            pRx->rawCounter = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
+                    // --- CRC dovrebbe essere l'ultimo byte prima dell'ETX
+                    CRC8rcvd = pRx->data[dataCounter];
 
-                        if (CRC8calc != CRC8rcvd)
-                            return LN_RCV_BADCRC;  // bad crc
-
-                        pRx->dataCounter--; // return received length escludendo il byte di CRC
+                    // --- calcolo del CRC senza il CRC e senza il byte[0]--> datacounter
+                    CRC8calc = crc8(&pRx->data[1], dataCounter-1);
+                    pRx->data[0]--;
+                    if (CRC8calc != CRC8rcvd)
+                        return LN_RCV_BADCRC;  // bad crc
+                    else
                         return LN_RCV_OK;
 
-                    } else {
-                        have_etx = true;
-                        break;
-                    }
 
 
                 case 0x0F:
@@ -221,46 +199,31 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     if (!have_stx)
                       break;
 
-                    // check byte is in valid form (4 bits followed by 4 bits complemented)
-                    // non c'è ragione in quanto appartiene sicuramente ad uno dei byte del case-
-                    if ((inByte >> 4) != ((inByte & 0x0F) ^ 0x0F) )
-                        return LN_RCV_BADCHAR;  // bad character
-
-                    return LN_RCV_BADCHAR;  // bad character
-
-
-                      // convert back
+                      // shift a dx
                     inByte >>= 4;
 
-                      // high-order nibble?
+                      // save high-order nibble...
                     if (first_nibble) {
                         current_byte = inByte;
                         first_nibble = false;
                         break;
                     }  // end of first nibble
 
-                    // low-order nibble
+
+                    // get low-order nibble and join byte
                     current_byte <<= 4;
                     current_byte |= inByte;
                     first_nibble = true;
-
-                      // if we have the ETX this must be the CRC
-                    if (have_etx) {
-                        if (pRx->fDEBUG)
-                            pRx->rawCounter = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
-
-                        if (crc8 (pRx->data, pRx->dataCounter) != current_byte)
-                            return LN_RCV_BADCRC;  // bad crc
-
-                        return LN_RCV_OK;  // return OK
-                    }  // end if have ETX already
+                    // printHexPDS( "      current_byte: ", current_byte);
 
                       // keep adding if not full
-                    if (pRx->dataCounter < pRx->dataBuffSize)
-                        pRx->data[pRx->dataCounter++] = current_byte;
-
-                    else
+                    if (dataCounter < buffSize) {
+                        pRx->data[++dataCounter] = current_byte;    // save byte
+                        pRx->data[0] = dataCounter;                 // update counter
+                    }
+                    else {
                         return LN_RCV_OVERFLOW;  // overflow
+                    }
 
                     break;
 
@@ -270,8 +233,9 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
             }  // end of switch
         }  // end of incoming data
-    } // end of while not timed out
+    } // end of while not timed out2
 
     return LN_RCV_TIMEOUT;  // timeout
+
 } // end of recvMsg
 

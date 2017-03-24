@@ -25,18 +25,11 @@
 
     // the data we broadcast to each other device
     typedef struct  {
-        const byte      dataBuffSize                = MAX_BUFF_SIZE;
-        byte            data[MAX_BUFF_SIZE];
-        byte            dataCounter                 = 0;    // bytes ricevuti o da trasmettere
-
-        byte            rawData[MAX_BUFF_SIZE];
-        byte            rawCounter                  = 0; // bytes ricevuti
-
-        unsigned long   timeout                     = 0;        // send/receive timeout
-        byte            fDEBUG                      = false;
-        byte            rCode                       = 0;
-        // char           *errMsg;
-
+        const byte      buffSize                = MAX_BUFF_SIZE;
+        byte            data[MAX_BUFF_SIZE];        // byte[0] is counter
+        byte            dataLen;                    // lunghezza dati Rx/Tx
+        byte            rawData[MAX_BUFF_SIZE*2];   // byte[0] is counter
+        unsigned long   timeout                 = 0;        // send/receive timeout
     }  RXTX_DATA, *pRXTX_DATA;
 
 
@@ -46,10 +39,10 @@
     typedef int  (*AvailableCallback)  ();              // return number of bytes available
     typedef int  (*ReadCallback)  ();                   // read a byte from serial port
 
+
+
     void sendMsg (WriteCallback fSend,
-                  const byte * data,
-                  const byte length,
-                  byte *DEBUG_TxRxMsg=NULL);
+                  RXTX_DATA *rxData);
 
     byte recvMsg (  AvailableCallback fAvailable,
                     ReadCallback fRead,
