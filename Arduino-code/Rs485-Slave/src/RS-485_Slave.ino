@@ -51,7 +51,7 @@ byte myEEpromAddress;        // who we are
 byte myAddress  = 0;
 byte myAddress0 = 0;
 byte myAddress1 = 0;
-
+// byte IAM[10];
 RXTX_DATA rx;
 
 //python3.4 -m serial.tools.list_ports
@@ -74,6 +74,8 @@ void setup() {
     Serial.print(F("this Version   : "));Serial.println(myVersion);
     Serial.print(F("EEprom Address : "));Serial.println(myEEpromAddress);
 
+    // String IAM = String("Loreto") + String(myEEpromAddress); // occupa 1600 bytes circa
+    // sprintf(IAM, "%s%d", "Slave", myEEpromAddress);
 }
 
 
@@ -119,7 +121,7 @@ void loop() {
         displayDebugMessage(&rx);
         displayRxMessage(&rx);
     }
-    else if (rx.rcvdBytes == 0) {
+    else if (rx.dataCounter == 0) {
         Serial.print(F("\r\nNessuna risposta ricevuta in un tempo di: "));
         Serial.print(rx.timeout);
         Serial.println(F("mS"));
@@ -138,8 +140,11 @@ void loop() {
 // #
 // #############################################################
 void displayErrorMessage(byte rCode, RXTX_DATA *ptr) {
+    const char *rs485ErrMsg[] = {"", " - OVERFLOW"," - BAD-CRC"," - BAD-CHAR"," - TIMEOUT"};
     Serial.print(F("\r\n[Slave] - ERROR: "));
-    Serial.println(rCode);
+    Serial.print(ptr->rCode);
+    Serial.println(rs485ErrMsg[rCode]);
+    // Serial.println(rs485ErrMsg[rCode]);
     return;
 }
 
@@ -148,11 +153,11 @@ void displayErrorMessage(byte rCode, RXTX_DATA *ptr) {
 // #############################################################
 void displayDebugMessage(RXTX_DATA *pRx) {
 
-    if (pRx->nDebugBytes > 0) {
+    if (pRx->rawCounter > 0) {
         Serial.println(F("\r\n[Slave] - DEBUG Risposta ricevuta : "));
         Serial.print(F("   "));
-        Serial.print(F("("));Serial.print(pRx->nDebugBytes);Serial.print(F(") - "));
-        printHex(pRx->debugData, pRx->nDebugBytes, ""); // contiene LEN STX ...data... ETX
+        Serial.print(F("("));Serial.print(pRx->rawCounter);Serial.print(F(") - "));
+        printHex(pRx->rawData, pRx->rawCounter, ""); // contiene LEN STX ...data... ETX
     }
 
 
@@ -167,7 +172,7 @@ void displayRxMessage(RXTX_DATA *pRx) {
 
     // only send once per successful change
     Serial.print(F("\r\n[Slave] - Risposta ricevuta       : "));
-    printHex(pRx->data, pRx->rcvdBytes, "");
+    printHex(pRx->data, pRx->dataCounter, "");
 
     // we cannot receive a message from ourself
     // someone must have given two devices the same address

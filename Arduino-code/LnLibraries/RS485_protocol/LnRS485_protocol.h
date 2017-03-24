@@ -8,28 +8,34 @@
     #endif
 
 
-    #define LN_RCV_OK         0
-    #define LN_RCV_OVERFLOW   1
-    #define LN_RCV_BADCRC     2
-    #define LN_RCV_BADCHAR    3
-    #define LN_RCV_TIMEOUT    4
-    #define LN_RCV_ERR_TEST   99
 
-    #define MAX_BUFF_SIZE      50
+    #if not defined LN_RCV_OK
+        #define LN_RCV_OK          0
+        #define LN_RCV_OVERFLOW    1
+        #define LN_RCV_BADCRC      2
+        #define LN_RCV_BADCHAR     3
+        #define LN_RCV_TIMEOUT     4
+        #define LN_RCV_ERR_TEST   99
+        #define MAX_BUFF_SIZE     50
+        // const char *rs485ErrMsg[] = {"", "OVERFLOW","BAD-CRC","BAD-CHAR","TIMEOUT"};
+    #endif
+
+
+
 
     // the data we broadcast to each other device
     typedef struct  {
         const byte      dataBuffSize                = MAX_BUFF_SIZE;
         byte            data[MAX_BUFF_SIZE];
-        byte            rcvdBytes                   = 0;    // bytes ricevuti o da trasmettere
-        byte            xmitBytes                   = 0;    // bytes ricevuti o da trasmettere
+        byte            dataCounter                 = 0;    // bytes ricevuti o da trasmettere
 
-        const byte      debugBuffSize               = MAX_BUFF_SIZE;
-        byte            debugData[MAX_BUFF_SIZE];
-        byte            nDebugBytes                 = 0; // bytes ricevuti
+        byte            rawData[MAX_BUFF_SIZE];
+        byte            rawCounter                  = 0; // bytes ricevuti
 
         unsigned long   timeout                     = 0;        // send/receive timeout
         byte            fDEBUG                      = false;
+        byte            rCode                       = 0;
+        // char           *errMsg;
 
     }  RXTX_DATA, *pRXTX_DATA;
 

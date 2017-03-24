@@ -68,9 +68,8 @@ function clearLibraryLink {
     echo
 
 
-    device=/dev/ttyUSBx
     device=$2
-    device=/dev/ttyUSB${2}
+    device=/dev/${2}
     action=$1
 
     if [[ ! -d $Project_LIB_DIR ]]; then
@@ -117,7 +116,7 @@ function clearLibraryLink {
     VERBOSE='--verbose'
     VERBOSE=''
     if [[ "$action" =~ "u" ]]; then
-        [[ "$device" == "" ]] && echo "Enter USB port: /dev/ttyUSB0, /dev/ttyUSB1, ...." && exit
+        [[ "$device" == "" ]] && echo "Enter USB port: ttyUSB0, ttyUSB1, slave01, ...." && exit
         [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
         Esegui "platformio run $VERBOSE --target upload --upload-port $device"
     fi

@@ -141,17 +141,18 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
     byte RxCount = 0;
     bool have_stx = false;
-    pRx->rcvdBytes  = 0;   // inizializziamo counter
+    pRx->dataCounter  = 0;   // inizializziamo counter
+
 
     if (pRx->fDEBUG == true) {
-        pRx->debugData[0] = 0;     // initialize il counter a 0
+        pRx->rawData[0] = 0;     // initialize il counter a 0
         Serial.println("\r\n\r\n...siamo in Rx-DEBUG mode!");
     }
 
 
     // variables below are set when we get an STX
     bool have_etx;
-    // byte rcvdBytes;
+    // byte dataCounter;
     bool first_nibble;
     byte current_byte;
 
@@ -162,7 +163,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
             byte inByte = fRead();
 
             if (pRx->fDEBUG) {
-                pRx->debugData[++RxCount] = inByte;         // by Loreto
+                pRx->rawData[++RxCount] = inByte;         // by Loreto
                 // printHexPDS("received: ", inByte);
             }
 
@@ -171,7 +172,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                 case STX:   // start of text
                     have_stx        = true;
                     have_etx        = false;
-                    pRx->rcvdBytes  = 0;        // azzeriamo counter
+                    pRx->dataCounter  = 0;        // azzeriamo counter
                     first_nibble    = true;
                     start_time      = millis();  // reset timeout period
                     break;
@@ -182,17 +183,17 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                             il byte precedente dovrebbe essere il CRC.
                             verifichiamo che sia valido.
                         */
-                        byte CRCpos   = pRx->rcvdBytes;      // dovrebbe puntare al CRC
-                        byte CRC8calc = crc8(pRx->data, pRx->rcvdBytes-1); // verificato
+                        byte CRCpos   = pRx->dataCounter;      // dovrebbe puntare al CRC
+                        byte CRC8calc = crc8(pRx->data, pRx->dataCounter-1); // verificato
                         byte CRC8rcvd = pRx->data[CRCpos-1];
 
                         if (pRx->fDEBUG)
-                            pRx->nDebugBytes = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
+                            pRx->rawCounter = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
 
                         if (CRC8calc != CRC8rcvd)
                             return LN_RCV_BADCRC;  // bad crc
 
-                        pRx->rcvdBytes--; // return received length escludendo il byte di CRC
+                        pRx->dataCounter--; // return received length escludendo il byte di CRC
                         return LN_RCV_OK;
 
                     } else {
@@ -225,6 +226,9 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     if ((inByte >> 4) != ((inByte & 0x0F) ^ 0x0F) )
                         return LN_RCV_BADCHAR;  // bad character
 
+                    return LN_RCV_BADCHAR;  // bad character
+
+
                       // convert back
                     inByte >>= 4;
 
@@ -243,17 +247,17 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                       // if we have the ETX this must be the CRC
                     if (have_etx) {
                         if (pRx->fDEBUG)
-                            pRx->nDebugBytes = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
+                            pRx->rawCounter = RxCount;                 // by Loreto (dovrebbe contenere: LEN(escluso byt0) STX ...data... CRC ETX)
 
-                        if (crc8 (pRx->data, pRx->rcvdBytes) != current_byte)
+                        if (crc8 (pRx->data, pRx->dataCounter) != current_byte)
                             return LN_RCV_BADCRC;  // bad crc
 
                         return LN_RCV_OK;  // return OK
                     }  // end if have ETX already
 
                       // keep adding if not full
-                    if (pRx->rcvdBytes < pRx->dataBuffSize)
-                        pRx->data[pRx->rcvdBytes++] = current_byte;
+                    if (pRx->dataCounter < pRx->dataBuffSize)
+                        pRx->data[pRx->dataCounter++] = current_byte;
 
                     else
                         return LN_RCV_OVERFLOW;  // overflow
