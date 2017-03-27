@@ -11,7 +11,7 @@
 
 #include <EEPROM.h>
 
-char myVersion[] = "2017-03-20 07.45.44";
+char myVersion[] = "2017-03-27 17.11.17";
 
 SoftwareSerial serialRs485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
@@ -39,11 +39,10 @@ int  fRead()                   {return serialRs485.read (); }
 // byte DEBUG_data [200] = "                                                                ";   // gli faccio scrivere il messaggio inviato con relativo CRC
 #define MAX_MSG_SIZE            50
 
-byte fDEBUG;
-
-
+byte fDEBUG = false;
 
 byte myEEpromAddress;        // who we are
+// byte myName[] = "[addr:  ]";        // who we are
 
 byte myAddress  = 0;
 byte myAddress0 = 0;
@@ -64,6 +63,8 @@ void setup() {
     pinMode(Addr1,  INPUT_PULLUP);  // set pullup on analog
 
     myEEpromAddress = EEPROM.read (0);
+
+    // myName[6] = EEPROM.read (0);
     delay(5*1000);
 
     // loop_DisplayAddress();
@@ -92,7 +93,7 @@ void loop_DisplayAddress() {
 
 
 
-void loop() {
+void loop_SEND() {
     RxTx.timeout = 10000;
 
     byte respoonse[] = "Loreto";
@@ -100,19 +101,17 @@ void loop() {
     delay(2000);
 }
 
-void loop_OK0() {
+void loop() {
     RxTx.timeout = 10000;
 
     byte rCode = recvMsg (fAvailable, fRead, &RxTx);
 
     if (rCode > 0) {
         displayErrorMessage(rCode, &RxTx);
-        // displayDebugMessage(&rx);
     }
     else if (fDEBUG == true)  {
-        // displayDebugMessage("[Slave] - DEBUG Richiesta ricevuta : ", &RxTx);
-        displayDebugMessage("[Slave] - CMD received (DEBUG)   : ", &RxTx);
-        displayRxMessage(   "[Slave] - CMD received (PAYLOAD) : ", &RxTx);
+        displayDebugMessage("CMD received (DEBUG)   : ", &RxTx);
+        displayPayload(   "CMD received (PAYLOAD) : ", &RxTx);
     }
     else if (RxTx.data[0] == 0) {
         Serial.print(F("\r\nNessuna richiesta ricevuta in un tempo di: "));
@@ -120,7 +119,7 @@ void loop_OK0() {
         Serial.println(F("mS"));
     }
     else
-        displayRxMessage("CMD received (PAYLOAD) : ", &RxTx);
+        displayPayload("CMD received (PAYLOAD) : ", &RxTx);
         byte respoonse[] = "Loreto";
         sendMessage(respoonse, sizeof(respoonse), &RxTx);
 
@@ -128,7 +127,9 @@ void loop_OK0() {
 
 
 
-
+void printName(void) {
+    Serial.print(F("[addr:"));Serial.print(myEEpromAddress);Serial.print(F("] - "));
+}
 
 
 // #############################################################
@@ -138,7 +139,8 @@ void displayErrorMessage(byte rCode, RXTX_DATA *ptr) {
     byte nBytes;
     const char *rs485ErrMsg[] = {"", " - OVERFLOW"," - BAD-CRC"," - BAD-CHAR"," - TIMEOUT"};
 
-    Serial.print(F(" [Slave] - ERROR: "));
+    printName();
+    Serial.print(F("ERROR: "));
     Serial.print(rCode);
     Serial.println(rs485ErrMsg[rCode]);
 
@@ -163,6 +165,7 @@ void displayDebugMessage(const char* text, RXTX_DATA *pRx) {
     byte dataLen = pRx->rawData[0];
 
     if (dataLen > 0) {
+        printName();
         Serial.print(text);
         Serial.print(F("   ("));Serial.print(dataLen);Serial.print(F(") - "));
         printHex(&pRx->rawData[1], dataLen); // contiene LEN STX ...data... ETX
@@ -176,7 +179,9 @@ void displayDebugMessage(const char* text, RXTX_DATA *pRx) {
 // #############################################################
 // #
 // #############################################################
-void displayRxMessage(const char* text, RXTX_DATA *pRx) {
+// void displayRxMessage(const char* text, RXTX_DATA *pRx) {
+void displayPayload(const char* text, RXTX_DATA *pRx) {
+    printName();
     Serial.print(text);
     Serial.print(F("   ("));Serial.print(pRx->data[0]);Serial.print(F(") - "));
     printHex(&pRx->data[1], pRx->data[0], "\r\n");
@@ -192,8 +197,8 @@ void sendMessage(byte data[], byte dataLen, RXTX_DATA *RxTx) {
 
     // assemble message
     // RxTx.data[0] = dataLen+1;    // len + SA + DA
-    RxTx->data[++index] = 0;    // SA
-    RxTx->data[++index] = 1;    // DA
+    RxTx->data[++index] = myEEpromAddress;    // SA
+    RxTx->data[++index] = 0;    // DA
 
     for (byte i = 0; i<dataLen; i++)
         RxTx->data[++index] = data[i];         // copiamo i dati nel buffer da inviare
@@ -205,9 +210,12 @@ void sendMessage(byte data[], byte dataLen, RXTX_DATA *RxTx) {
     digitalWrite(RS485_ENABLE_PIN, HIGH);               // enable sending
     sendMsg(fWrite, RxTx);
     digitalWrite(RS485_ENABLE_PIN, LOW);                // disable sending
-    fDEBUG = true;
-    if (fDEBUG)
-        displayDebugMessage("[Slave] - Resp xmitted (DEBUG)  : ", RxTx);
 
+    if (fDEBUG)
+        displayDebugMessage("Resp xmitted (DEBUG)   : ", RxTx);
+    else
+        displayPayload("Resp xmitted (PAYLOAD) : ", RxTx);
+
+    Serial.println();
 }
 

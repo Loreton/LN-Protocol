@@ -48,7 +48,7 @@ Modifiche di Loreto:
 #include <LnFunctions.h>
 #include "LnRS485_protocol.h"
 
-#define CRC_DEBUG // debug in caso di errore del CRC
+#define xxxCRC_DEBUG // debug in caso di errore del CRC
 
 const byte STX = 0x02;
 const byte ETX = 0x03;
@@ -91,22 +91,6 @@ static byte crc8(const byte *data, byte len) {
 }
 
 
-// calculate 8-bit CRC
-static byte crc8_(const byte *addr, byte len) {
-    byte crc = 0;
-    while (len--) {
-        byte inbyte = *addr++;
-        for (byte i = 8; i; i--) {
-            byte mix = (crc ^ inbyte) & 0x01;
-            crc >>= 1;
-            if (mix)
-                crc ^= 0x8C;
-            inbyte >>= 1;
-        }  // end of for
-    }  // end of while
-
-    return crc;
-}  // end of crc8
 
 // ###########################################################
 // - send a byte complemented, repeated
