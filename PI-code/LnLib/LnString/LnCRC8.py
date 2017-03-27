@@ -6,6 +6,13 @@
 import binascii
 
 def strCheckSum(strData):
+    byteArray_data = bytearray()
+    for x in strData:
+        byteArray_data.append(ord(x))
+    result = calculateCRC8(byteArray_data)
+    return result
+
+def strCheckSum_2(strData):
     bytes_data      = strData.encode()
     bytes_hex_data  = binascii.hexlify(bytes_data)
     byteArray_data  = bytearray(bytes_hex_data)
@@ -26,7 +33,6 @@ def byteArrayCheckSum(byteArray_data):
 def calculateCRC8(byteArray_data):
     result = 0
     for byte in byteArray_data:
-        # print ('byte: {0} - result {1}'.format( byte, result))
         b2 = byte
         if (byte < 0):
             b2 = byte + 256
@@ -40,13 +46,20 @@ def calculateCRC8(byteArray_data):
     return result
 
 
+
 if __name__ == '__main__':
     import sys
 
     msg = bytearray(3)
-    msg[0] = 1
-    msg[1] = 2
-    msg[2] = 0xcb   # ATTESO D0 come CRC8
+    msg.append(0x00)
+    msg.append(0x01)
+    msg.append(0X4C)    # L
+    msg.append(0X6F)    # 0
+    msg.append(0X72)    # r
+    msg.append(0X65)    # e
+    msg.append(0X74)    # t
+    msg.append(0X6F)    # o
+        # atteso 0xDD
 
     if isinstance(msg, bytearray):
         CRC8 = byteArrayCheckSum(msg)
@@ -60,5 +73,5 @@ if __name__ == '__main__':
         print ("CRC-8 Maxim/Dallas: {0} ".format(hex(CRC8)))
         # interpretato com HEX value
         # CRC8 = calcCheckSum(hexData=msg)
-        CRC8 = hexCheckSum(msg)
-        print ("CRC-8 Maxim/Dallas: {0} ".format(hex(CRC8)))
+        # CRC8 = hexCheckSum(msg)
+        # print ("CRC-8 Maxim/Dallas: {0} ".format(hex(CRC8)))

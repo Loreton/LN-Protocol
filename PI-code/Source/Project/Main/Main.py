@@ -71,6 +71,21 @@ def Main(gv, action):
             port.ETX                        = rs485.ETX
             port.CRC                        = rs485.CRC
             port.close_port_after_each_call = rs485.close_port_after_each_call
+            '''
+            msg = bytearray(3)
+            msg.append(0x00)
+            msg.append(0x01)
+            msg.append(0X4C)    # L
+            msg.append(0X6F)    # 0
+            msg.append(0X72)    # r
+            msg.append(0X65)    # e
+            msg.append(0X74)    # t
+            msg.append(0X6F)    # o
+                # atteso 0xDD
+            CRC = port._getCRC8( msg)
+            print (CRC, hex(CRC))
+            sys.exit()
+            '''
 
             print(port.__repr__())
 
@@ -79,7 +94,10 @@ def Main(gv, action):
             while True:
                 print( '--- monitoring: {0}'.format(rs485.usbDevPath))
                 payLoad, rowData = port.readData()
-                print ('rowData (Hex):   {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
+                # print ('rowData (Hex):   {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
+                msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='raw data', LEN=len(rowData), DATA=' '.join('{:02X}'.format(x) for x in rowData))
+                print (msg)
+
                 if payLoad:
                     print ('fields       :   SA DA data')
                     print ('payLoad (Hex):   {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))

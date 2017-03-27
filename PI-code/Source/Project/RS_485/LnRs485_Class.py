@@ -143,7 +143,7 @@ class LnRs485_Instrument():
 
         self.STX = int('0x02', 16) # integer
         self.ETX = int('0x03', 16) # integer
-        self.CRC = True
+        # self.CRC = True
 
         self.close_port_after_each_call = True
         """If this is :const:'True', the serial port will be closed after each call. """
@@ -201,7 +201,6 @@ class LnRs485_Instrument():
             debug                      = {DEBUG},
             STX                        = 0x{STX:02x},
             ETX                        = 0x{ETX:02x},
-            CRC                        = {CRC},
             serial-id                  = {SERIAL},
                 >""".format(
                         MOD=self.__module__,
@@ -214,8 +213,7 @@ class LnRs485_Instrument():
                         DEBUG=self.debug,
                         SERIAL=self.serial,
                         STX=self.STX,
-                        ETX=self.ETX,
-                        CRC=self.CRC
+                        ETX=self.ETX
             )
 
     # def displayPortParameters(self):
@@ -224,10 +222,9 @@ class LnRs485_Instrument():
     #     print ('ETX:                            0x{0:02x}'.format(self.ETX))
     #     print ('CLOSE_PORT_AFTER_EACH_CALL:     {0}'.format(self.close_port_after_each_call))
     #     print ('precalculate_read_size:         {0}'.format(self.precalculate_read_size))
-    #     print ('CRC:                            {0}'.format(self.CRC))
 
 
-    def _calculateCRC8(self, byteArray_data):
+    def _getCRC8(self, byteArray_data):
         logger = self._setLogger(package=__name__)
         crcValue = 0
         for byte in byteArray_data:
@@ -401,9 +398,8 @@ class LnRs485_Instrument():
 
 
         rowData = self._readBuffer()
-        logger.debug('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in rowData)))
-        print('full data:       {0}'.format(' '.join('{:02x}'.format(x) for x in rowData)))
-
+        msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='full data', LEN=len(rowData), DATA=' '.join('{:02X}'.format(x) for x in rowData))
+        logger.debug(msg)
 
             # Prendiamo i dati fissi
         if not rowData[0] == self.STX:
@@ -431,14 +427,20 @@ class LnRs485_Instrument():
             # il trick che segue ci permette di prelevare due bytes alla volta
         payLoad = bytearray()
         payLoadNibbled  = rowData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
+        # msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='payLoadNibbled', LEN=len(payLoadNibbled), DATA=' '.join('{:02X}'.format(x) for x in payLoadNibbled))
+        # print (msg)
+
+        # for val in payLoadNibbled: print ('{0:02X}'.format(val), end=' ')
+        # print()
         xy = iter(payLoadNibbled)
         for byte1, byte2 in zip(xy, xy):
-
+            # print ('{0:02X}'.format(byte1), '{0:02X}'.format(byte2), end=' --> ')
                 # re-build real byte
             if byte1 in self._validBytes and byte2 in self._validBytes:
                 byte1_HighNibble = (byte1 >> 4) & 0x0F
                 byte2_HighNibble = (byte2 >> 4) & 0x0F
                 realByte = byte1_HighNibble*16 + byte2_HighNibble
+                # print ('{0:02X}'.format(realByte))
 
             else:
                 msg = 'ERROR: some byte corrupted byte1:{0:02x} byte2:{1:02x}'.format(byte1, byte2)
@@ -453,26 +455,25 @@ class LnRs485_Instrument():
             # - Una volta ricostruidi i bytes origilali,
             # - calcoliamo il CRC sui dati (ovviamento escluso il byte di CRC stesso)
             # -----------------------------------------------------------------------
+        CRC_calculated  = self._getCRC8(payLoad[:-1])
+            # ---------------------------------
+            # - check CRC (drop STX and ETX)
+            # ---------------------------------
+        CRC_received    = payLoad[-1]
+        payLoad         = payLoad[:-1]
 
-        if self.CRC:
-            CRC_calculated  = self._calculateCRC8(payLoad[:-1])
-                # ---------------------------------
-                # - check CRC (drop STX and ETX)
-                # ---------------------------------
-            CRC_received    = payLoad[-1]
-            payLoad         = payLoad[:-1]
+        logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
+        logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
+        # sys.exit()
 
-            logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
-            logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
-
-            if not CRC_received == CRC_calculated:
-                logger.error('Il valore di CRC non coincide')
-                print ('ERROR: Il valore di CRC non coincide')
-                print ()
-                print ("    CRC received  : x{0:02X}".format(CRC_received))
-                print ("    CRC calculated: x{0:02X}".format(CRC_calculated))
-                print ()
-                return bytearray(), rowData
+        if not CRC_received == CRC_calculated:
+            logger.error('Il valore di CRC non coincide')
+            print ('ERROR: Il valore di CRC non coincide')
+            print ()
+            print ("    CRC received  : x{0:02X}".format(CRC_received))
+            print ("    CRC calculated: x{0:02X}".format(CRC_calculated))
+            print ()
+            return bytearray(), rowData
 
         return payLoad, rowData
 
@@ -511,7 +512,7 @@ class LnRs485_Instrument():
 
             # - CRC nell'array
         if self.CRC:
-            CRC_value    = self._calculateCRC8(data)
+            CRC_value    = self._getCRC8(data)
             byte1, byte2 = self._splitComplementedByte(CRC_value)
             dataToSend.append(byte1)
             dataToSend.append(byte2)

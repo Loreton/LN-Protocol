@@ -55,7 +55,7 @@
 
     void printHex(const byte data);
     void printHex(const uchar data,         const char * endStr);
-    void printHex(const uchar *data,        const byte len,         const char *endStr="");
+    void printHex(const uchar *data,        const byte len,         const char *endStr="\r\n");
     void printHexPDS(const char *prefixStr, const byte data,        const char *suffixStr="\r\n");
 
     byte LnCRC8(const byte *data,     byte len);

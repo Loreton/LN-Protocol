@@ -45,25 +45,57 @@ Modifiche di Loreto:
 
 #define I_AM_RS485_PROTOCOL_CPP
 
-#include <LnFunctions.h>                    // for SET_CRC_BEFORE_ETX definition
+#include <LnFunctions.h>
 #include "LnRS485_protocol.h"
 
-#define xxBAD_CRC_DEBUG // debug in caso di errore del CRC
+#define CRC_DEBUG // debug in caso di errore del CRC
 
 const byte STX = 0x02;
 const byte ETX = 0x03;
-const bool  SET_CRC_BEFORE_ETX = true;    // by Loreto
+
+        // #if defined CRC_DEBUG
+        //     Serial.print( "[");Serial.print(len);Serial.print( "] - ");
+        //     printHexPDS( "inbyte: ", inbyte);
+        // #endif
+
+// calculate 8-bit CRC
+static byte crc8(const byte *data, byte len) {
+    byte crc = 0, i;
+    #if defined CRC_DEBUG
+        Serial.print( "data len: ");Serial.print(len);Serial.println( );
+    #endif
+
+    for (byte index=0; index<len; index++) {
+        byte inbyte = data[index];
+
+        #if defined CRC_DEBUG
+            Serial.print( "[");Serial.print(index);Serial.print( "] - ");
+            printHexPDS( "inbyte: ", inbyte);
+        #endif
+
+        for (i = 8; i; i--) {
+            byte mix = (crc ^ inbyte) & 0x01;
+            crc >>= 1;
+            if (mix)
+                crc ^= 0x8C;
+            inbyte >>= 1;
+        }  // end of for
+    }
+
+    #if defined CRC_DEBUG
+        printHexPDS( "calculated CRC: ", crc);
+        Serial.println();
+    #endif
+
+    return crc;
+}
 
 
 // calculate 8-bit CRC
-static byte crc8(const byte *addr, byte len) {
+static byte crc8_(const byte *addr, byte len) {
     byte crc = 0;
     while (len--) {
         byte inbyte = *addr++;
-        #if defined BAD_CRC_DEBUG
-            Serial.print( "[");Serial.print(len);Serial.print( "] - ");
-            printHexPDS( "inbyte: ", inbyte);
-        #endif
         for (byte i = 8; i; i--) {
             byte mix = (crc ^ inbyte) & 0x01;
             crc >>= 1;
@@ -72,6 +104,7 @@ static byte crc8(const byte *addr, byte len) {
             inbyte >>= 1;
         }  // end of for
     }  // end of while
+
     return crc;
 }  // end of crc8
 
@@ -81,16 +114,20 @@ static byte crc8(const byte *addr, byte len) {
 // -   0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
 // -   invia prima l'HighNibble e poi il LowNibble
 // ###########################################################
-void sendComplemented (WriteCallback fSend, const byte what) {
-byte c;
+void sendComplemented (WriteCallback fSend, const byte what, RXTX_DATA *pTx) {
+byte c, sentByte;
 
-    // first nibble
+    // high nibble
     c = what >> 4;
-    fSend ((c << 4) | (c ^ 0x0F));
+    sentByte = (c << 4) | (c ^ 0x0F);
+    fSend (sentByte);
+    pTx->rawData[++pTx->rawData[0]] = sentByte;
 
-    // second nibble
+    // low nibble
     c = what & 0x0F;
-    fSend ((c << 4) | (c ^ 0x0F));
+    sentByte = (c << 4) | (c ^ 0x0F);
+    fSend (sentByte);
+    pTx->rawData[++pTx->rawData[0]] = sentByte;
 
 }  // end of sendComplemented
 
@@ -98,19 +135,27 @@ byte c;
 // - il primo byte di pTx->data è la lunghezza dei dati.
 // ###########################################################
 void sendMsg (WriteCallback fSend, RXTX_DATA *pTx) {
-    byte dataLen = pTx->data[0];
 
-    byte CRC8value = crc8(&pTx->data[1], dataLen);   // calcoliamo il CRC
+    byte CRC8value = crc8(&pTx->data[1], pTx->data[0]);   // calcoliamo il CRC
+    pTx->rawData[0] = 0;
 
     fSend (STX);  // STX
+    pTx->rawData[++pTx->rawData[0]] = STX;
 
-    for (byte i = 1; i < dataLen; i++) {
-        sendComplemented (fSend, pTx->data[i]);
-        // pTx->rawData[++TxCount] = pTx->data[i];         // by Loreto
-    }
+    for (byte i=1; i<=pTx->data[0]; i++)
+        sendComplemented (fSend, pTx->data[i], pTx);
 
-    sendComplemented (fSend, CRC8value);  // by Loreto - inserito prima del ETX
+
+    sendComplemented (fSend, CRC8value, pTx);
+    // pTx->rawData[++pTx->rawData[0]] = CRC8value;
+
     fSend (ETX);
+    pTx->rawData[++pTx->rawData[0]] = ETX;
+
+    // Serial.print( "raw data sent len:[");Serial.print(pTx->rawData[0]);Serial.println( "] - ");
+    // printHex( &pTx->rawData[1], pTx->rawData[0]);
+    // Serial.println();
+
 
 }  // end of sendMsg
 
@@ -160,12 +205,13 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
                 case ETX:   // end of text
 
-                    // --- CRC dovrebbe essere l'ultimo byte prima dell'ETX
+                    // --- CRC è l'ultimo byte prima dell'ETX
                     CRC8rcvd = pRx->data[pRx->data[0]];
 
-                    // --- calcolo del CRC escludendo il byte di CRC
+                    // --- calcolo del CRC escludendo il byte di CRC precedentemente salvato
                     CRC8calc = crc8(&pRx->data[1], --pRx->data[0]);
-                    #if defined BAD_CRC_DEBUG
+
+                    #if defined CRC_DEBUG
                         Serial.print( "dataLen : ");Serial.println(pRx->data[0]);
                         printHexPDS( "CRC8rcvd: ", CRC8rcvd);
                         printHexPDS( "CRC8calc: ", CRC8calc);
