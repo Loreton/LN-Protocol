@@ -48,12 +48,10 @@ Modifiche di Loreto:
 #include <LnFunctions.h>                    // for SET_CRC_BEFORE_ETX definition
 #include "LnRS485_protocol.h"
 
-// const byte STX = '\02';
-// const byte ETX = '\03';
+#define xxBAD_CRC_DEBUG // debug in caso di errore del CRC
+
 const byte STX = 0x02;
 const byte ETX = 0x03;
-// byte fDEBUG     = false;
-
 const bool  SET_CRC_BEFORE_ETX = true;    // by Loreto
 
 
@@ -62,8 +60,10 @@ static byte crc8(const byte *addr, byte len) {
     byte crc = 0;
     while (len--) {
         byte inbyte = *addr++;
-        // Serial.print( "[");Serial.print(len);Serial.print( "] - ");
-        // printHexPDS( "inbyte: ", inbyte);
+        #if defined BAD_CRC_DEBUG
+            Serial.print( "[");Serial.print(len);Serial.print( "] - ");
+            printHexPDS( "inbyte: ", inbyte);
+        #endif
         for (byte i = 8; i; i--) {
             byte mix = (crc ^ inbyte) & 0x01;
             crc >>= 1;
@@ -136,9 +136,9 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
     byte CRC8calc ;
     byte CRC8rcvd ;
+    byte lowNibble ;
+    byte highNibble ;
 
-    byte rawCounter  = 0;
-    byte dataCounter = 0;
     byte buffSize    = sizeof(pRx->data);
 
     unsigned long start_time = millis();
@@ -146,41 +146,35 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
     while ((millis() - start_time) < pRx->timeout) {
         if (fAvailable () > 0) {
             byte inByte = fRead();
-            pRx->rawData[++rawCounter] = inByte;         // by Loreto
-            pRx->rawData[0] = rawCounter;                   // update counter
+            pRx->rawData[++pRx->rawData[0]] = inByte;         // by Loreto
 
             switch (inByte) {
 
                 case STX:   // start of text
                     have_stx        = true;
-                    dataCounter     = 0;        // azzeriamo counter
-                    pRx->dataLen    = 0;
+                    pRx->data[0]    = 0;            // azzeramento dataLen
+                    pRx->rawData[0] = 0;            // azzeramento dataLen
                     first_nibble    = true;
                     start_time      = millis();  // reset timeout period
                     break;
 
                 case ETX:   // end of text
 
-                    // --- eliminamo un counter perché incrementato a priori
-                    pRx->dataLen--;
-
                     // --- CRC dovrebbe essere l'ultimo byte prima dell'ETX
-                    CRC8rcvd = pRx->data[pRx->dataLen];
+                    CRC8rcvd = pRx->data[pRx->data[0]];
 
-                    // --- calcolo del CRC senza il CRC
-                    CRC8calc = crc8(pRx->data, pRx->dataLen);
-
-
-                    // printHexPDS( "dataLen : ", pRx->dataLen);
-                    // printHexPDS( "CRC8rcvd: ", CRC8rcvd);
-                    // printHexPDS( "CRC8calc: ", CRC8calc);
-
+                    // --- calcolo del CRC escludendo il byte di CRC
+                    CRC8calc = crc8(&pRx->data[1], --pRx->data[0]);
+                    #if defined BAD_CRC_DEBUG
+                        Serial.print( "dataLen : ");Serial.println(pRx->data[0]);
+                        printHexPDS( "CRC8rcvd: ", CRC8rcvd);
+                        printHexPDS( "CRC8calc: ", CRC8calc);
+                    #endif
 
                     if (CRC8calc != CRC8rcvd)
                         return LN_RCV_BADCRC;  // bad crc
                     else
                         return LN_RCV_OK;
-
 
 
                 case 0x0F:
@@ -202,26 +196,22 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     if (!have_stx)
                       break;
 
-                      // shift a dx
-                    inByte >>= 4;
-
                       // save high-order nibble...
                     if (first_nibble) {
-                        current_byte = inByte;
+                        highNibble = inByte & 0xF0;
                         first_nibble = false;
                         break;
-                    }  // end of first nibble
-
+                    }
 
                     // get low-order nibble and join byte
-                    current_byte <<= 4;
-                    current_byte |= inByte;
+                    lowNibble    = inByte >>4;
+                    current_byte = highNibble | lowNibble;
                     first_nibble = true;
-                    // printHexPDS( "      current_byte: ", current_byte);
+
 
                       // keep adding if not full
-                    if (dataCounter < buffSize)
-                        pRx->data[pRx->dataLen++] = current_byte;    // save byte
+                    if (pRx->data[0] < buffSize)
+                        pRx->data[++pRx->data[0]] = current_byte;    // save byte
                     else
                         return LN_RCV_OVERFLOW;  // overflow
 

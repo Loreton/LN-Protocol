@@ -108,7 +108,7 @@ void loop() {
         displayDebugMessage(&RxTx);
         displayRxMessage(&RxTx);
     }
-    else if (RxTx.dataLen == 0) {
+    else if (RxTx.data[0] == 0) {
         Serial.print(F("\r\nNessuna risposta ricevuta in un tempo di: "));
         Serial.print(RxTx.timeout);
         Serial.println(F("mS"));
@@ -130,19 +130,19 @@ void displayErrorMessage(byte rCode, RXTX_DATA *ptr) {
     byte nBytes;
     const char *rs485ErrMsg[] = {"", " - OVERFLOW"," - BAD-CRC"," - BAD-CHAR"," - TIMEOUT"};
 
-    Serial.print(F("\r\n[Slave] - ERROR: "));
+    Serial.print(F(" [Slave] - ERROR: "));
     Serial.print(rCode);
     Serial.println(rs485ErrMsg[rCode]);
 
     // display dei rawdata
     nBytes = ptr->rawData[0];
-    Serial.print(F("\r\n raw->  ("));Serial.print(nBytes);Serial.print(F(") - "));
-    printHex(&ptr->rawData[1], nBytes, ""); // contiene LEN STX ...data... ETX
+    Serial.print(F(" raw->  ("));Serial.print(nBytes);Serial.print(F(") - "));
+    printHex(&ptr->rawData[1], nBytes, "\r\n"); // contiene LEN STX ...data... ETX
 
     // display dei data
     nBytes = ptr->data[0];
-    Serial.print(F("\r\n data-> ("));Serial.print(nBytes);Serial.print(F(") - "));
-    printHex(&ptr->data[1], nBytes, ""); // contiene solo dati
+    Serial.print(F(" data-> ("));Serial.print(nBytes);Serial.print(F(") - "));
+    printHex(&ptr->data[1], nBytes, "\r\n"); // contiene solo dati
 
 
     return;
@@ -152,13 +152,13 @@ void displayErrorMessage(byte rCode, RXTX_DATA *ptr) {
 // #
 // #############################################################
 void displayDebugMessage(RXTX_DATA *pRx) {
-    byte dataCounter = pRx->rawData[0];
+    byte dataLen = pRx->rawData[0];
 
-    if (dataCounter > 0) {
-        Serial.println(F("\r\n[Slave] - DEBUG Risposta ricevuta : "));
+    if (dataLen > 0) {
+        Serial.println(F("[Slave] - DEBUG Risposta ricevuta : "));
         Serial.print(F("   "));
-        Serial.print(F("("));Serial.print(dataCounter);Serial.print(F(") - "));
-        printHex(&pRx->rawData[1], dataCounter, ""); // contiene LEN STX ...data... ETX
+        Serial.print(F("("));Serial.print(dataLen);Serial.print(F(") - "));
+        printHex(&pRx->rawData[1], dataLen, ""); // contiene LEN STX ...data... ETX
     }
 
 
@@ -170,11 +170,11 @@ void displayDebugMessage(RXTX_DATA *pRx) {
 // #
 // #############################################################
 void displayRxMessage(RXTX_DATA *pRx) {
-    // byte dataCounter = pRx->data[0];
+    // byte dataLen = pRx->data[0];
 
     // only send once per successful change
-    Serial.print(F("\r\n[Slave] - Risposta ricevuta       : "));
-    printHex(pRx->data, pRx->dataLen, "");
+    Serial.print(F("[Slave] - Risposta ricevuta       : "));
+    printHex(&pRx->data[1], pRx->data[0], "\r\n");
 
     // we cannot receive a message from ourself
     // someone must have given two devices the same address
