@@ -60,6 +60,8 @@ def Main(gv, action):
         # = RS-485 port monitor
         # ===================================================
     if gv.INPUT_PARAM.actionCommand == 'rs485.monitor':
+        gv.Prj.Monitor(gv)
+        '''
             # ------------------------------
             # - Inizializzazione
             # ------------------------------
@@ -71,21 +73,7 @@ def Main(gv, action):
             port.ETX                        = rs485.ETX
             port.CRC                        = rs485.CRC
             port.close_port_after_each_call = rs485.close_port_after_each_call
-            '''
-            msg = bytearray(3)
-            msg.append(0x00)
-            msg.append(0x01)
-            msg.append(0X4C)    # L
-            msg.append(0X6F)    # 0
-            msg.append(0X72)    # r
-            msg.append(0X65)    # e
-            msg.append(0X74)    # t
-            msg.append(0X6F)    # o
-                # atteso 0xDD
-            CRC = port._getCRC8( msg)
-            print (CRC, hex(CRC))
-            sys.exit()
-            '''
+
 
             print(port.__repr__())
 
@@ -111,6 +99,7 @@ def Main(gv, action):
             print ("Keybord interrupt has been pressed")
             sys.exit()
 
+        '''
 
     elif gv.INPUT_PARAM.actionCommand == 'rs485.send':
             # ------------------------------

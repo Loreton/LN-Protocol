@@ -6,6 +6,7 @@
 ####################################################
 
 from . Main.Main                    import  Main
+from . Main.Monitor                    import  Monitor
 
 
 from . Setup.SetupEnv               import  SetupEnv
