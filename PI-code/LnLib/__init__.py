@@ -35,3 +35,7 @@ from . LnString.LnCRC8                  import  strCheckSum
 from . LnString.LnCRC8                  import  hexCheckSum
 from . LnString.LnCRC8                  import  byteArrayCheckSum
 from . LnString.LnCRC8                  import  calculateCRC8
+
+
+
+from . LnRS485.LnRs485_Class      import  LnRs485_Instrument as LnRs485 # import di un membro

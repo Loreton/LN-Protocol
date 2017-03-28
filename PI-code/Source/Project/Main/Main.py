@@ -37,9 +37,9 @@ def Main(gv, action):
         # = RS-485
         # ===================================================
     if gv.INPUT_PARAM.actionCommand.startswith('rs485.'):
-        LnRs485                             = gv.Prj.LnRs485.LnRs485_Instrument   # short pointer alla classe
-        # LnRs485                             = gv.Prj.LnRs485.LnRs485   # short pointer alla classe
+        LnRs485                             = gv.Ln.LnRs485    # short pointer alla classe
         rs485                               = gv.LnDict()
+        # rs485.Class                         = gv.Ln.LnRs485    # short pointer alla classe
         rs485.MASTER_ADDRESS                = 0
         rs485.STX                           = int('0x02', 16)
         rs485.ETX                           = int('0x03', 16)
@@ -51,104 +51,27 @@ def Main(gv, action):
 
         if fDEBUG:rs485.printTree()
 
-        # rs485.Class.CLOSE_PORT_AFTER_EACH_CALL = True
+            # ----------------------------------------------------
+            # = RS-485 open/initialize port
+            # ----------------------------------------------------
+        port = LnRs485(port=rs485.usbDevPath, baudrate=rs485.baudRate, mode=rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
+        port.STX                        = rs485.STX
+        port.ETX                        = rs485.ETX
+        port.CRC                        = rs485.CRC
+        port.close_port_after_each_call = rs485.close_port_after_each_call
 
-
-
+        print(port.__repr__())
 
         # ===================================================
         # = RS-485 port monitor
         # ===================================================
     if gv.INPUT_PARAM.actionCommand == 'rs485.monitor':
-        gv.Prj.Monitor(gv)
-        '''
-            # ------------------------------
-            # - Inizializzazione
-            # ------------------------------
-        try:
-            address = 5
-            print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
-            port = LnRs485(port=rs485.usbDevPath, slaveaddress=address, baudrate=rs485.baudRate, mode=rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
-            port.STX                        = rs485.STX
-            port.ETX                        = rs485.ETX
-            port.CRC                        = rs485.CRC
-            port.close_port_after_each_call = rs485.close_port_after_each_call
+        print( '--- monitoring device: {0}'.format(rs485.usbDevPath))
+        gv.Prj.Monitor(gv, port)
 
-
-            print(port.__repr__())
-
-            print ('... press ctrl-c to stop the process.')
-
-            while True:
-                print( '--- monitoring: {0}'.format(rs485.usbDevPath))
-                payLoad, rowData = port.readData()
-                # print ('rowData (Hex):   {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
-                msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='raw data', LEN=len(rowData), DATA=' '.join('{:02X}'.format(x) for x in rowData))
-                print (msg)
-
-                if payLoad:
-                    print ('fields       :   SA DA data')
-                    print ('payLoad (Hex):   {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
-                    print ('payLoad (chr):     {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))
-                else:
-                    print ('payLoad ERROR....')
-                print()
-
-
-        except (KeyboardInterrupt) as key:
-            print ("Keybord interrupt has been pressed")
-            sys.exit()
-
-        '''
 
     elif gv.INPUT_PARAM.actionCommand == 'rs485.send':
-            # ------------------------------
-            # - Inizializzazione
-            # ------------------------------
-        try:
-            address = 5
-            print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
-            port = LnRs485(port=rs485.usbDevPath, slaveaddress=address, baudrate=rs485.baudRate, mode=rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
-            port.STX                        = rs485.STX
-            port.ETX                        = rs485.ETX
-            port.CRC                        = rs485.CRC
-            port.close_port_after_each_call = rs485.close_port_after_each_call
-
-            print(port.__repr__())
-            print ('... press ctrl-c to stop the process.')
-
-
-            sourceAddr  = bytes([0]) # MASTER
-            destAddr    = bytes([gv.INPUT_PARAM.rs485Address])
-            sourceAddr  = int.from_bytes(sourceAddr, 'little')
-            destAddr    = int.from_bytes(destAddr, 'little')
-            print ('sourceAddr: x{0:02x}'.format(sourceAddr))
-            print ('destAddr:   x{0:02x}'.format(destAddr))
-
-            basedata = 'Loreto.'
-            index = 0
-            while True:
-                index += 1
-                dataStr = '{DATA}.{INX:04}'.format(DATA=basedata, INX=index)
-
-                dataToSend = bytearray()
-                dataToSend.append(sourceAddr)
-                dataToSend.append(destAddr)
-                for x in dataStr:
-                    dataToSend.append(ord(x))
-
-                line = '[{0}:{1:04}] - {2}'.format(rs485.usbDevPath, index, dataToSend)
-                print (line)
-                dataSent = port.writeData(dataToSend)
-                print ('sent (Hex): {0}'.format(' '.join('{0:02x}'.format(x) for x in dataSent)))
-                print()
-                time.sleep(5)
-
-
-        except (KeyboardInterrupt) as key:
-            print ("Keybord interrupt has been pressed")
-            sys.exit()
-
+        gv.Prj.SendMsg(gv, port, rs485)
 
     else:
         print(gv.INPUT_PARAM.actionCommand, 'not available')

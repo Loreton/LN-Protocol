@@ -85,7 +85,8 @@ class LnRs485_Instrument():
 
     """
 
-    def __init__(self, port, slaveaddress, mode='ascii', baudrate=9600, logger=None):
+    # def __init__(self, port, slaveaddress, mode='ascii', baudrate=9600, logger=None):
+    def __init__(self, port, mode='ascii', baudrate=9600, logger=None):
         self._MODE_ASCII = mode
         if port not in _SERIALPORTS or not _SERIALPORTS[port]:
             try:
@@ -129,7 +130,7 @@ class LnRs485_Instrument():
         """
 
 
-        self.address = slaveaddress
+        # self.address = slaveaddress
         """Slave address (int). Most often set by the constructor (see the class documentation). """
 
         self.mode = mode
@@ -192,21 +193,20 @@ class LnRs485_Instrument():
 
     def __repr__(self):
         """String representation of the :class:'.Instrument' object."""
+            # address                    = {ADDRESS},
         return """{MOD}.{CLASS}
             <class-id                  = 0x{ID:x},
-            address                    = {ADDRESS},
             mode                       = {MODE},
             close_port_after_each_call = {CPAEC},
             precalculate_read_size     = {PRS},
             debug                      = {DEBUG},
             STX                        = 0x{STX:02x},
             ETX                        = 0x{ETX:02x},
-            serial-id                  = {SERIAL},
-                >""".format(
+            serial-id                  = {SERIAL},>
+                """.format(
                         MOD=self.__module__,
                         CLASS=self.__class__.__name__,
                         ID=id(self),
-                        ADDRESS=self.address,
                         MODE=self.mode,
                         CPAEC=self.close_port_after_each_call,
                         PRS=self.precalculate_read_size,
@@ -215,6 +215,7 @@ class LnRs485_Instrument():
                         STX=self.STX,
                         ETX=self.ETX
             )
+                        # ADDRESS=self.address,
 
     # def displayPortParameters(self):
     #     print ('mode:                           {0}'.format(self._MODE_ASCII))
@@ -393,26 +394,26 @@ class LnRs485_Instrument():
     # - credo che questa funzione venga chiamata non direttamente da me
     # - in quanto ho notato che non prende ulteriori parametri.
     #######################################################################
-    def readData(self):
+    def readData(self, fDEBUG=False):
         logger = self._setLogger(package=__name__)
 
 
-        rowData = self._readBuffer()
-        msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='full data', LEN=len(rowData), DATA=' '.join('{:02X}'.format(x) for x in rowData))
+        rawData = self._readBuffer()
+        msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='full data', LEN=len(rawData), DATA=' '.join('{:02X}'.format(x) for x in rawData))
         logger.debug(msg)
 
             # Prendiamo i dati fissi
-        if not rowData[0] == self.STX:
+        if not rawData[0] == self.STX:
             msg = 'ERROR: STX missed'
             print(msg)
             logger.error(msg)
-            return bytearray(), rowData
+            return bytearray(), rawData
 
-        if not rowData[-1] == self.ETX:
+        if not rawData[-1] == self.ETX:
             msg = 'ERROR: ETX missed'
             print(msg)
             logger.error(msg)
-            return bytearray(), rowData
+            return bytearray(), rawData
 
 
             # ---------------------------------------------
@@ -426,27 +427,21 @@ class LnRs485_Instrument():
 
             # il trick che segue ci permette di prelevare due bytes alla volta
         payLoad = bytearray()
-        payLoadNibbled  = rowData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
-        # msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='payLoadNibbled', LEN=len(payLoadNibbled), DATA=' '.join('{:02X}'.format(x) for x in payLoadNibbled))
-        # print (msg)
-
-        # for val in payLoadNibbled: print ('{0:02X}'.format(val), end=' ')
-        # print()
+        payLoadNibbled  = rawData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
         xy = iter(payLoadNibbled)
         for byte1, byte2 in zip(xy, xy):
-            # print ('{0:02X}'.format(byte1), '{0:02X}'.format(byte2), end=' --> ')
                 # re-build real byte
             if byte1 in self._validBytes and byte2 in self._validBytes:
                 byte1_HighNibble = (byte1 >> 4) & 0x0F
                 byte2_HighNibble = (byte2 >> 4) & 0x0F
                 realByte = byte1_HighNibble*16 + byte2_HighNibble
-                # print ('{0:02X}'.format(realByte))
+
 
             else:
                 msg = 'ERROR: some byte corrupted byte1:{0:02x} byte2:{1:02x}'.format(byte1, byte2)
                 print(msg)
                 logger.error(msg)
-                return bytearray(), rowData
+                return bytearray(), rawData
 
             payLoad.append(realByte)
 
@@ -464,7 +459,8 @@ class LnRs485_Instrument():
 
         logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
         logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
-        # sys.exit()
+
+
 
         if not CRC_received == CRC_calculated:
             logger.error('Il valore di CRC non coincide')
@@ -473,30 +469,61 @@ class LnRs485_Instrument():
             print ("    CRC received  : x{0:02X}".format(CRC_received))
             print ("    CRC calculated: x{0:02X}".format(CRC_calculated))
             print ()
-            return bytearray(), rowData
+            return bytearray(), rawData
 
-        return payLoad, rowData
+        if fDEBUG:
+            print('from {sADDR:03}  to {dADDR:03}'.format(sADDR=payLoad[0], dADDR=payLoad[1]))
+            print ('{DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in rawData)))
+            print ('{DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in payLoad)))
+            print ('{DESCR:<10}:       {DATA}'.format(DESCR="payload", DATA=' '.join('{0:>2}'.format(chr(x)) for x in payLoad[2:])))
+
+
+        return payLoad, rawData
 
 
     #######################################################################
     # - by Loreto
-    # - Scrittura dati bsato sul protocollo:
+    # - Scrittura dati basato sul protocollo:
     # -     RS485 protocol library by Nick Gammon
     # - STX - data - CRC - ETX
     # - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
     # -  byte complemented (incluso il CRC)
     # -  only values sent would be (in hex):
     # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
-    # -  Con il fatto che solo i byte di sopra possono essere inviati,
-    # -  il controllo su di essi forse fa venire meno il CRC  e quindi
-    # -  l'ho inserito come flag
-    #
-    # - credo che questa funzione venga chiamata non direttamente da me
-    # - in quanto ho notato che non prende ulteriori parametri.
     #######################################################################
-    def writeData(self, data):
-        logger = self._setLogger(package=__name__)
+    def writeDataSDD(self, sourceAddress, destAddress, dataStr, fDEBUG=False):
+        ''' formato esplicito dei parametri '''
+        dataToSend = bytearray()
+        dataToSend.append(sourceAddress)
+        dataToSend.append(destAddress)
+        for x in dataStr:
+            dataToSend.append(ord(x))
 
+        dataSent = self.writeData(dataToSend, fDEBUG=fDEBUG)
+        return dataSent
+
+
+    def writeDataCMD(self, command, fDEBUG=False):
+        ''' formato CLASS dei parametri '''
+        dataToSend = bytearray()
+        dataToSend.append(command.sourceAddr)
+        dataToSend.append(command.destAddr)
+        for x in command.dataStr:
+            dataToSend.append(ord(x))
+
+        dataSent = self.writeData(dataToSend, fDEBUG=fDEBUG)
+        return dataSent
+
+
+
+
+    def writeData(self, data, fDEBUG=False):
+        ''' formato in bytearray dei parametri '''
+        logger = self._setLogger(package=__name__)
+        if fDEBUG:
+            print()
+            print('source: {sADDR:03}  dest: {dADDR:03}'.format(sADDR=data[0], dADDR=data[1]))
+            print ('{DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
 
             # - preparaiamo il bytearray con i dati da inviare
         dataToSend=bytearray()
@@ -516,12 +543,9 @@ class LnRs485_Instrument():
             byte1, byte2 = self._splitComplementedByte(CRC_value)
             dataToSend.append(byte1)
             dataToSend.append(byte2)
-            # dataToSend.append(CRC_value)   # per generare un errore
 
             # - ETX
         dataToSend.append(self.ETX)
-
-
 
         if self.close_port_after_each_call:
             self.serial.open()
@@ -532,6 +556,9 @@ class LnRs485_Instrument():
 
         if self.close_port_after_each_call:
             self.serial.close()
+
+        if fDEBUG:
+            print ('{DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in dataToSend)))
 
         return dataToSend
 
@@ -610,8 +637,8 @@ if __name__ == '__main__':
 
             print ('... press ctrl-c to stop the process.')
             while True:
-                payLoad, rowData = monPort.readData()
-                print ('rowData (Hex):  {0}'.format(' '.join('{0:02x}'.format(x) for x in rowData)))
+                payLoad, rawData = monPort.readData()
+                print ('rawData (Hex):  {0}'.format(' '.join('{0:02x}'.format(x) for x in rawData)))
                 if payLoad:
                     print ('payLoad (Hex):      {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
                     print ('payLoad (chr):      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))

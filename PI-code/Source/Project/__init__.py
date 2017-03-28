@@ -7,6 +7,7 @@
 
 from . Main.Main                    import  Main
 from . Main.Monitor                    import  Monitor
+from . Main.SendMsg                    import  SendMsg
 
 
 from . Setup.SetupEnv               import  SetupEnv
@@ -16,8 +17,7 @@ from . Setup.ImportLib              import  ImportLib
 
 
 
-from . import RS_485               as rs485     # import della directory
-from . RS_485                      import  LnRs485_Class as LnRs485 # import di un membro
+
 
 
 
