@@ -22,14 +22,17 @@ from . System.ExecRcode                 import ExecRcode
 from . System.ExecGetOut                import ExecGetOut
 from . System.GetFunctionPtr            import GetFunctionPtr
 
-from . LnDict                           import DotMap  as LnDict
+# from . LnDict                           import DotMap  as LnDict
+from . LnDict.LnDict_DotMap             import DotMap  as LnDict
 
 from . LnFile.ReadIniFile_Class         import ReadIniFile
 from . LnFile.ReadWriteTextFile         import readTextFile
 from . LnFile.ReadWriteTextFile         import WriteTextFile
 from . LnFile.WriteCSVFile              import WriteCSVFile
 
-from . LnDevices.isUsbDevice              import  isUsbDevice
+
+if os.name == 'posix':
+    from . LnDevices.isUsbDevice              import  isUsbDevice
 
 from . LnString.LnCRC8                  import  strCheckSum
 from . LnString.LnCRC8                  import  hexCheckSum

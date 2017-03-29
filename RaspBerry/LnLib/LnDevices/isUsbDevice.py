@@ -4,7 +4,7 @@
 #                                               &  Loreto Notarantonio 2015, October
 # ######################################################################################
 
-import pyudev           # sudo pip3.4 install pyudev
+import pyudev           # sudo pip3.4 --proxy=localhost:60080 install pyudev
 
 # ##########################################################################
 # # setupRS485(usbDevice)

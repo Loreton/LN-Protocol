@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nlroeto@gmail.com'
 
-__version__  = 'v2017-03-09_09.02.35'
+__version__  = 'LnVer_2017-03-29_12.14.36'
 __status__   = 'Beta'
 
 import os
@@ -179,9 +179,9 @@ class LnRs485_Instrument():
                 def error(self, data):  pass
                 def warning(self, data):  pass
 
-                def _print_(self, data):
-                    pass
                 def _print(self, data):
+                    pass
+                def _print_(self, data):
                     caller = inspect.stack()[3]
                     dummy, programFile, lineNumber, funcName, lineCode, rest = caller
                     if funcName == '<module>': funcName = '__main__'
