@@ -1,45 +1,49 @@
 /*
  RS485 protocol library.
 
- Devised and written by Nick Gammon.
- Date: 14 November 2011
- Version: 1.1
+    reviewed:  Loreto notarantonio
+    Version:   LnVer_2017-04-05_14.29.31
 
- Version 1.1 reset the timeout period after getting STX.
-
- Licence: Released for public use.
-
-
- Can send from 1 to 255 bytes from one node to another with:
-
- * Packet start indicator (STX)
- * Each data byte is doubled and inverted to check validity
- * Packet end indicator (ETX)
- * Packet CRC (checksum)
-
-Modifiche di Loreto:
-    - Spostato il CRC prima del byte di ETX
-    - inserita la variabile DEBUG_TxData per ritornare il messaggio ricevuto oppure trasmesso e verificarne il contenuto.
-      Anche il valore di ritorno è stato portato da 0 ad 1 per permettere di analizzare il contenuto.
+     Devised and written by Nick Gammon.
+     Date: 14 November 2011
+     Version: 1.1
 
 
- To allow flexibility with hardware (eg. Serial, SoftwareSerial, I2C)
- you provide three "callback" functions which send or receive data. Examples are:
+     Version 1.1 reset the timeout period after getting STX.
 
- void fWrite (const byte what)
- {
- Serial.write (what);
- }
+     Licence: Released for public use.
 
- int fAvailable ()
- {
- return Serial.available ();
- }
 
- int fRead ()
- {
- return Serial.read ();
- }
+     Can send from 1 to 255 bytes from one node to another with:
+
+     * Packet start indicator (STX)
+     * Each data byte is doubled and inverted to check validity
+     * Packet end indicator (ETX)
+     * Packet CRC (checksum)
+
+    Modifiche di Loreto:
+        - Spostato il CRC prima del byte di ETX
+        - inserita la variabile DEBUG_TxData per ritornare il messaggio ricevuto oppure trasmesso e verificarne il contenuto.
+          Anche il valore di ritorno è stato portato da 0 ad 1 per permettere di analizzare il contenuto.
+
+
+     To allow flexibility with hardware (eg. Serial, SoftwareSerial, I2C)
+     you provide three "callback" functions which send or receive data. Examples are:
+
+     void fWrite (const byte what)
+     {
+     Serial.write (what);
+     }
+
+     int fAvailable ()
+     {
+     return Serial.available ();
+     }
+
+     int fRead ()
+     {
+     return Serial.read ();
+     }
 
  */
 
@@ -52,12 +56,14 @@ Modifiche di Loreto:
 
 const byte STX = 0x02;
 const byte ETX = 0x03;
-
-        // #if defined CRC_DEBUG
-        //     Serial.print( "[");Serial.print(len);Serial.print( "] - ");
-        //     printHexPDS( "inbyte: ", inbyte);
-        // #endif
-
+const char *errMsg[]    = { "",
+                            " - OVERFLOW",
+                            " - BAD-CRC",
+                            " - BAD-CHAR",
+                            " - TIMEOUT",
+                            " - PAYLOAD",
+                            " - DEBUG"
+                        };
 // calculate 8-bit CRC
 static byte crc8(const byte *data, byte len) {
     byte crc = 0, i;
@@ -113,6 +119,7 @@ byte c, sentByte;
     fSend (sentByte);
     pTx->rawData[++pTx->rawData[0]] = sentByte;
 
+
 }  // end of sendComplemented
 
 // ###########################################################
@@ -123,6 +130,7 @@ void sendMsg (WriteCallback fSend, RXTX_DATA *pTx) {
     byte CRC8value = crc8(&pTx->data[1], pTx->data[0]);   // calcoliamo il CRC
     pTx->rawData[0] = 0;
 
+
     fSend (STX);  // STX
     pTx->rawData[++pTx->rawData[0]] = STX;
 
@@ -131,15 +139,14 @@ void sendMsg (WriteCallback fSend, RXTX_DATA *pTx) {
 
 
     sendComplemented (fSend, CRC8value, pTx);
-    // pTx->rawData[++pTx->rawData[0]] = CRC8value;
 
     fSend (ETX);
     pTx->rawData[++pTx->rawData[0]] = ETX;
 
-    // Serial.print( "raw data sent len:[");Serial.print(pTx->rawData[0]);Serial.println( "] - ");
-    // printHex( &pTx->rawData[1], pTx->rawData[0]);
-    // Serial.println();
-
+    if (pTx->displayData) {
+        displayDebugMessage(0, pTx->rawData);
+        displayDebugMessage(0, pTx->data);
+    }
 
 }  // end of sendMsg
 
@@ -201,11 +208,15 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                         printHexPDS( "CRC8calc: ", CRC8calc);
                     #endif
 
-                    if (CRC8calc != CRC8rcvd)
-                        return LN_RCV_BADCRC;  // bad crc
-                    else
-                        return LN_RCV_OK;
 
+                    if (CRC8calc != CRC8rcvd) {
+                        displayDebugMessage(LN_BADCRC, pRx->rawData);
+                        return LN_BADCRC;  // bad crc
+                    }
+                    else {
+                        if (pRx->displayData) displayDebugMessage(LN_OK, pRx->rawData);
+                        return LN_OK;
+                    }
 
                 case 0x0F:
                 case 0x1E:
@@ -242,8 +253,10 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                       // keep adding if not full
                     if (pRx->data[0] < buffSize)
                         pRx->data[++pRx->data[0]] = current_byte;    // save byte
-                    else
-                        return LN_RCV_OVERFLOW;  // overflow
+                    else {
+                        displayDebugMessage(LN_OVERFLOW, pRx->rawData);
+                        return LN_OVERFLOW;  // overflow
+                    }
 
 
                     break;
@@ -256,7 +269,70 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
         }  // end of incoming data
     } // end of while not timed out2
 
-    return LN_RCV_TIMEOUT;  // timeout
+    displayDebugMessage(LN_TIMEOUT, pRx->rawData);
+
+    return LN_TIMEOUT;  // timeout
 
 } // end of recvMsg
 
+
+// #############################################################
+// # const char* text : per ricevere una stringa constante es: "Loreto"
+// #############################################################
+// void displayDebugMessage(const char* text, const byte *data) {
+void displayDebugMessage(byte rCode, const byte *data) {
+    byte dataLen = data[0];
+
+
+    // Serial.print(text);
+    Serial.print(errMsg[rCode]);
+    Serial.print(F("   ("));Serial.print(dataLen);Serial.print(F(") - "));
+    if (dataLen > 0)
+        printHex(&data[1], dataLen); // contiene LEN STX ...data... ETX
+
+    return;
+}
+
+
+
+#if 0
+// #############################################################
+// # const char* text : per ricevere una stringa constante es: "Loreto"
+// #############################################################
+void displayData(void) {
+    byte dataLen = myRawData[0];
+
+    Serial.print(F(" raw->  ("));Serial.print(dataLen);Serial.print(F(") - "));
+    if (dataLen > 0)
+        printHex(&myRawData[1], dataLen); // contiene LEN STX ...data... ETX
+
+
+    return;
+}
+
+// #############################################################
+// #
+// #############################################################
+void printPayload(RXTX_DATA *ptr) {
+    byte dataLen = ptr->data[0];
+    Serial.print(F(" data-> ("));Serial.print(ptr->data[0]);Serial.print(F(") - "));
+    if (dataLen > 0)
+        printHex(&ptr->data[1], ptr->data[0], "\r\n");
+
+    return;
+}
+
+// #############################################################
+// # const char* text : per ricevere una stringa constante es: "Loreto"
+// #############################################################
+void printData(void) {
+    byte dataLen = myRawData[0];
+
+    if (dataLen > 0) {
+        Serial.print(F(" raw-> ("));Serial.print(dataLen);Serial.print(F(") - "));
+        printHex(&myRawData[1], dataLen); // contiene LEN STX ...data... ETX
+    }
+
+    return;
+}
+#endif

@@ -33,10 +33,10 @@ def ExecuteOptions(myParser, required=False):
 ####################################
 # -
 ####################################
-def UsbPort(myParser, required):
+def SerialPort(myParser, required):
     mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
 
-    myParser.add_argument( "-p", "--port",
+    myParser.add_argument( "--port",
                             type=isUsbDevice,
                             required=required,
                             dest="usbPort",
@@ -52,7 +52,7 @@ def Rs485Address(myParser, required):
     mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
 
     myDefault = None
-    myParser.add_argument( "-a", "--address",
+    myParser.add_argument( "--address",
                             type=int,
                             required=required,
                             dest="rs485Address",
@@ -60,6 +60,102 @@ def Rs485Address(myParser, required):
                             help=mandatory + LnColor.getYellow("""indirizzo del dispositivo RS-485 [1-254].
     [DEFAULT: {0}]
     """.format(myDefault)))
+
+
+
+
+
+
+# ---------------------------
+# - DataProtocol
+# ---------------------------
+def DataProtocol(myParser, required=False):
+
+    mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
+    rs485Group = myParser.add_mutually_exclusive_group(required=True)  # True indica obbligatorietà di uno del gruppo
+
+
+    DEFAULT = False
+    rs485Group.add_argument( "--raw",
+                            action="store_true",
+                            dest="fRAW",
+                            default=DEFAULT,
+                            help=mandatory + LnColor.getYellow("""read data in raw format
+            DEFAULT = {DEF}
+    """.format(DEF=DEFAULT)))
+
+    rs485Group.add_argument( "--rs485",
+                            action="store_true",
+                            dest="fRS485",
+                            default=DEFAULT,
+                            help=mandatory + LnColor.getYellow("""send data in LnRs485 protocol format
+            DEFAULT = {DEF}
+    """.format(DEF=DEFAULT)))
+
+
+
+
+
+
+# ---------------------------
+# - DataFormat
+# ---------------------------
+def DisplayDataFormat(myParser, required=False):
+    mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
+
+    # rawGroup = myParser.add_mutually_exclusive_group(required=True)  # True indica obbligatorietà di uno del gruppo
+    rawGroup = myParser.add_argument_group(
+                            title=LnColor.getGreenH('raw data display'),
+                            description=LnColor.getGreenH("definisce il formato dei dati per il display")
+                            )
+
+
+        # log debug su file
+    DEFAULT = True
+    rawGroup.add_argument( "-hex",
+                            action="store_false",
+                            dest="fHEX",
+                            default=DEFAULT,
+                            help=mandatory + LnColor.getYellow("""remove HEX format display
+            DEFAULT = {DEF}
+    """.format(DEF=DEFAULT)))
+
+    DEFAULT = False
+
+    rawGroup.add_argument( "+char",
+                            action="store_true",
+                            dest="fCHAR",
+                            default=DEFAULT,
+                            help=mandatory + LnColor.getYellow("""ADD single char display
+            DEFAULT = {DEF}
+    """.format(DEF=DEFAULT)))
+
+
+    rawGroup.add_argument( "+line",
+                            action="store_true",
+                            dest="fLINE",
+                            default=DEFAULT,
+                            help=mandatory + LnColor.getYellow("""ADD full line display
+            DEFAULT = {DEF}
+    """.format(DEF=DEFAULT)))
+
+
+    myDefault = int('0x0A', 16) # integer
+    myDefault = None
+    myParser.add_argument( "--eod",
+                            type=int,
+                            required=required,
+                            dest="eod_char",
+                            default=myDefault,
+                            help=mandatory + LnColor.getYellow("""end Of Data char (espresso in decimale es: 10 per \n).
+    [DEFAULT: {0}]
+    """.format(myDefault)))
+
+
+
+
+
+
 
 
 

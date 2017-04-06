@@ -57,10 +57,10 @@ if __name__ == "__main__":
         # -   e quindi passiamo i valori validi per detto argomento.
         # ===================================================
     Input           = Prj.ParseInput(gv, args=sys.argv[1:])
-    gv.INPUT_PARAM  = gv.Ln.LnDict(Input)
-    gv.fDEBUG       = gv.INPUT_PARAM.fDEBUG
+    gv.input  = gv.Ln.LnDict(Input)
+    gv.fDEBUG       = gv.input.fDEBUG
 
-    # gv.INPUT_PARAM.PrintTree(MaxLevel=3, fEXIT=True)
+    # gv.input.PrintTree(MaxLevel=3, fEXIT=True)
 
 
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         # - Inizio applicazione
         # ===================================================
 
-    Prj.Main(gv, gv.INPUT_PARAM.actionCommand )
+    Prj.Main(gv, gv.input.actionCommand )
     gv.Ln.Exit(0, "completed", printStack=False, stackLevel=9, console=True)
     sys.exit()
 

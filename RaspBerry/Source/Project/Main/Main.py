@@ -28,28 +28,29 @@ def Main(gv, action):
     C       = gv.Ln.LnColor()
 
 
-    fEXECUTE = gv.INPUT_PARAM.fEXECUTE
-    fDEBUG   = gv.INPUT_PARAM.fDEBUG
+    fEXECUTE = gv.input.fEXECUTE
+    fDEBUG   = gv.input.fDEBUG
 
 
 
         # ===================================================
         # = RS-485
         # ===================================================
-    if gv.INPUT_PARAM.actionCommand.startswith('rs485.'):
+    if gv.input.actionCommand.startswith('rs485.') or gv.input.actionCommand.startswith('serial.'):
         LnRs485                             = gv.Ln.LnRs485    # short pointer alla classe
         rs485                               = gv.LnDict()
         # rs485.Class                         = gv.Ln.LnRs485    # short pointer alla classe
         rs485.MASTER_ADDRESS                = 0
         rs485.STX                           = int('0x02', 16)
         rs485.ETX                           = int('0x03', 16)
-        rs485.usbDevPath                    = gv.INPUT_PARAM.usbPort
+        rs485.usbDevPath                    = gv.input.usbPort
         rs485.baudRate                      = 9600
         rs485.mode                          = 'ascii'
         rs485.CRC                           = True
-        rs485.close_port_after_each_call    = True
+
 
         if fDEBUG:rs485.printTree()
+
 
             # ----------------------------------------------------
             # = RS-485 open/initialize port
@@ -58,22 +59,43 @@ def Main(gv, action):
         port.STX                        = rs485.STX
         port.ETX                        = rs485.ETX
         port.CRC                        = rs485.CRC
-        port.close_port_after_each_call = rs485.close_port_after_each_call
 
+        port.ClosePortAfterEachCall(True)
         print(port.__repr__())
 
         # ===================================================
         # = RS-485 port monitor
         # ===================================================
-    if gv.INPUT_PARAM.actionCommand == 'rs485.monitor':
-        print( '--- monitoring device: {0}'.format(rs485.usbDevPath))
-        gv.Prj.Monitor(gv, port)
+    # if gv.input.actionCommand == 'rs485.monitor':
+    #     print( '--- monitoring device: {0}'.format(rs485.usbDevPath))
+    #     gv.Prj.Monitor(gv, port)
 
 
-    elif gv.INPUT_PARAM.actionCommand == 'rs485.send':
+    if gv.input.actionCommand == 'serial.rs485':
+        if gv.input.fREAD:
+            gv.Prj.Monitor(gv, port, 'rs485')
+
+        elif gv.input.fSEND:
+            gv.Prj.SendMsg(gv, port, rs485)
+
+    elif gv.input.actionCommand == 'serial.read':
+        gv.Prj.Monitor(gv, port, gv.input.fRS485)
+
+
+    elif gv.input.actionCommand == 'serial.send':
+        if gv.input.fRAW:
+            gv.Prj.Monitor(gv, port, 'raw')
+
+        elif gv.input.fRS485:
+            gv.Prj.SendMsg(gv, port, rs485)
+        elif gv.input.fSEND:
+            print ('... not yet implemented.\n')
+
+
+    elif gv.input.actionCommand == 'rs485.send':
         gv.Prj.SendMsg(gv, port, rs485)
 
     else:
-        print(gv.INPUT_PARAM.actionCommand, 'not available')
+        print(gv.input.actionCommand, 'not available')
         return
 

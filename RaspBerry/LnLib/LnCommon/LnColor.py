@@ -55,6 +55,9 @@ class LnColor:
     callerFunc = sys._getframe(1).f_code.co_name
 
 
+        # -----------------------------------------------
+        # - Y E L L O W
+        # -----------------------------------------------
     def yellowRev(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         self._print (' '*tab + self.YelloOnBlack, msg, end, reset)
 
@@ -64,57 +67,55 @@ class LnColor:
     def printYellowH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         self._print ( ' '*tab + self.YELLOWH, msg, end, reset)
 
-
-
-    def printGreen(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.GREEN, msg, end, reset)
-
-    def printGreenH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.GREENH, msg, end, reset)
-
-
-
-    def printBlue(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.BLUE, msg, end, reset)
-
-
-
-    def printMagenta(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.MAGENTA, msg, end, reset)
-
-    def printMagentaH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.MAGENTAH, msg, end, reset)
-
-    def printCyan(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.CYAN, msg, end, reset)
-
-    def printCyanH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.CYANH, msg, end, reset)
-
-    def printWhite(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.WHITE, msg, end, reset)
-
-    def printRed(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.RED, msg, end, reset)
-
-    def printRedH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
-        self._print ( ' '*tab + self.REDH, msg, end, reset)
-
-
-        # -----------------------------------------------
-        # - ritorna una stringa colorata come richiesto
-        # -----------------------------------------------
     def getYellow(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.YELLOW, msg, end, reset)
 
     def getYellowH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.YELLOWH, msg, end, reset)
 
+
+
+
+        # -----------------------------------------------
+        # - G R E E N
+        # -----------------------------------------------
+    def printGreen(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.GREEN, msg, end, reset)
+
+    def printGreenH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.GREENH, msg, end, reset)
+
     def getGreen(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.GREEN, msg, end, reset)
 
+    def getGreenH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        return self._print ( ' '*tab + self.GREENH, msg, end, reset)
+
+
+
+
+
+        # -----------------------------------------------
+        # - B L U E
+        # -----------------------------------------------
+    def printBlue(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.BLUE, msg, end, reset)
+
     def getBlue(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.BLUE, msg, end, reset)
+
+
+
+
+        # -----------------------------------------------
+        # - M A G E N T A
+        # -----------------------------------------------
+    def printMagenta(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.MAGENTA, msg, end, reset)
+
+    def printMagentaH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.MAGENTAH, msg, end, reset)
+
 
     def getMagenta(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.MAGENTA, msg, end, reset)
@@ -122,20 +123,60 @@ class LnColor:
     def getMagentaH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.MAGENTAH, msg, end, reset)
 
+
+        # -----------------------------------------------
+        # - C Y A N
+        # -----------------------------------------------
+    def printCyan(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.CYAN, msg, end, reset)
+
+    def printCyanH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.CYANH, msg, end, reset)
+
+
     def getCyan(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.CYAN, msg, end, reset)
 
     def getCyanH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.CYANH, msg, end, reset)
 
+
+
+
+
+        # -----------------------------------------------
+        # - W H I T E
+        # -----------------------------------------------
+    def printWhite(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.WHITE, msg, end, reset)
+
     def getWhite(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.WHITE, msg, end, reset)
+
+
+
+
+
+        # -----------------------------------------------
+        # - R E D
+        # -----------------------------------------------
+    def printRed(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.RED, msg, end, reset)
+
+    def printRedH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        self._print ( ' '*tab + self.REDH, msg, end, reset)
+
 
     def getRed(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.RED, msg, end, reset)
 
     def getRedH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( ' '*tab + self.REDH, msg, end, reset)
+
+
+
+
+
 
 
 

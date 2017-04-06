@@ -1,4 +1,11 @@
+// ########################################
+// Author:  Loreto notarantonio
+// Version: LnVer_2017-04-05_14.27.44
+// ########################################
+
+
 #if not defined I_AM_RS485_PROTOCOL_H
+
 
     #define I_AM_RS485_PROTOCOL_H
     #if defined(ARDUINO) && ARDUINO >= 100
@@ -10,14 +17,21 @@
 
 
     #if not defined LN_RCV_OK
-        #define LN_RCV_OK          0
-        #define LN_RCV_OVERFLOW    1
-        #define LN_RCV_BADCRC      2
-        #define LN_RCV_BADCHAR     3
-        #define LN_RCV_TIMEOUT     4
-        #define LN_RCV_ERR_TEST   99
-        #define MAX_BUFF_SIZE     50
-        // const char *rs485ErrMsg[] = {"", "OVERFLOW","BAD-CRC","BAD-CHAR","TIMEOUT"};
+
+        enum errorType  {   LN_OK=0,
+                            LN_OVERFLOW,
+                            LN_BADCRC,
+                            LN_BADCHAR,
+                            LN_TIMEOUT,
+                            LN_PAYLOAD,
+                            LN_DEBUG
+                        };
+        extern const char *errMsg[];
+
+        #define MAX_DATA_SIZE     20
+
+
+    #else
     #endif
 
 
@@ -25,10 +39,12 @@
 
     // the data we broadcast to each other device
     typedef struct  {
-        byte            data[MAX_BUFF_SIZE];        // byte[0] is dataLen
-        byte            rawData[MAX_BUFF_SIZE*2+2];   // byte[0] is dataLen SIZE = dataLen + STX+ETX
+        byte            data[MAX_DATA_SIZE];        // byte[0] is dataLen
+        byte            rawData[MAX_DATA_SIZE*2+2];   // byte[0] is dataLen SIZE = dataLen + STX+ETX
         unsigned long   timeout  = 0;        // send/receive timeout
+        byte            displayData = false;        // per fare il print del rawData
     }  RXTX_DATA, *pRXTX_DATA;
+
 
 
 
@@ -45,5 +61,10 @@
     byte recvMsg (  AvailableCallback fAvailable,
                     ReadCallback fRead,
                     RXTX_DATA *rxData);
+
+        // dataLen is byte data[0]
+    // void displayDebugMessage(const char *msgText, const byte *data);
+    void displayDebugMessage(byte errMscType, const byte *data);
+
 
 #endif

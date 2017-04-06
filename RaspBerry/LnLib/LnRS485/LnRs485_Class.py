@@ -4,15 +4,16 @@
 # #####################################################
 
 __author__   = 'Loreto Notarantonio'
-__email__    = 'nlroeto@gmail.com'
+__email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-03-29_12.14.36'
+__version__  = 'LnVer_2017-04-06_17.55.19'
 __status__   = 'Beta'
 
 import os
 import serial       # sudo pip3.4 install pyserial
 import sys
 import inspect
+import string
 
 
 
@@ -130,9 +131,6 @@ class LnRs485_Instrument():
         """
 
 
-        # self.address = slaveaddress
-        """Slave address (int). Most often set by the constructor (see the class documentation). """
-
         self.mode = mode
         """Slave mode (str), can be MODE_RTU or MODE_ASCII.  Most often set by the constructor (see the class documentation).
 
@@ -146,8 +144,9 @@ class LnRs485_Instrument():
         self.ETX = int('0x03', 16) # integer
         # self.CRC = True
 
-        self.close_port_after_each_call = True
+        self.close_port_after_each_call = False
         """If this is :const:'True', the serial port will be closed after each call. """
+        if  self.close_port_after_each_call: self.serial.close()
 
         self.precalculate_read_size = True
         """If this is :const:'False', the serial port reads until timeout
@@ -156,12 +155,20 @@ class LnRs485_Instrument():
         New in version 0.5.
         """
 
-        if  self.close_port_after_each_call:
-            print('closing port...')
-            self.serial.close()
 
 
+    def ClosePortAfterEachCall(self, openPortAEC):
+        logger = self._setLogger(package=__name__)
+        self.close_port_after_each_call = openPortAEC
 
+        if openPortAEC:
+            if self.serial.isOpen():
+                logger.info('closing port...')
+                self.serial.close()
+        else:
+            if not self.serial.isOpen():
+                logger.info('opening port...')
+                self.serial.open()
 
 
 
@@ -312,30 +319,91 @@ class LnRs485_Instrument():
 
 
     #######################################################################
-    # - Lettura dati fino a EndOfData
+    # - Lettura dati fino a:
+    # -     EOD = None ... fino al primo NULL byte
+    # -     EOD = xxx ... fino al char xxx
     # - Ritorna una bytearray di integer
     #######################################################################
-    def _readBufferOK(self):
+    def _readBufferRaw(self, EOD=None):
         logger = self._setLogger(package=__name__)
 
         if self.close_port_after_each_call:
             logger.debug('openig port...')
             self.serial.open()
 
+        # print ('..............', EOD)
         buffer = bytearray()
-        chInt=-1
-        while chInt != self.ETX:
-            ch = self.serial.read(1)       # ch e' un bytes
-            if ch == b'': continue
-            chInt = int.from_bytes(ch, 'little')
-            buffer.append(chInt)
-            logger.debug( "Received: byte hex: {0:02x}... waiting for {1:02x}".format(chInt, self.ETX) )
+
+        if EOD:
+            chInt=-1
+            while chInt != EOD:
+                ch = self.serial.read(1)       # ch e' un bytes
+                if ch == b'': continue
+                chInt = int.from_bytes(ch, 'little')
+                buffer.append(chInt)
+                logger.debug( "Received byte: {0:02x}... waiting for {1:02x}".format(chInt, EOD) )
+
+        else:
+            while True:
+                ch = self.serial.read(1)       # ch e' un bytes
+                if ch == b'':
+                    # print ('break')
+                    break
+                chInt = int.from_bytes(ch, 'little')
+                buffer.append(chInt)
+                logger.debug( "Received byte: {0:02x}... waiting for NULL".format(chInt) )
 
         if self.close_port_after_each_call:
             logger.debug('closing port...')
             self.serial.close()
 
         return buffer
+
+    #######################################################################
+    # - by Loreto
+    # - EOD = int('0x0A', 16) # integer
+    # - EOD = None   ... legge fino al primo byte null
+    #######################################################################
+
+    def readRawData(self, EOD=None, hex=False, text=False, char=False):
+        logger = self._setLogger(package=__name__)
+
+        printableIChars = [ord(c) for c in string.printable]
+
+        line = self._readBufferRaw(EOD=EOD)
+        # hexData         = ' '.join('{0:02x}'.format(x) for x in line)
+        # print (hexData)
+
+        if line:
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
+
+
+            printableChars = []
+            for i in line:
+                cc = chr(i)
+                if i > 31 and i < 127:
+                    printableChars.append(cc)
+                else:
+                    printableChars.append(" ")
+
+
+            if hex:
+                hexData         = ' '.join('{0:02x}'.format(x) for x in line)
+                print ('{DESCR:^10}:  {DATA}'.format(DESCR="raw", DATA=hexData))
+
+            if char:
+                print ('{DESCR:^10}:  {DATA}'.format(DESCR="chr", DATA='  '.join(printableChars)))
+
+            if text:
+                print ('{DESCR:^10}:  {DATA}'.format(DESCR="line", DATA=''.join(printableChars)))
+
+            # return line
+
+
+
+        return line
+
 
 
     #######################################################################
@@ -481,15 +549,10 @@ class LnRs485_Instrument():
         return payLoad, rawData
 
 
+
     #######################################################################
-    # - by Loreto
-    # - Scrittura dati basato sul protocollo:
-    # -     RS485 protocol library by Nick Gammon
-    # - STX - data - CRC - ETX
-    # - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
-    # -  byte complemented (incluso il CRC)
-    # -  only values sent would be (in hex):
-    # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
+    # - writeDataSDD - con parametri di input diversi
+    # -    richiama comunque writeData
     #######################################################################
     def writeDataSDD(self, sourceAddress, destAddress, dataStr, fDEBUG=False):
         ''' formato esplicito dei parametri '''
@@ -503,6 +566,10 @@ class LnRs485_Instrument():
         return dataSent
 
 
+    #######################################################################
+    # - writeDataCMD - con parametri di input diversi
+    # -    richiama comunque writeData
+    #######################################################################
     def writeDataCMD(self, command, fDEBUG=False):
         ''' formato CLASS dei parametri '''
         dataToSend = bytearray()
@@ -517,6 +584,16 @@ class LnRs485_Instrument():
 
 
 
+    #######################################################################
+    # - by Loreto
+    # - Scrittura dati basato sul protocollo:
+    # -     RS485 protocol library by Nick Gammon
+    # - STX - data - CRC - ETX
+    # - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
+    # -  byte complemented (incluso il CRC)
+    # -  only values sent would be (in hex):
+    # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
+    #######################################################################
     def writeData(self, data, fDEBUG=False):
         ''' formato in bytearray dei parametri '''
         logger = self._setLogger(package=__name__)

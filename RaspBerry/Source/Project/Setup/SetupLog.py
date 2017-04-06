@@ -8,7 +8,7 @@ import os, sys
 # - SetUp del log
 # #########################################################
 def SetupLog(gv):
-    if gv.INPUT_PARAM.LOGGER:
+    if gv.input.LOGGER:
         C       = gv.Ln.LnColor()
 
         logFileName         = '/tmp/{PREFIX}_{USER}.log'.format(PREFIX=gv.Prj.prefix, USER=getpass.getuser())
@@ -27,9 +27,9 @@ def SetupLog(gv):
             gv.Ln.InitLogger(   iniLogFile=logConfigFileName,
                                 logFileName=logFileName,
                                 package=gv.Prj.name,
-                                LOGGER=gv.INPUT_PARAM.LOGGER,
-                                logCONSOLE=gv.INPUT_PARAM.logCONSOLE,
-                                logMODULE=gv.INPUT_PARAM.logMODULE,
+                                LOGGER=gv.input.LOGGER,
+                                logCONSOLE=gv.input.logCONSOLE,
+                                logMODULE=gv.input.logMODULE,
                                 packageQualifiers=8
                             )
 

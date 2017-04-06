@@ -24,13 +24,19 @@ def ParseInput(gVars, args, programVersion=None):
         'edit': {
             'conf'    : "edit configuration file"
             },
-        'rs485': {
-            'monitor'   : "read-only from USB data formatted LnRs485-bus",
-            'send'      : "send data to   USB data formatted LnRs485-bus",
+        # 'rs485': {
+        #     'monitor'   : "read-only from USB data formatted LnRs485-bus",
+        #     'send'      : "send data to   USB data formatted LnRs485-bus",
+        #     },
+        'serial': {
+            'raw'        : "read RAW data from serial Port and display it",
+            'rs485'      : "read/send data from USB data formatted LnRs485-bus",
+            'read'       : "read data from serial Port and display it",
+            'send'       : "send data from serial Port",
             },
         'virtualwire': {
             'monitor'      : ".....",
-            }
+            },
         }
 
 
@@ -119,6 +125,7 @@ def prepareArgParse(positionalActionsDict, programVersion):
         usage='',                                          # non voglio lo usage
         epilog=C.getYellow(mainHelp),
         conflict_handler='resolve',
+        prefix_chars='-+/',
     )
 
 
@@ -188,6 +195,7 @@ def commonParsing(positionalParm, DESCR='CIAO DESCR'):
                                         # formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                         formatter_class=argparse.RawTextHelpFormatter,
                                         # formatter_class=argparse.RawDescriptionHelpFormatter,
+                                        prefix_chars='-+/',
                                         )
 
 
@@ -338,13 +346,59 @@ def RS485(myParser, action):
 
     # print ('....', action.lower())
     if action.lower() in ['monitor']:
-        rs485.UsbPort(myParser, required=True)
+        rs485.SerialPort(myParser, required=True)
 
 
     elif action.lower() in ['send']:
-        rs485.UsbPort(myParser, required=True)
+        rs485.SerialPort(myParser, required=True)
         rs485.Rs485Address(myParser, required=True)
         pass
+
+
+    else:
+        print("""
+            Action: [{0}] non prevista.
+            valori previsti sono:
+            """.format(action)
+            )
+        sys.exit()
+
+    _debugOptions(myParser)
+
+
+# ---------------------------
+# - A C T I O N s
+# ---------------------------
+def SERIAL(myParser, action):
+    from . import ParseInput_RS485 as rs485
+
+    rs485.SetGlobals(C, gv.Ln)
+    rs485.ExecuteOptions(myParser, required=False)
+
+    if action.lower() in ['rs485']:
+        rs485.SerialPort(myParser, required=True)
+        rs485.SerialAction(myParser, required=True)
+        rs485.Rs485Address(myParser, required=False)
+
+
+    elif action.lower() in ['raw']:
+        rs485.SerialPort(myParser, required=True)
+        rs485.rawMonitor(myParser, required=False)
+        rs485.SerialAction(myParser, required=True)
+        pass
+
+
+    elif action.lower() in ['read']:
+        rs485.SerialPort(myParser, required=True)
+        rs485.DataProtocol(myParser, required=True)
+        rs485.DisplayDataFormat(myParser, required=False)
+
+
+    elif action.lower() in ['send']:
+        rs485.SerialPort(myParser, required=True)
+        rs485.DataProtocol(myParser, required=True)
+        rs485.Rs485Address(myParser, required=True)
+
 
 
     else:

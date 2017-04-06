@@ -19,7 +19,7 @@ def SendMsg(gv, sendPort, rs485):
     C       = gv.Ln.LnColor()
 
 
-    fDEBUG   = gv.INPUT_PARAM.fDEBUG
+    fDEBUG   = gv.input.fDEBUG
     TYPE = 3
 
     if TYPE == 1:
@@ -30,7 +30,7 @@ def SendMsg(gv, sendPort, rs485):
             print ('... press ctrl-c to stop the process.')
 
             sourceAddr  = bytes([0]) # MASTER
-            destAddr    = bytes([gv.INPUT_PARAM.rs485Address])
+            destAddr    = bytes([gv.input.rs485Address])
             sourceAddr  = int.from_bytes(sourceAddr, 'little')
             destAddr    = int.from_bytes(destAddr, 'little')
             # print ('sourceAddr: x{0:02x}'.format(sourceAddr))
@@ -68,7 +68,7 @@ def SendMsg(gv, sendPort, rs485):
             print ('... press ctrl-c to stop the process.')
 
             sourceAddr  = bytes([0]) # MASTER
-            destAddr    = bytes([gv.INPUT_PARAM.rs485Address])
+            destAddr    = bytes([gv.input.rs485Address])
             basedata = 'Loreto.'
 
             cmd = LnClass()
@@ -97,7 +97,7 @@ def SendMsg(gv, sendPort, rs485):
             print ('... press ctrl-c to stop the process.')
 
             sourceAddr  = bytes([0]) # MASTER
-            destAddr    = bytes([gv.INPUT_PARAM.rs485Address])
+            destAddr    = bytes([gv.input.rs485Address])
 
             sourceAddr = int.from_bytes(sourceAddr, 'little')
             destAddr   = int.from_bytes(destAddr, 'little')

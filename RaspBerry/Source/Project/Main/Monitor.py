@@ -13,29 +13,52 @@ import os, sys
 ################################################################################
 # -
 ################################################################################
-def Monitor(gv, monPort):
+def Monitor(gv, monPort, TYPE=None):
     logger  = gv.Ln.SetLogger(package=__name__)
     C       = gv.Ln.LnColor()
 
 
-    fDEBUG   = gv.INPUT_PARAM.fDEBUG
+    fDEBUG   = gv.input.fDEBUG
+    print ('... press ctrl-c to stop the process.\n')
 
         # ===================================================
         # = RS-485 port monitor
         # ===================================================
-    try:
-        print ('... press ctrl-c to stop the process.\n')
+    if gv.input.fRS485:
+        print ('... RS485 format...')
+        try:
 
-        while True:
-            payLoad, rowData = monPort.readData(fDEBUG=True)
-            if not payLoad:
-                print ('payLoad ERROR....')
-            print()
+            while True:
+                payLoad, rowData = monPort.readData(fDEBUG=True)
+                if not payLoad:
+                    print ('payLoad ERROR....')
+                print()
 
 
-    except (KeyboardInterrupt) as key:
-        print ("Keybord interrupt has been pressed")
-        sys.exit()
+        except (KeyboardInterrupt) as key:
+            print ("Keybord interrupt has been pressed")
+            sys.exit()
+
+
+
+
+        # ===================================================
+        # = R A W
+        # ===================================================
+    elif gv.input.fRAW:
+        print ('... RAW format...', gv.input.eod_char)
+        EOD = int('0x0A', 16) # integer
+        EOD = int('0x03', 16) # integer
+        EOD = None
+        monPort.ClosePortAfterEachCall(False) # ho notato che altrimenti perdo qualche byte
+        try:
+            while True:
+                data = monPort.readRawData(EOD=gv.input.eod_char, hex=gv.input.fHEX, text=gv.input.fLINE, char=gv.input.fCHAR)
+                if data: print()
+
+        except (KeyboardInterrupt) as key:
+            print ("Keybord interrupt has been pressed")
+            sys.exit()
 
 
 
