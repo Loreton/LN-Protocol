@@ -62,9 +62,6 @@
 
     void LnPrint(const char *data1, const char *data2="", const char *data3="");
     void LnPrintStrHex(const char *prefix, byte value, const char *suffix="");
-    // definizione delle callBack Functions
-    // typedef void    (*sendComplemented_CB)  (const byte what);                  // read a byte from serial port
-    // typedef void    (*sendMessage_CB)       (const byte *data, byte dataLen);        // Send a Message
-    // typedef void    (*sendMessage_CB)       (const byte *msg, byte dataLen) ;        // Send a Message
+    char *LnUtoa(unsigned int i, byte padLen=2, byte fill=' ');
 
 #endif

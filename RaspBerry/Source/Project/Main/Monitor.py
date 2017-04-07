@@ -13,7 +13,7 @@ import os, sys
 ################################################################################
 # -
 ################################################################################
-def Monitor(gv, monPort, TYPE=None):
+def Monitor(gv, monPort):
     logger  = gv.Ln.SetLogger(package=__name__)
     C       = gv.Ln.LnColor()
 
@@ -46,7 +46,7 @@ def Monitor(gv, monPort, TYPE=None):
         # = R A W
         # ===================================================
     elif gv.input.fRAW:
-        print ('... RAW format...', gv.input.eod_char)
+        print ('... RAW format... until char:', gv.input.eod_char)
         EOD = int('0x0A', 16) # integer
         EOD = int('0x03', 16) # integer
         EOD = None

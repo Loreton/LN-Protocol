@@ -1,7 +1,16 @@
+/*
+per compilare c++ online:
+    https://www.codechef.com/ide
+    https://www.tutorialspoint.com/compile_cpp_online.php   -- anche python
+
+version : LnVer_2017-04-07_16.16.59
+
+*/
+
 
 #include <LnFunctions.h>                //  D2X(dest, val, 2)
-// char * rvcvdByte = "0";
-// void printChar(byte data, cha);
+
+char workingBuff[10];
 void printHex(const byte *data, const byte len, const char *suffixData) {
     byte i;
     for (i=0; i<len; i++) {
@@ -10,34 +19,55 @@ void printHex(const byte *data, const byte len, const char *suffixData) {
     Serial.print(suffixData);
 }
 
-// 2017-03-19 18.29.13 fromt char *strBuff = "00..."; to char strBuff[] = "00...";
-char strBuff[] = "00...";      // notare il BLANK come ultimo carattere. Separa i vari bytes
+// 2017-03-19 18.29.13 fromt char *workingBuff = "00..."; to char workingBuff[] = "00...";
 void printHex(const byte data) {
-    D2X(strBuff, data, 2);
-    Serial.print(strBuff);
+    D2X(workingBuff, data, 2);
+    Serial.print(workingBuff);
 }
 
 void printHex(const byte data, const char *suffixData) {
-    D2X(strBuff, data, 2);
-    Serial.print(strBuff);
+    D2X(workingBuff, data, 2);
+    Serial.print(workingBuff);
     Serial.print(suffixData);
 }
 
 void printHexPDS(const char *prefixStr, const byte data, const char *suffixStr) {
     Serial.print(prefixStr);
-    D2X(strBuff, data, 2);
-    Serial.print(strBuff);
+    D2X(workingBuff, data, 2);
+    Serial.print(workingBuff);
     Serial.print(suffixStr);
 }
 
 
 void LnPrintStrHex(const char *prefix, byte value, const char *suffix) {
-    D2X(strBuff, value, 2);
+    D2X(workingBuff, value, 2);
     Serial.print(prefix);
-    Serial.print(strBuff);
+    Serial.print(workingBuff);
     Serial.print(suffix);
 
 }
+
+
+
+char *LnUtoa(unsigned int i, byte padLen,  byte fill) {
+    char *p = &workingBuff[9];
+    *p = '\0';                  // chiude il buffer finale
+
+    for(*p--=0; i>0 ;i/=10) {
+        *p-- = i%10 + '0';
+        padLen--;
+        // printf("padLen %i\r\n", padLen);
+    }
+
+    // while (padLen--) *p-- = '0';
+    while (padLen--) *p-- = fill;
+
+    // printf("%s - %i\r\n", p, padLen);
+    return ++p;
+}
+
+
+
 
 
 
@@ -48,10 +78,10 @@ void serialHex_OK(const byte *data, const byte len, char * suffixData) {
     Serial.print("len:");
     Serial.print(len, DEC);
     Serial.print("  -  ");
-    char *strBuff = "0000000000";
+    char *workingBuff = "0000000000";
     for (i=0; i<len; i++) {
-        D2X(strBuff, data[i], 2);
-        Serial.print(strBuff);
+        D2X(workingBuff, data[i], 2);
+        Serial.print(workingBuff);
         Serial.print(" ");
     }
     Serial.println(suffixData);

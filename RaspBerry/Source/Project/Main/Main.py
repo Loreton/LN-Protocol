@@ -64,36 +64,21 @@ def Main(gv, action):
         print(port.__repr__())
 
         # ===================================================
-        # = RS-485 port monitor
+        # = serial port monitor
         # ===================================================
-    # if gv.input.actionCommand == 'rs485.monitor':
-    #     print( '--- monitoring device: {0}'.format(rs485.usbDevPath))
-    #     gv.Prj.Monitor(gv, port)
+    if gv.input.actionCommand == 'serial.read':
+        gv.Prj.Monitor(gv, port)
 
 
-    if gv.input.actionCommand == 'serial.rs485':
-        if gv.input.fREAD:
-            gv.Prj.Monitor(gv, port, 'rs485')
-
-        elif gv.input.fSEND:
-            gv.Prj.SendMsg(gv, port, rs485)
-
-    elif gv.input.actionCommand == 'serial.read':
-        gv.Prj.Monitor(gv, port, gv.input.fRS485)
-
-
+        # ===================================================
+        # = serial port send
+        # ===================================================
     elif gv.input.actionCommand == 'serial.send':
-        if gv.input.fRAW:
-            gv.Prj.Monitor(gv, port, 'raw')
-
-        elif gv.input.fRS485:
+        if gv.input.fRS485:
             gv.Prj.SendMsg(gv, port, rs485)
-        elif gv.input.fSEND:
+        elif gv.input.fRAW:
             print ('... not yet implemented.\n')
 
-
-    elif gv.input.actionCommand == 'rs485.send':
-        gv.Prj.SendMsg(gv, port, rs485)
 
     else:
         print(gv.input.actionCommand, 'not available')

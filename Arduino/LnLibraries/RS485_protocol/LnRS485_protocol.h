@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-04-05_14.27.44
+// Version: LnVer_2017-04-07_16.36.13
 // ########################################
 
 
@@ -15,18 +15,20 @@
     #endif
 
 
+    // extern enum errorType;
+    extern const char *errMsg[];
+    // extern const byte LN_SEND_CALLER[];
+    // extern const byte LN_RECV_CALLER[];
 
     #if not defined LN_RCV_OK
-
-        enum errorType  {   LN_OK=0,
-                            LN_OVERFLOW,
-                            LN_BADCRC,
-                            LN_BADCHAR,
-                            LN_TIMEOUT,
-                            LN_PAYLOAD,
-                            LN_DEBUG
-                        };
-        extern const char *errMsg[];
+    enum errorType  {   LN_OK=0,
+                        LN_OVERFLOW,
+                        LN_BADCRC,
+                        LN_BADCHAR,
+                        LN_TIMEOUT,
+                        LN_PAYLOAD,
+                        LN_DEBUG,
+                    };
 
         #define MAX_DATA_SIZE     20
 
@@ -41,7 +43,7 @@
     typedef struct  {
         byte            data[MAX_DATA_SIZE];        // byte[0] is dataLen
         byte            rawData[MAX_DATA_SIZE*2+2];   // byte[0] is dataLen SIZE = dataLen + STX+ETX
-        unsigned long   timeout  = 0;        // send/receive timeout
+        unsigned long   timeout  = 10000;        // send/receive timeout
         byte            displayData = false;        // per fare il print del rawData
     }  RXTX_DATA, *pRXTX_DATA;
 
@@ -64,7 +66,9 @@
 
         // dataLen is byte data[0]
     // void displayDebugMessage(const char *msgText, const byte *data);
-    void displayDebugMessage(byte errMscType, const byte *data);
-
+    // void displayDebugMessage(byte errMscType, const byte *data);
+    // void displayDebugMessage_(byte errMscType, const byte *data);
+    void displayDebugMessage(const char *caller, byte errMscType, const byte *data);
+    void prova(const char *caller);
 
 #endif

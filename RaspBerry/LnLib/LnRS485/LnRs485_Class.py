@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-04-06_17.55.19'
+__version__  = 'LnVer_2017-04-06_17.57.23'
 __status__   = 'Beta'
 
 import os
@@ -397,9 +397,6 @@ class LnRs485_Instrument():
 
             if text:
                 print ('{DESCR:^10}:  {DATA}'.format(DESCR="line", DATA=''.join(printableChars)))
-
-            # return line
-
 
 
         return line

@@ -24,16 +24,14 @@ def ParseInput(gVars, args, programVersion=None):
         'edit': {
             'conf'    : "edit configuration file"
             },
-        # 'rs485': {
-        #     'monitor'   : "read-only from USB data formatted LnRs485-bus",
-        #     'send'      : "send data to   USB data formatted LnRs485-bus",
-        #     },
+
         'serial': {
             'raw'        : "read RAW data from serial Port and display it",
             'rs485'      : "read/send data from USB data formatted LnRs485-bus",
             'read'       : "read data from serial Port and display it",
             'send'       : "send data from serial Port",
             },
+
         'virtualwire': {
             'monitor'      : ".....",
             },
@@ -375,20 +373,7 @@ def SERIAL(myParser, action):
     rs485.SetGlobals(C, gv.Ln)
     rs485.ExecuteOptions(myParser, required=False)
 
-    if action.lower() in ['rs485']:
-        rs485.SerialPort(myParser, required=True)
-        rs485.SerialAction(myParser, required=True)
-        rs485.Rs485Address(myParser, required=False)
-
-
-    elif action.lower() in ['raw']:
-        rs485.SerialPort(myParser, required=True)
-        rs485.rawMonitor(myParser, required=False)
-        rs485.SerialAction(myParser, required=True)
-        pass
-
-
-    elif action.lower() in ['read']:
+    if action.lower() in ['read']:
         rs485.SerialPort(myParser, required=True)
         rs485.DataProtocol(myParser, required=True)
         rs485.DisplayDataFormat(myParser, required=False)

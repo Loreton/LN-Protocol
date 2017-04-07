@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-04-05_14.29.31
+    Version:   LnVer_2017-04-07_16.36.04
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -56,13 +56,15 @@
 
 const byte STX = 0x02;
 const byte ETX = 0x03;
-const char *errMsg[]    = { "",
+
+
+const char *errMsg[]    = { " - OK      ",
                             " - OVERFLOW",
-                            " - BAD-CRC",
+                            " - BAD-CRC ",
                             " - BAD-CHAR",
-                            " - TIMEOUT",
-                            " - PAYLOAD",
-                            " - DEBUG"
+                            " - TIMEOUT ",
+                            " - PAYLOAD ",
+                            " - DEBUG   ",
                         };
 // calculate 8-bit CRC
 static byte crc8(const byte *data, byte len) {
@@ -126,7 +128,8 @@ byte c, sentByte;
 // - il primo byte di pTx->data è la lunghezza dei dati.
 // ###########################################################
 void sendMsg (WriteCallback fSend, RXTX_DATA *pTx) {
-
+    const char LN_SEND_CALLER_DATA[] = "libSEND-data";
+    const char LN_SEND_CALLER_RAW[]  = "libSEND-raw ";
     byte CRC8value = crc8(&pTx->data[1], pTx->data[0]);   // calcoliamo il CRC
     pTx->rawData[0] = 0;
 
@@ -144,8 +147,8 @@ void sendMsg (WriteCallback fSend, RXTX_DATA *pTx) {
     pTx->rawData[++pTx->rawData[0]] = ETX;
 
     if (pTx->displayData) {
-        displayDebugMessage(0, pTx->rawData);
-        displayDebugMessage(0, pTx->data);
+        displayDebugMessage(LN_SEND_CALLER_RAW,  LN_OK, pTx->rawData);
+        displayDebugMessage(LN_SEND_CALLER_DATA, LN_OK, pTx->data);
     }
 
 }  // end of sendMsg
@@ -162,7 +165,8 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
               RXTX_DATA *pRx) {
 
     bool have_stx   = false;
-
+    const char LN_RECV_CALLER_RAW[]  = "libRECV-raw ";
+    const char LN_RECV_CALLER_DATA[] = "libRECV-data";
 
     // variables below are set when we get an STX
 
@@ -178,7 +182,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
     byte buffSize    = sizeof(pRx->data);
 
     unsigned long start_time = millis();
-
+    pRx->rawData[0] = 0;            // azzeramento dataLen
     while ((millis() - start_time) < pRx->timeout) {
         if (fAvailable () > 0) {
             byte inByte = fRead();
@@ -189,7 +193,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                 case STX:   // start of text
                     have_stx        = true;
                     pRx->data[0]    = 0;            // azzeramento dataLen
-                    pRx->rawData[0] = 0;            // azzeramento dataLen
+                    // pRx->rawData[0] = 0;            // azzeramento dataLen
                     first_nibble    = true;
                     start_time      = millis();  // reset timeout period
                     break;
@@ -210,11 +214,15 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
 
                     if (CRC8calc != CRC8rcvd) {
-                        displayDebugMessage(LN_BADCRC, pRx->rawData);
+                        displayDebugMessage(LN_RECV_CALLER_RAW,  LN_BADCRC, pRx->rawData);
+                        displayDebugMessage(LN_RECV_CALLER_DATA, LN_BADCRC, pRx->data);
                         return LN_BADCRC;  // bad crc
                     }
                     else {
-                        if (pRx->displayData) displayDebugMessage(LN_OK, pRx->rawData);
+                        if (pRx->displayData) {
+                            displayDebugMessage(LN_RECV_CALLER_RAW, LN_OK, pRx->rawData);
+                            displayDebugMessage(LN_RECV_CALLER_DATA,    LN_OK, pRx->data);
+                        }
                         return LN_OK;
                     }
 
@@ -254,7 +262,8 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     if (pRx->data[0] < buffSize)
                         pRx->data[++pRx->data[0]] = current_byte;    // save byte
                     else {
-                        displayDebugMessage(LN_OVERFLOW, pRx->rawData);
+                        displayDebugMessage(LN_RECV_CALLER_RAW,  LN_OVERFLOW, pRx->rawData);
+                        displayDebugMessage(LN_RECV_CALLER_DATA, LN_OVERFLOW, pRx->data);
                         return LN_OVERFLOW;  // overflow
                     }
 
@@ -269,7 +278,8 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
         }  // end of incoming data
     } // end of while not timed out2
 
-    displayDebugMessage(LN_TIMEOUT, pRx->rawData);
+    displayDebugMessage(LN_RECV_CALLER_RAW, LN_TIMEOUT, pRx->rawData);
+    displayDebugMessage(LN_RECV_CALLER_DATA, LN_TIMEOUT, pRx->data);
 
     return LN_TIMEOUT;  // timeout
 
@@ -279,16 +289,13 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 // #############################################################
 // # const char* text : per ricevere una stringa constante es: "Loreto"
 // #############################################################
-// void displayDebugMessage(const char* text, const byte *data) {
-void displayDebugMessage(byte rCode, const byte *data) {
+void displayDebugMessage(const char *caller, byte rCode, const byte *data) {
     byte dataLen = data[0];
-
-
-    // Serial.print(text);
+    Serial.print(caller);
     Serial.print(errMsg[rCode]);
-    Serial.print(F("   ("));Serial.print(dataLen);Serial.print(F(") - "));
+    Serial.print(F("   ("));Serial.print(LnUtoa(dataLen, 3, ' '));Serial.print(F(") - "));
     if (dataLen > 0)
-        printHex(&data[1], dataLen); // contiene LEN STX ...data... ETX
+        printHex(&data[1], dataLen);
 
     return;
 }
