@@ -11,7 +11,7 @@
 #include <EEPROM.h>
 
 // Author:             Loreto notarantonio
-char myVersion[] = "LnVer_2017-04-07_16.35.34";
+char myVersion[] = "LnVer_2017-04-07_16.49.40";
 
 SoftwareSerial serialRs485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
@@ -28,6 +28,7 @@ int  fRead()                   {return serialRs485.read (); }
 
 byte myEEpromAddress;        // who we are
 RXTX_DATA RxTx;             // struttura dati
+
 
 
 //python3.4 -m serial.tools.list_ports
@@ -51,12 +52,14 @@ void setup() {
 
 
 void loop() {
-    RxTx.timeout = 10000;
+    RXTX_DATA *ptr;
+    ptr = &RxTx;
+    ptr->timeout = 10000;
     byte rCode = recvMsg (fAvailable, fRead, &RxTx);
 
-    if (RxTx.displayData == false) {
-        displayDebugMessage("inoRECV-raw ", rCode, RxTx.rawData);
-        displayDebugMessage("inoRECV-data", rCode, RxTx.data);
+    if (ptr->displayData == false) {
+        displayDebugMessage("inoRECV-raw ", rCode, ptr->raw);
+        displayDebugMessage("inoRECV-data", rCode, ptr->rx);
     }
 
     if (rCode == LN_OK) {
@@ -64,9 +67,9 @@ void loop() {
         sendMessage(response, sizeof(response), &RxTx);
             // print solo se non lo ha già fatto al libreria
     }
-    else if (RxTx.data[0] == 0) {
+    else if (ptr->rx[0] == 0) {
         Serial.print(F("\r\nNessuna richiesta ricevuta in un tempo di: "));
-        Serial.print(RxTx.timeout);
+        Serial.print(ptr->timeout);
         Serial.println(F("mS"));
     }
 
@@ -79,13 +82,13 @@ void loop() {
 void processRequest(RXTX_DATA *ptr) {
 
 
-    RxTx->data[++index] = myEEpromAddress;    // SA
-    RxTx->data[++index] = 0;    // DA
+    ptr->tx[++index] = myEEpromAddress;    // SA
+    ptr->tx[++index] = 0;    // DA
 
     for (byte i = 0; i<dataLen; i++)
-        RxTx->data[++index] = data[i];         // copiamo i dati nel buffer da inviare
+        ptr->tx[++index] = data[i];         // copiamo i dati nel buffer da inviare
 
-    RxTx->data[0] = --index;  // set dataLen
+    ptr->tx[0] = --index;  // set dataLen
 
         // send to RS-485 bus
     digitalWrite(RS485_ENABLE_PIN, HIGH);               // enable sending
@@ -99,26 +102,29 @@ void processRequest(RXTX_DATA *ptr) {
 // #############################################################
 // #
 // #############################################################
-void sendMessage(byte data[], byte dataLen, RXTX_DATA *RxTx) {
+void sendMessage(byte data[], byte dataLen, RXTX_DATA *ptr) {
+    // RXTX_DATA *ptr;
+    // ptr = &RxTx;
+
     byte index = 0;
 
-    RxTx->data[++index] = myEEpromAddress;    // SA
-    RxTx->data[++index] = 0;    // DA
+    ptr->tx[++index] = myEEpromAddress;    // SA
+    ptr->tx[++index] = 0;    // DA
 
     for (byte i = 0; i<dataLen; i++)
-        RxTx->data[++index] = data[i];         // copiamo i dati nel buffer da inviare
+        ptr->tx[++index] = data[i];         // copiamo i dati nel buffer da inviare
 
-    RxTx->data[0] = --index;  // set dataLen
+    ptr->tx[0] = --index;  // set dataLen
 
         // send to RS-485 bus
     digitalWrite(RS485_ENABLE_PIN, HIGH);               // enable sending
-    sendMsg(fWrite, RxTx);
+    sendMsg(fWrite, ptr);
     digitalWrite(RS485_ENABLE_PIN, LOW);                // disable sending
 
     // --- DISPLAY DATA
-    if (RxTx->displayData == false) {
-        displayDebugMessage("inoSEND-data", LN_OK, RxTx->data);
-        displayDebugMessage("inoSEND-raw ", LN_OK, RxTx->rawData);
+    if (ptr->displayData == false) {
+        displayDebugMessage("inoSEND-data", LN_OK, ptr->tx);
+        displayDebugMessage("inoSEND-raw ", LN_OK, ptr->raw);
     }
 
     Serial.println();
@@ -127,26 +133,26 @@ void sendMessage(byte data[], byte dataLen, RXTX_DATA *RxTx) {
 
 #if 0
 void loop() {
-    RxTx.timeout = 10000;
+    ptr->timeout = 10000;
     const char LN_RECV_CALLER[] = "inoRECV";
 
     byte rCode = recvMsg (fAvailable, fRead, &RxTx);
 
 
     if (rCode > 0) {
-        displayDebugMessage(LN_RECV_CALLER, rCode, RxTx.rawData);
+        displayDebugMessage(LN_RECV_CALLER, rCode, ptr->raw);
     }
     else if (fDEBUG == true)  {
-        displayDebugMessage(LN_RECV_CALLER, rCode, RxTx.rawData);
-        displayDebugMessage(LN_RECV_CALLER, rCode, RxTx.data);
+        displayDebugMessage(LN_RECV_CALLER, rCode, ptr->raw);
+        displayDebugMessage(LN_RECV_CALLER, rCode, ptr->data);
     }
-    else if (RxTx.data[0] == 0) {
+    else if (ptr->data[0] == 0) {
         Serial.print(F("\r\nNessuna richiesta ricevuta in un tempo di: "));
-        Serial.print(RxTx.timeout);
+        Serial.print(ptr->timeout);
         Serial.println(F("mS"));
     }
     else
-        displayDebugMessage(LN_RECV_CALLER, rCode, RxTx.data);
+        displayDebugMessage(LN_RECV_CALLER, rCode, ptr->data);
         byte response[] = "Loreto";
         sendMessage(response, sizeof(response), &RxTx);
 }
@@ -183,7 +189,7 @@ void loop_DisplayAddress() {
 
 
 void loop_SEND() {
-    RxTx.timeout = 10000;
+    ptr->timeout = 10000;
 
     byte response[] = "Loreto";
     sendMessage(response, sizeof(response), &RxTx);

@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-04-07_16.36.13
+// Version: LnVer_2017-04-07_16.48.34
 // ########################################
 
 
@@ -41,8 +41,9 @@
 
     // the data we broadcast to each other device
     typedef struct  {
-        byte            data[MAX_DATA_SIZE];        // byte[0] is dataLen
-        byte            rawData[MAX_DATA_SIZE*2+2];   // byte[0] is dataLen SIZE = dataLen + STX+ETX
+        byte            rx[MAX_DATA_SIZE];        // byte[0] is dataLen
+        byte            tx[MAX_DATA_SIZE];        // byte[0] is dataLen
+        byte            raw[MAX_DATA_SIZE*2+2];   // byte[0] is dataLen SIZE = dataLen + STX+ETX
         unsigned long   timeout  = 10000;        // send/receive timeout
         byte            displayData = false;        // per fare il print del rawData
     }  RXTX_DATA, *pRXTX_DATA;

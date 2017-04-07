@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-04-07_16.36.04
+    Version:   LnVer_2017-04-07_16.50.59
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -106,49 +106,49 @@ static byte crc8(const byte *data, byte len) {
 // -   0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
 // -   invia prima l'HighNibble e poi il LowNibble
 // ###########################################################
-void sendComplemented (WriteCallback fSend, const byte what, RXTX_DATA *pTx) {
+void sendComplemented (WriteCallback fSend, const byte what, RXTX_DATA *ptrData) {
 byte c, sentByte;
 
     // high nibble
     c = what >> 4;
     sentByte = (c << 4) | (c ^ 0x0F);
     fSend (sentByte);
-    pTx->rawData[++pTx->rawData[0]] = sentByte;
+    ptrData->raw[++ptrData->raw[0]] = sentByte;
 
     // low nibble
     c = what & 0x0F;
     sentByte = (c << 4) | (c ^ 0x0F);
     fSend (sentByte);
-    pTx->rawData[++pTx->rawData[0]] = sentByte;
+    ptrData->raw[++ptrData->raw[0]] = sentByte;
 
 
 }  // end of sendComplemented
 
 // ###########################################################
-// - il primo byte di pTx->data è la lunghezza dei dati.
+// - il primo byte di ptrData->tx è la lunghezza dei dati.
 // ###########################################################
-void sendMsg (WriteCallback fSend, RXTX_DATA *pTx) {
+void sendMsg (WriteCallback fSend, RXTX_DATA *ptrData) {
     const char LN_SEND_CALLER_DATA[] = "libSEND-data";
     const char LN_SEND_CALLER_RAW[]  = "libSEND-raw ";
-    byte CRC8value = crc8(&pTx->data[1], pTx->data[0]);   // calcoliamo il CRC
-    pTx->rawData[0] = 0;
+    byte CRC8value = crc8(&ptrData->tx[1], ptrData->tx[0]);   // calcoliamo il CRC
+    ptrData->raw[0] = 0;
 
 
     fSend (STX);  // STX
-    pTx->rawData[++pTx->rawData[0]] = STX;
+    ptrData->raw[++ptrData->raw[0]] = STX;
 
-    for (byte i=1; i<=pTx->data[0]; i++)
-        sendComplemented (fSend, pTx->data[i], pTx);
+    for (byte i=1; i<=ptrData->tx[0]; i++)
+        sendComplemented (fSend, ptrData->tx[i], ptrData);
 
 
-    sendComplemented (fSend, CRC8value, pTx);
+    sendComplemented (fSend, CRC8value, ptrData);
 
     fSend (ETX);
-    pTx->rawData[++pTx->rawData[0]] = ETX;
+    ptrData->raw[++ptrData->raw[0]] = ETX;
 
-    if (pTx->displayData) {
-        displayDebugMessage(LN_SEND_CALLER_RAW,  LN_OK, pTx->rawData);
-        displayDebugMessage(LN_SEND_CALLER_DATA, LN_OK, pTx->data);
+    if (ptrData->displayData) {
+        displayDebugMessage(LN_SEND_CALLER_RAW,  LN_OK, ptrData->raw);
+        displayDebugMessage(LN_SEND_CALLER_DATA, LN_OK, ptrData->tx);
     }
 
 }  // end of sendMsg
@@ -162,7 +162,7 @@ void sendMsg (WriteCallback fSend, RXTX_DATA *pTx) {
 // ###########################################################
 byte recvMsg (AvailableCallback fAvailable,   // return available count
               ReadCallback fRead,             // read one byte
-              RXTX_DATA *pRx) {
+              RXTX_DATA *ptrData) {
 
     bool have_stx   = false;
     const char LN_RECV_CALLER_RAW[]  = "libRECV-raw ";
@@ -179,21 +179,21 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
     byte lowNibble ;
     byte highNibble ;
 
-    byte buffSize    = sizeof(pRx->data);
+    byte buffSize    = sizeof(ptrData->rx);
 
     unsigned long start_time = millis();
-    pRx->rawData[0] = 0;            // azzeramento dataLen
-    while ((millis() - start_time) < pRx->timeout) {
+    ptrData->raw[0] = 0;            // azzeramento dataLen
+    while ((millis() - start_time) < ptrData->timeout) {
         if (fAvailable () > 0) {
             byte inByte = fRead();
-            pRx->rawData[++pRx->rawData[0]] = inByte;         // by Loreto
+            ptrData->raw[++ptrData->raw[0]] = inByte;         // by Loreto
 
             switch (inByte) {
 
                 case STX:   // start of text
                     have_stx        = true;
-                    pRx->data[0]    = 0;            // azzeramento dataLen
-                    // pRx->rawData[0] = 0;            // azzeramento dataLen
+                    ptrData->rx[0]    = 0;            // azzeramento dataLen
+                    // ptrData->raw[0] = 0;            // azzeramento dataLen
                     first_nibble    = true;
                     start_time      = millis();  // reset timeout period
                     break;
@@ -201,27 +201,27 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                 case ETX:   // end of text
 
                     // --- CRC è l'ultimo byte prima dell'ETX
-                    CRC8rcvd = pRx->data[pRx->data[0]];
+                    CRC8rcvd = ptrData->rx[ptrData->rx[0]];
 
                     // --- calcolo del CRC escludendo il byte di CRC precedentemente salvato
-                    CRC8calc = crc8(&pRx->data[1], --pRx->data[0]);
+                    CRC8calc = crc8(&ptrData->rx[1], --ptrData->rx[0]);
 
                     #if defined CRC_DEBUG
-                        Serial.print( "dataLen : ");Serial.println(pRx->data[0]);
+                        Serial.print( "dataLen : ");Serial.println(ptrData->rx[0]);
                         printHexPDS( "CRC8rcvd: ", CRC8rcvd);
                         printHexPDS( "CRC8calc: ", CRC8calc);
                     #endif
 
 
                     if (CRC8calc != CRC8rcvd) {
-                        displayDebugMessage(LN_RECV_CALLER_RAW,  LN_BADCRC, pRx->rawData);
-                        displayDebugMessage(LN_RECV_CALLER_DATA, LN_BADCRC, pRx->data);
+                        displayDebugMessage(LN_RECV_CALLER_RAW,  LN_BADCRC, ptrData->raw);
+                        displayDebugMessage(LN_RECV_CALLER_DATA, LN_BADCRC, ptrData->rx);
                         return LN_BADCRC;  // bad crc
                     }
                     else {
-                        if (pRx->displayData) {
-                            displayDebugMessage(LN_RECV_CALLER_RAW, LN_OK, pRx->rawData);
-                            displayDebugMessage(LN_RECV_CALLER_DATA,    LN_OK, pRx->data);
+                        if (ptrData->displayData) {
+                            displayDebugMessage(LN_RECV_CALLER_RAW, LN_OK, ptrData->raw);
+                            displayDebugMessage(LN_RECV_CALLER_DATA,    LN_OK, ptrData->rx);
                         }
                         return LN_OK;
                     }
@@ -259,11 +259,11 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
 
                       // keep adding if not full
-                    if (pRx->data[0] < buffSize)
-                        pRx->data[++pRx->data[0]] = current_byte;    // save byte
+                    if (ptrData->rx[0] < buffSize)
+                        ptrData->rx[++ptrData->rx[0]] = current_byte;    // save byte
                     else {
-                        displayDebugMessage(LN_RECV_CALLER_RAW,  LN_OVERFLOW, pRx->rawData);
-                        displayDebugMessage(LN_RECV_CALLER_DATA, LN_OVERFLOW, pRx->data);
+                        displayDebugMessage(LN_RECV_CALLER_RAW,  LN_OVERFLOW, ptrData->raw);
+                        displayDebugMessage(LN_RECV_CALLER_DATA, LN_OVERFLOW, ptrData->rx);
                         return LN_OVERFLOW;  // overflow
                     }
 
@@ -278,8 +278,8 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
         }  // end of incoming data
     } // end of while not timed out2
 
-    displayDebugMessage(LN_RECV_CALLER_RAW, LN_TIMEOUT, pRx->rawData);
-    displayDebugMessage(LN_RECV_CALLER_DATA, LN_TIMEOUT, pRx->data);
+    displayDebugMessage(LN_RECV_CALLER_RAW, LN_TIMEOUT, ptrData->raw);
+    displayDebugMessage(LN_RECV_CALLER_DATA, LN_TIMEOUT, ptrData->rx);
 
     return LN_TIMEOUT;  // timeout
 
@@ -321,10 +321,10 @@ void displayData(void) {
 // #
 // #############################################################
 void printPayload(RXTX_DATA *ptr) {
-    byte dataLen = ptr->data[0];
-    Serial.print(F(" data-> ("));Serial.print(ptr->data[0]);Serial.print(F(") - "));
+    byte dataLen = ptrData->data[0];
+    Serial.print(F(" ptrData-> ("));Serial.print(ptrData->data[0]);Serial.print(F(") - "));
     if (dataLen > 0)
-        printHex(&ptr->data[1], ptr->data[0], "\r\n");
+        printHex(&ptrData->data[1], ptrData->data[0], "\r\n");
 
     return;
 }
