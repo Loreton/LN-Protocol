@@ -25,16 +25,26 @@ def ParseInput(gVars, args, programVersion=None):
             'conf'    : "edit configuration file"
             },
 
-        'serial': {
-            'raw'        : "read RAW data from serial Port and display it",
-            'rs485'      : "read/send data from USB data formatted LnRs485-bus",
-            'read'       : "read data from serial Port and display it",
-            'send'       : "send data from serial Port",
+        # 'serial': {
+        #     'raw'        : "read RAW data from serial Port and display it",
+        #     'rs485'      : "read/send data from USB data formatted LnRs485-bus",
+        #     'read'       : "read data from serial Port and display it",
+        #     'send'       : "send data from serial Port",
+        #     },
+
+        'send': {
+            'raw'        : "send RAW data from serial Port and display it",
+            'rs485'      : "send LnRs485 formatted data from USB data",
             },
 
-        'virtualwire': {
-            'monitor'      : ".....",
+        'monitor': {
+            'raw'        : "read RAW data from serial Port and display it",
+            'rs485'      : "read LnRs485 formatted data from USB data",
             },
+
+        # 'virtualwire': {
+        #     'monitor'      : ".....",
+        #     },
         }
 
 
@@ -383,6 +393,67 @@ def SERIAL(myParser, action):
         rs485.SerialPort(myParser, required=True)
         rs485.DataProtocol(myParser, required=True)
         rs485.Rs485Address(myParser, required=True)
+
+
+
+    else:
+        print("""
+            Action: [{0}] non prevista.
+            valori previsti sono:
+            """.format(action)
+            )
+        sys.exit()
+
+    _debugOptions(myParser)
+
+
+
+# ---------------------------
+# - A C T I O N s
+# ---------------------------
+def SEND(myParser, action):
+    from . import ParseInput_RS485 as rs485
+
+    rs485.SetGlobals(C, gv.Ln)
+    rs485.ExecuteOptions(myParser, required=False)
+
+    if action.lower() in ['raw']:
+        rs485.SerialPort(myParser, required=True)
+
+
+    elif action.lower() in ['rs485']:
+        rs485.SerialPort(myParser, required=True)
+        rs485.Rs485Address(myParser, required=True)
+
+    else:
+        print("""
+            Action: [{0}] non prevista.
+            valori previsti sono:
+            """.format(action)
+            )
+        sys.exit()
+
+    _debugOptions(myParser)
+
+
+
+# ---------------------------
+# - A C T I O N s
+# ---------------------------
+def MONITOR(myParser, action):
+    from . import ParseInput_RS485 as rs485
+
+    rs485.SetGlobals(C, gv.Ln)
+    rs485.ExecuteOptions(myParser, required=False)
+
+    if action.lower() in ['raw']:
+        rs485.SerialPort(myParser, required=True)
+        rs485.DisplayDataFormat(myParser, required=False)
+
+
+    elif action.lower() in ['rs485']:
+        rs485.SerialPort(myParser, required=True)
+        # rs485.DisplayDataFormat(myParser, required=False)
 
 
 

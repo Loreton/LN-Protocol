@@ -14,7 +14,7 @@ class LnClass(): pass
 ################################################################################
 # -
 ################################################################################
-def SendMsg(gv, sendPort, rs485):
+def SendRS485(gv, sendPort):
     logger  = gv.Ln.SetLogger(package=__name__)
     C       = gv.Ln.LnColor()
 

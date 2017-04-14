@@ -7,7 +7,8 @@
 
 from . Main.Main                    import  Main
 from . Main.Monitor                    import  Monitor
-from . Main.SendMsg                    import  SendMsg
+from . Main.MonitorRS485               import  MonitorRS485
+from . Main.SendRS485                    import  SendRS485
 
 
 from . Setup.SetupEnv               import  SetupEnv

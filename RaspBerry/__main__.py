@@ -7,7 +7,8 @@
 import sys; sys.dont_write_bytecode = True
 import os
 
-import Project as Prj
+#import Project as Prj
+import Source as Prj
 try:
     import LnLib as Ln
 except:

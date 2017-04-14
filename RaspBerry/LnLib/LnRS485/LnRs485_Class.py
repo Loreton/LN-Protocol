@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-04-06_17.57.23'
+__version__  = 'LnVer_2017-04-13_12.16.58'
 __status__   = 'Beta'
 
 import os
@@ -537,7 +537,7 @@ class LnRs485_Instrument():
             return bytearray(), rawData
 
         if fDEBUG:
-            print('from {sADDR:03}  to {dADDR:03}'.format(sADDR=payLoad[0], dADDR=payLoad[1]))
+            print('from addr: {sADDR:03} ---> {dADDR:03}'.format(sADDR=payLoad[0], dADDR=payLoad[1]))
             print ('{DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in rawData)))
             print ('{DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in payLoad)))
             print ('{DESCR:<10}:       {DATA}'.format(DESCR="payload", DATA=' '.join('{0:>2}'.format(chr(x)) for x in payLoad[2:])))

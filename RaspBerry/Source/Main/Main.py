@@ -33,10 +33,11 @@ def Main(gv, action):
 
 
 
+    print ('.{}.'.format(gv.input.actionCommand))
         # ===================================================
         # = RS-485
         # ===================================================
-    if gv.input.actionCommand.startswith('rs485.') or gv.input.actionCommand.startswith('serial.'):
+    if gv.input.actionCommand in ['send.rs485', 'read.rs485', 'monitor.rs485']:
         LnRs485                             = gv.Ln.LnRs485    # short pointer alla classe
         rs485                               = gv.LnDict()
         # rs485.Class                         = gv.Ln.LnRs485    # short pointer alla classe
@@ -47,7 +48,7 @@ def Main(gv, action):
         rs485.baudRate                      = 9600
         rs485.mode                          = 'ascii'
         rs485.CRC                           = True
-
+        print ('.............sonoqui')
 
         if fDEBUG:rs485.printTree()
 
@@ -68,6 +69,18 @@ def Main(gv, action):
         # ===================================================
     if gv.input.actionCommand == 'serial.read':
         gv.Prj.Monitor(gv, port)
+
+    elif gv.input.actionCommand == 'read.raw':
+        gv.Prj.Monitor(gv, port)
+
+    elif gv.input.actionCommand == 'monitor.rs485':
+        gv.Prj.MonitorRS485(gv, port)
+
+    elif gv.input.actionCommand == 'send.rs485':
+        gv.Prj.SendRS485(gv, port)
+
+    elif gv.input.actionCommand == 'send.raw':
+        print ('... not yet implemented.\n')
 
 
         # ===================================================

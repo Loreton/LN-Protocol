@@ -52,7 +52,7 @@ def Rs485Address(myParser, required):
     mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
 
     myDefault = None
-    myParser.add_argument( "--address",
+    myParser.add_argument( "-a", "--address",
                             type=int,
                             required=required,
                             dest="rs485Address",
