@@ -37,7 +37,7 @@ def Main(gv, action):
         # ===================================================
         # = RS-485
         # ===================================================
-    if gv.input.actionCommand in ['send.rs485', 'read.rs485', 'monitor.rs485']:
+    if gv.input.actionCommand in ['send.rs485', 'read.rs485', 'monitor.rs485', 'monitor.raw']:
         LnRs485                             = gv.Ln.LnRs485    # short pointer alla classe
         rs485                               = gv.LnDict()
         # rs485.Class                         = gv.Ln.LnRs485    # short pointer alla classe
@@ -75,6 +75,9 @@ def Main(gv, action):
 
     elif gv.input.actionCommand == 'monitor.rs485':
         gv.Prj.MonitorRS485(gv, port)
+
+    elif gv.input.actionCommand == 'monitor.raw':
+        gv.Prj.MonitorRaw(gv, port)
 
     elif gv.input.actionCommand == 'send.rs485':
         gv.Prj.SendRS485(gv, port)

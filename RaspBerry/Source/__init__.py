@@ -6,8 +6,8 @@
 ####################################################
 
 from . Main.Main                    import  Main
-from . Main.Monitor                    import  Monitor
 from . Main.MonitorRS485               import  MonitorRS485
+from . Main.MonitorRaw               import  MonitorRaw
 from . Main.SendRS485                    import  SendRS485
 
 
