@@ -24,11 +24,17 @@ function createLibraryLink {
 
          # ---- create new link
         if [ -d "$sourceDir" ]; then
-            Esegui "sudo ln -s ${sourceDir} ${linkDir}"
+            Esegui "ln -s ${sourceDir} ${linkDir}"
         else
             echo "skipping      .....  $dirName"
         fi
     done
+
+     # ---- create new link
+    if [ -f "$platformioINI" ]; then
+        Esegui "ln -s ${platformioINI} ${platformioLNK}"
+    fi
+
 
 }
 
@@ -37,10 +43,12 @@ function clearLibraryLink {
     for dirName in $dirNames; do
         linkDir="${Project_LIB_DIR}/${dirName}"
         if [ -L "$linkDir" ]; then
-            Esegui "sudo rm -f ${linkDir}";
+            Esegui "rm -f ${linkDir}";
         fi
     done
-
+    if [ -L "${platformioLNK}" ]; then
+        Esegui "rm -f ${platformioLNK}";
+    fi
 }
 
 # ########################################################################
@@ -55,18 +63,27 @@ function clearLibraryLink {
     currentDir=${thisDir%/.*}
 
 
-    Project_LIB_DIR="$currentDir/lib"
-    LORETO_LIB_DIR="$scriptDir/LnLibraries"
+    GIT_ROOT_DIR="$scriptDir"
+    Project_DIR="$currentDir"
+
+    Project_LIB_DIR="$Project_DIR/lib"
+    LORETO_LIB_DIR="$GIT_ROOT_DIR/LnLibraries"
+
+    platformioINI="$GIT_ROOT_DIR/platformio.ini"
+    platformioLNK="${Project_DIR}/platformio.ini"
+
     # LORETO_LIB_DIR="/home/pi/GIT-REPO/HW-Projects/LnProtocol/LnLibraries"
 
     echo
-    echo "      script  dir is: $scriptDir"
-    echo "      library dir is: $LORETO_LIB_DIR"
+    echo "      GIT ROOT DIR    dir is: $GIT_ROOT_DIR"
+    echo "      library         dir is: $LORETO_LIB_DIR"
     echo
-    echo "      current dir is: $currentDir"
-    echo "      prjLib  dir is: $Project_LIB_DIR"
+    echo "      current         dir is: $currentDir"
+    echo "      prjLib          dir is: $Project_LIB_DIR"
     echo
-
+    echo "      platformioINI   is: $platformioINI"
+    echo "      platformioLNK   is: $platformioLNK"
+    echo
 
     device=$2
     device=/dev/${2}
@@ -111,6 +128,7 @@ function clearLibraryLink {
         echo
         echo "Building .... from dir: $PWD"
         Esegui "platformio run --environment nano"
+        clearLibraryLink
     fi
 
     VERBOSE='--verbose'
