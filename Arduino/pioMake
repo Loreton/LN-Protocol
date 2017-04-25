@@ -117,18 +117,17 @@ function clearLibraryLink {
     dirNames='RCSwitch LnFunctions RS485_protocol VirtualWire115 MAX7219 Adafruit-ST7735-Library Adafruit_GFX'
     dirNames='LnFunctions RS485_protocol'
 
+    clearLibraryLink
+    createLibraryLink
     if [[ "$action" =~ "c" ]]; then
         echo "Cleaning project ....: $PWD"
         Esegui "platformio run --target clean"
     fi
 
     if [[ "$action" =~ "b" ]]; then
-        clearLibraryLink
-        createLibraryLink
         echo
         echo "Building .... from dir: $PWD"
         Esegui "platformio run --environment nano"
-        clearLibraryLink
     fi
 
     VERBOSE='--verbose'
@@ -145,3 +144,5 @@ function clearLibraryLink {
         [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
         Esegui "platformio device monitor -p $device"
     fi
+
+    clearLibraryLink

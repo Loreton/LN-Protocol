@@ -61,7 +61,7 @@ def Main(gv, action):
         port.ETX                        = rs485.ETX
         port.CRC                        = rs485.CRC
 
-        port.ClosePortAfterEachCall(True)
+        port.ClosePortAfterEachCall(False)
         print(port.__repr__())
 
         # ===================================================

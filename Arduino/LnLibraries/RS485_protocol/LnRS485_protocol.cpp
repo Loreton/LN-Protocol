@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-04-13_17.26.48
+    Version:   LnVer_2017-04-25_19.32.42
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -174,6 +174,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
     byte highNibble ;
 
     byte maxBuffSize    = sizeof(pData->raw);
+    byte unexpextedCounter = 0;
 
     unsigned long start_time = millis();
     pData->raw[LEN] = 0;            // azzeramento dataLen
@@ -272,7 +273,15 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
                     break;
 
                 default:
-                    printHexPDS("unexpexted byte: ", inByte);
+                    --pData->raw[LEN]; // decrease rawLen
+                    if (unexpextedCounter == 0)
+                        // Serial.print(F("unexpexted byte: "));
+                        printHexPDS("unexpexted byte: ", inByte, "");
+
+                    printHexPDS(" ", inByte, "");
+
+                    // printHex(inByte);
+                    unexpextedCounter++;
                     break;
 
             }  // end of switch

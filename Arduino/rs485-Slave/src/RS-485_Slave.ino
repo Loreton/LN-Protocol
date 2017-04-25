@@ -11,7 +11,7 @@
 #include <EEPROM.h>
 
 // Author:             Loreto notarantonio
-char myVersion[] = "LnVer_2017-04-13_17.07.24";
+char myVersion[] = "LnVer_2017-04-25_20.16.00";
 
 SoftwareSerial serialRs485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
@@ -28,12 +28,15 @@ int  fRead()                   {return serialRs485.read (); }
 #define SENDER      1
 #define DESTINATION 2
 #define PAYLOAD     3
+#define ENA_TX       HIGH
+#define ENA_RX       LOW
 
 byte        myEEpromAddress;        // who we are
 RXTX_DATA   RxTx;             // struttura dati
 //.............0         1
 //.............01234567890123
 char myID[] = "Arduino: xxx :";
+unsigned long responseDelay = 0;
 
 
 
@@ -43,7 +46,9 @@ void setup() {
 
     Serial.begin(9600);             // SERIAL_8N1 (the default)
     serialRs485.begin(9600);
-    pinMode (RS485_ENABLE_PIN, OUTPUT);  // driver output enable
+    pinMode (RS485_ENABLE_PIN, OUTPUT);  // enable rx by default
+    digitalWrite(RS485_ENABLE_PIN, ENA_RX);  // set in receive mode
+
     pinMode (LED_PIN, OUTPUT);          // built-in LED
 
     /* ------------------------
@@ -60,7 +65,10 @@ void setup() {
     // delay(5*1000);
 
     Serial.println(myID);
-
+    if (myEEpromAddress == 11)
+        responseDelay = 1000;
+    if (myEEpromAddress == 12)
+        responseDelay = 4000;
 
 }
 
@@ -101,7 +109,6 @@ void processRequest(RXTX_DATA *pData) {
     if (destAddr == myEEpromAddress) {    // sono io.... rispondi sulla RS485
         Serial.println(F("Request is for me...: answering..."));
         byte response[] = "Loreto";
-        delay(1000);
         sendMessage(senderAddr, response, sizeof(response), pData);
     }
     else {                                // non sono io.... commento sulla seriale
@@ -130,9 +137,10 @@ void sendMessage(byte destAddr, byte data[], byte dataLen, RXTX_DATA *pData) {
     pData->tx[DATALEN] = index;  // set dataLen
 
         // send to RS-485 bus
-    digitalWrite(RS485_ENABLE_PIN, HIGH);               // enable sending
+    delay(responseDelay);
+    digitalWrite(RS485_ENABLE_PIN, ENA_TX);               // enable sending
     sendMsg(fWrite, pData);
-    digitalWrite(RS485_ENABLE_PIN, LOW);                // disable sending
+    digitalWrite(RS485_ENABLE_PIN, ENA_RX);                // set in receive mode
 }
 
 // ################################################################
