@@ -11,7 +11,7 @@
 #include <EEPROM.h>
 
 // Author:             Loreto notarantonio
-char myVersion[] = "LnVer_2017-04-26_11.11.30";
+char myVersion[] = "LnVer_2017-04-26_11.35.24";
 
 SoftwareSerial serialRs485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
@@ -33,11 +33,6 @@ int  fRead()                   {return serialRs485.read (); }
 
 byte        myEEpromAddress;        // who we are
 RXTX_DATA   RxTx, *pData;             // struttura dati
-// pRXTX_DATA  pData;
-// pData_DATA   pData;             // struttura dati
-//.............0         1
-//   .............01234567890123
-// char myID[] = "Arduino: xxx :";
 //.............01234567890123
 char myID[] = "[xxx] - ";
 unsigned long responseDelay = 0;
@@ -64,9 +59,6 @@ void setup() {
     */
     myEEpromAddress = EEPROM.read(0);
     char *xx = LnUtoa(myEEpromAddress, 3, '0');
-    // myID[9]  = xx[0];
-    // myID[10] = xx[1];
-    // myID[11] = xx[2];
     myID[1] = xx[0];
     myID[2] = xx[1];
     myID[3] = xx[2];
@@ -99,8 +91,8 @@ void loop() {
 
     else if (pData->rx[0] == 0) {
         Serial.print(myID);
-        Serial.print(" rCode: ");Serial.println(rCode);
-        Serial.print(F("Nessuna richiesta ricevuta in un tempo di: "));
+        Serial.print(F("rCode: "));Serial.print(rCode);
+        Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di: "));
         Serial.print(pData->timeout);
         Serial.println(F("mS"));
     }

@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-04-26_11.03.47
+    Version:   LnVer_2017-04-26_11.31.45
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -291,6 +291,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
         }  // end of incoming data
     } // end of while not timed out2
 
+    Serial.println();
     displayDebugMessage(LN_RECV_CALLER_RAW, LN_TIMEOUT, pData->raw);
 
     return LN_TIMEOUT;  // timeout
@@ -307,11 +308,15 @@ void displayDebugMessage(const char *caller, byte rCode, const byte *data) {
     Serial.print(pMyID);
     Serial.print(caller);
     Serial.print(errMsg[rCode]);
-    Serial.print(F(" ["));Serial.print(LnUtoa(dataLen, 3, ' '));Serial.print(F("] - "));
-    if (dataLen > 0)
-        printHex(&data[1], dataLen);
 
-    // Serial.println();
+    if (dataLen > 0) {
+        Serial.print(F(" ["));Serial.print(LnUtoa(dataLen, 3, ' '));Serial.print(F("] - "));
+        printHex(&data[1], dataLen);
+    }
+    else {
+        Serial.println();
+    }
+
     return;
 }
 
