@@ -122,7 +122,7 @@ def SendRS485(gv, sendPort):
             # ===================================================
         print ('... press ctrl-c to stop the process.')
 
-        gv.input.rs485Address = [11, 12]
+        # gv.input.rs485Address = [11, 12]
 
         sourceAddr  = bytes([0]) # MASTER
         sourceAddr = int.from_bytes(sourceAddr, 'little')

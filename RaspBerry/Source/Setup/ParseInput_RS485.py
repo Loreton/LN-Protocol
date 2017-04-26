@@ -51,13 +51,16 @@ def SerialPort(myParser, required):
 def Rs485Address(myParser, required):
     mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
 
+    # nargs - importante: dopo il flag lasciare lo spazio....
     myDefault = None
     myParser.add_argument( "-a", "--address",
                             type=int,
                             required=required,
                             dest="rs485Address",
                             default=myDefault,
-                            help=mandatory + LnColor.getYellow("""indirizzo del dispositivo RS-485 [1-254].
+                            nargs='+',
+                            help=mandatory + LnColor.getYellow("""indirizzo/i del dispositivo RS-485 [1-254]
+                        separati da BLANK se più di uno.
     [DEFAULT: {0}]
     """.format(myDefault)))
 

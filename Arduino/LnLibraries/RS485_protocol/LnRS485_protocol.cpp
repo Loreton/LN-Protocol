@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-04-25_19.32.42
+    Version:   LnVer_2017-04-26_11.03.47
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -55,7 +55,7 @@
 const byte STX = 0x02;
 const byte ETX = 0x03;
 #define LEN 0
-
+char *pMyID;
 
 const char *errMsg[]    = { " - OK......:",
                             " - OVERFLOW:",
@@ -131,7 +131,7 @@ void sendMsg (WriteCallback fSend, RXTX_DATA *pData) {
     const char LN_SEND_CALLER_RAW[]  = "libSEND-raw ";
     byte CRC8value = crc8(&pData->tx[1], pData->tx[LEN]);   // calcoliamo il CRC
     pData->raw[LEN] = 0;
-
+    pMyID = pData->myID;
 
     fSend (STX);  // STX
     pData->raw[++pData->raw[LEN]] = STX;
@@ -175,6 +175,7 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
     byte maxBuffSize    = sizeof(pData->raw);
     byte unexpextedCounter = 0;
+    pMyID = pData->myID;
 
     unsigned long start_time = millis();
     pData->raw[LEN] = 0;            // azzeramento dataLen
@@ -274,9 +275,11 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
                 default:
                     --pData->raw[LEN]; // decrease rawLen
-                    if (unexpextedCounter == 0)
-                        // Serial.print(F("unexpexted byte: "));
-                        printHexPDS("unexpexted byte: ", inByte, "");
+                    if (unexpextedCounter == 0) {
+                        Serial.println();
+                        Serial.print(pMyID);
+                        printHexPDS("unexpexted byte(s): ", inByte, "");
+                    }
 
                     printHexPDS(" ", inByte, "");
 
@@ -294,144 +297,14 @@ byte recvMsg (AvailableCallback fAvailable,   // return available count
 
 } // end of recvMsg
 
-/*
-// ###########################################################
-// - receive a message, maximum "length" bytes, timeout after "timeout" milliseconds
-// - if nothing received, or an error (eg. bad CRC, bad data) return 0
-// - if nothing received, or an error (eg. bad CRC, bad data) return 1 (by Loreto per fare comunque il display dei dati ricevuti)
-// - otherwise, returns length of received data
-// ###########################################################
-byte recvMsg_OK (AvailableCallback fAvailable,   // return available count
-              ReadCallback fRead,             // read one byte
-              RXTX_DATA *pData) {
-
-    bool have_stx   = false;
-    const char LN_RECV_CALLER_RAW[]  = "libRECV-raw ";
-    const char LN_RECV_CALLER_DATA[] = "libRECV-data";
-
-    // variables below are set when we get an STX
-
-    bool first_nibble;
-    byte current_byte;
 
 
-    byte CRC8calc ;
-    byte CRC8rcvd ;
-    byte lowNibble ;
-    byte highNibble ;
-
-    byte buffSize    = sizeof(pData->rx);
-
-    unsigned long start_time = millis();
-    pData->raw[LEN] = 0;            // azzeramento dataLen
-    while ((millis() - start_time) < pData->timeout) {
-        if (fAvailable () > 0) {
-            byte inByte = fRead();
-            pData->raw[++pData->raw[LEN]] = inByte;         // by Loreto
-
-            switch (inByte) {
-
-                case STX:   // start of text
-                    have_stx        = true;
-                    pData->rx[LEN]    = 0;            // azzeramento dataLen
-                    // pData->raw[LEN] = 0;            // azzeramento dataLen
-                    first_nibble    = true;
-                    start_time      = millis();  // reset timeout period
-                    break;
-
-                case ETX:   // end of text
-
-                    // --- CRC è l'ultimo byte prima dell'ETX
-                    CRC8rcvd = pData->rx[pData->rx[LEN]];
-
-                    // --- calcolo del CRC escludendo il byte di CRC precedentemente salvato
-                    CRC8calc = crc8(&pData->rx[1], --pData->rx[LEN]);
-
-                    #if defined CRC_DEBUG
-                        Serial.print( "dataLen : ");Serial.println(pData->rx[LEN]);
-                        printHexPDS( "CRC8rcvd: ", CRC8rcvd);
-                        printHexPDS( "CRC8calc: ", CRC8calc);
-                    #endif
-
-
-                    if (CRC8calc != CRC8rcvd) {
-                        displayDebugMessage(LN_RECV_CALLER_RAW,  LN_BADCRC, pData->raw);
-                        displayDebugMessage(LN_RECV_CALLER_DATA, LN_BADCRC, pData->rx);
-                        return LN_BADCRC;  // bad crc
-                    }
-                    else {
-                        if (pData->displayData) {
-                            displayDebugMessage(LN_RECV_CALLER_RAW, LN_OK, pData->raw);
-                            displayDebugMessage(LN_RECV_CALLER_DATA,    LN_OK, pData->rx);
-                        }
-                        return LN_OK;
-                    }
-
-                case 0x0F:
-                case 0x1E:
-                case 0x2D:
-                case 0x3C:
-                case 0x4B:
-                case 0x5A:
-                case 0x69:
-                case 0x78:
-                case 0x87:
-                case 0x96:
-                case 0xA5:
-                case 0xB4:
-                case 0xC3:
-                case 0xD2:
-                case 0xE1:
-                case 0xF0:
-                    if (!have_stx)
-                      break;
-
-                      // save high-order nibble...
-                    if (first_nibble) {
-                        highNibble = inByte & 0xF0;
-                        first_nibble = false;
-                        break;
-                    }
-
-                    // get low-order nibble and join byte
-                    lowNibble    = inByte >>4;
-                    current_byte = highNibble | lowNibble;
-                    first_nibble = true;
-
-
-                      // keep adding if not full
-                    if (pData->rx[LEN] < buffSize)
-                        pData->rx[++pData->rx[LEN]] = current_byte;    // save byte
-                    else {
-                        displayDebugMessage(LN_RECV_CALLER_RAW,  LN_OVERFLOW, pData->raw);
-                        displayDebugMessage(LN_RECV_CALLER_DATA, LN_OVERFLOW, pData->rx);
-                        return LN_OVERFLOW;  // overflow
-                    }
-
-
-                    break;
-
-                default:
-                    printHexPDS("unexpexted byte: ", inByte);
-                    break;
-
-            }  // end of switch
-        }  // end of incoming data
-    } // end of while not timed out2
-
-    displayDebugMessage(LN_RECV_CALLER_RAW, LN_TIMEOUT, pData->raw);
-    displayDebugMessage(LN_RECV_CALLER_DATA, LN_TIMEOUT, pData->rx);
-
-    return LN_TIMEOUT;  // timeout
-
-} // end of recvMsg
-
-*/
 // #############################################################
 // # const char* text : per ricevere una stringa constante es: "Loreto"
 // #############################################################
 void displayDebugMessage(const char *caller, byte rCode, const byte *data) {
     byte dataLen = data[LEN];
+    Serial.print(pMyID);
     Serial.print(caller);
     Serial.print(errMsg[rCode]);
     Serial.print(F(" ["));Serial.print(LnUtoa(dataLen, 3, ' '));Serial.print(F("] - "));

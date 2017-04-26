@@ -11,7 +11,7 @@
 #include <EEPROM.h>
 
 // Author:             Loreto notarantonio
-char myVersion[] = "LnVer_2017-04-25_20.16.00";
+char myVersion[] = "LnVer_2017-04-26_11.11.30";
 
 SoftwareSerial serialRs485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
@@ -32,17 +32,23 @@ int  fRead()                   {return serialRs485.read (); }
 #define ENA_RX       LOW
 
 byte        myEEpromAddress;        // who we are
-RXTX_DATA   RxTx;             // struttura dati
+RXTX_DATA   RxTx, *pData;             // struttura dati
+// pRXTX_DATA  pData;
+// pData_DATA   pData;             // struttura dati
 //.............0         1
+//   .............01234567890123
+// char myID[] = "Arduino: xxx :";
 //.............01234567890123
-char myID[] = "Arduino: xxx :";
+char myID[] = "[xxx] - ";
 unsigned long responseDelay = 0;
 
 
 
 //python3.4 -m serial.tools.list_ports
 void setup() {
-    RxTx.displayData = true;    // data display dei byt hex inviatie ricevuti (lo fa direttamente la libreria)
+    pData      = &RxTx;
+
+    pData->displayData = true;    // data display dei byt hex inviatie ricevuti (lo fa direttamente la libreria)
 
     Serial.begin(9600);             // SERIAL_8N1 (the default)
     serialRs485.begin(9600);
@@ -58,9 +64,13 @@ void setup() {
     */
     myEEpromAddress = EEPROM.read(0);
     char *xx = LnUtoa(myEEpromAddress, 3, '0');
-    myID[9]  = xx[0];
-    myID[10] = xx[1];
-    myID[11] = xx[2];
+    // myID[9]  = xx[0];
+    // myID[10] = xx[1];
+    // myID[11] = xx[2];
+    myID[1] = xx[0];
+    myID[2] = xx[1];
+    myID[3] = xx[2];
+    pData->myID = myID;
 
     // delay(5*1000);
 
@@ -77,17 +87,16 @@ void setup() {
 // #
 // ################################################################
 void loop() {
-    RXTX_DATA *pData;
-    pData = &RxTx;
+    // RXTX_DATA *pData;
+    // pData = &RxTx;
     pData->timeout = 10000;
     byte rCode = recvMsg (fAvailable, fRead, pData);
 
     // displayData(rCode, pData)
     if (rCode == LN_OK) {
         processRequest(pData);
-
-            // print solo se non lo ha già fatto al libreria
     }
+
     else if (pData->rx[0] == 0) {
         Serial.print(myID);
         Serial.print(" rCode: ");Serial.println(rCode);
@@ -106,18 +115,19 @@ void processRequest(RXTX_DATA *pData) {
     byte senderAddr = pData->rx[SENDER];
     byte destAddr   = pData->rx[DESTINATION];
 
+    Serial.print(myID); Serial.print(F("from: ")); Serial.print(senderAddr);
+                        Serial.print(F(" to  : ")); Serial.print(destAddr);
+
     if (destAddr == myEEpromAddress) {    // sono io.... rispondi sulla RS485
-        Serial.println(F("Request is for me...: answering..."));
+        Serial.println(F("   (Request is for me)"));
+        Serial.println();
+        Serial.print(myID); Serial.println(F("answering..."));
         byte response[] = "Loreto";
         sendMessage(senderAddr, response, sizeof(response), pData);
     }
     else {                                // non sono io.... commento sulla seriale
+        Serial.println(F("   (Request is NOT for me)"));
         Serial.println();
-        Serial.print(" rCode: ");Serial.println(LN_OK);
-        printHexPDS (" source address: ", senderAddr);
-        printHexPDS (" destAddr      : ", destAddr);
-        Serial.println(F("Request is NOT for me...: "));
-        // printHex(&pData->rx[1], dataLen, "\r\n");
         rxDisplayData(0, pData);
     }
 }
@@ -155,3 +165,39 @@ void txDisplayData(byte rCode, RXTX_DATA *pData) {
     displayDebugMessage("inoSEND-data", rCode, pData->tx);
     displayDebugMessage("inoSEND-raw ", rCode, pData->raw);
 }
+
+
+
+// void LnPrint(byte *text) {
+//     Serial.print(myID);
+//     Serial.print(text)
+// }
+
+
+/*
+Configurazione
+
+rs485_01 - pennetta
+rs485_02 - pennetta
+rs485_03 - pennetta
+
+arduino11 - Arduino nano
+arduino12 - Arduino nano
+
+rs485_01 - trasmette sia per arduino11 che per arduino12
+
+
+rs485_01        rs482_02        arduino11         - arduino12
+
+send->11        -               -                   -
+-               00-->11         -                   -
+-               -               OK                   -
+-               -               00<--reply           -
+-               00<--11         -                   -
+-               -                 -                   -
+-               -                 -                   -
+-               -                 -                   -
+-               -                 -                   -
+
+*/
+
