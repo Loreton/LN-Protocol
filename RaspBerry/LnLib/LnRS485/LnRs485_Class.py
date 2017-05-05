@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-04-13_12.16.58'
+__version__  = 'LnVer_2017-05-05_15.08.12'
 __status__   = 'Beta'
 
 import os
@@ -76,14 +76,10 @@ validBytesHex = [
 
 
 class LnRs485_Instrument():
-# class LnRs485():
     """Instrument class for talking to instruments (slaves) via the Modbus RTU protocol (via RS485 or RS232).
-
     Args:
         * port (str):           The serial port name, for example '/dev/ttyUSB0' (Linux), '/dev/tty.usbserial' (OS X) or 'COM4' (Windows).
-        * slaveaddress (int):   Slave address in the range 1 to 247 (use decimal numbers, not hex).
         * mode (str):           Mode selection. Can be MODE_RTU or MODE_ASCII!
-
     """
 
     # def __init__(self, port, slaveaddress, mode='ascii', baudrate=9600, logger=None):
@@ -92,13 +88,19 @@ class LnRs485_Instrument():
         if port not in _SERIALPORTS or not _SERIALPORTS[port]:
             try:
                 self.serial = _SERIALPORTS[port] = serial.Serial(
-                                                    port=port,
-                                                    baudrate=baudrate,
-                                                    parity=PARITY,
-                                                    bytesize=BYTESIZE,
-                                                    stopbits=STOPBITS,
-                                                    timeout=TIMEOUT)
-                                                    # rtscts=1,
+                                                    port     = port,
+                                                    baudrate = baudrate,
+                                                    parity   = serial.PARITY_NONE,
+                                                    bytesize = serial.EIGHTBITS,
+                                                    stopbits = serial.STOPBITS_ONE,
+                                                    rtscts   = False,
+                                                    xonxoff  = False,
+                                                    dsrdtr   = False,
+                                                    timeout  = TIMEOUT)
+
+
+
+
             except (Exception) as why:
                 print ('ERROR:  ', str(why))
                 sys.exit()
@@ -140,6 +142,9 @@ class LnRs485_Instrument():
         self.debug = True
         """Set this to :const:'True' to print the communication details. Defaults to :const:'False'."""
 
+        self.sendCounter = 0
+        """Set this to :const:'True' to print the communication details. Defaults to :const:'False'."""
+
         self.STX = int('0x02', 16) # integer
         self.ETX = int('0x03', 16) # integer
         # self.CRC = True
@@ -154,7 +159,6 @@ class LnRs485_Instrument():
 
         New in version 0.5.
         """
-
 
 
     def ClosePortAfterEachCall(self, openPortAEC):
@@ -324,7 +328,7 @@ class LnRs485_Instrument():
     # -     EOD = xxx ... fino al char xxx
     # - Ritorna una bytearray di integer
     #######################################################################
-    def _readBufferRaw(self, EOD=None):
+    def _readRawBuffer(self, EOD=None):
         logger = self._setLogger(package=__name__)
 
         if self.close_port_after_each_call:
@@ -368,9 +372,9 @@ class LnRs485_Instrument():
     def readRawData(self, EOD=None, hex=False, text=False, char=False):
         logger = self._setLogger(package=__name__)
 
-        printableIChars = [ord(c) for c in string.printable]
+        # printableIChars = [ord(c) for c in string.printable]
 
-        line = self._readBufferRaw(EOD=EOD)
+        line = self._readRawBuffer(EOD=EOD)
         # hexData         = ' '.join('{0:02x}'.format(x) for x in line)
         # print (hexData)
 
@@ -379,11 +383,12 @@ class LnRs485_Instrument():
                 line = line.decode('utf-8')
 
 
+
             printableChars = []
             for i in line:
-                cc = chr(i)
-                if i > 31 and i < 127:
-                    printableChars.append(cc)
+                # if byte >= ord(' ') and byte <= ord('~'):  # Handle only printable ASCII
+                if i >= 32 and i <= 126:                    # Handle only printable ASCII
+                    printableChars.append(chr(byte))
                 else:
                     printableChars.append(" ")
 
@@ -546,6 +551,10 @@ class LnRs485_Instrument():
         return payLoad, rawData
 
 
+    def _getSendCounter(self):
+        self.sendCounter += 1
+        yy = self.sendCounter.to_bytes(2, byteorder='big')
+        return yy
 
     #######################################################################
     # - writeDataSDD - con parametri di input diversi
@@ -556,6 +565,11 @@ class LnRs485_Instrument():
         dataToSend = bytearray()
         dataToSend.append(sourceAddress)
         dataToSend.append(destAddress)
+
+        yy = self._getSendCounter()
+        dataToSend.append(yy[0])  # high byte
+        dataToSend.append(yy[1])  # Low byte
+
         for x in dataStr:
             dataToSend.append(ord(x))
 
@@ -572,13 +586,16 @@ class LnRs485_Instrument():
         dataToSend = bytearray()
         dataToSend.append(command.sourceAddr)
         dataToSend.append(command.destAddr)
+
+        yy = self._getSendCounter()
+        dataToSend.append(yy[0])  # high byte
+        dataToSend.append(yy[1])  # Low byte
+
         for x in command.dataStr:
             dataToSend.append(ord(x))
 
         dataSent = self.writeData(dataToSend, fDEBUG=fDEBUG)
         return dataSent
-
-
 
 
     #######################################################################
@@ -596,7 +613,7 @@ class LnRs485_Instrument():
         logger = self._setLogger(package=__name__)
         if fDEBUG:
             print()
-            print('source: {sADDR:03}  dest: {dADDR:03}'.format(sADDR=data[0], dADDR=data[1]))
+            print('source: {sADDR:03}  dest: {dADDR:03} [{SEQ:05}]'.format(sADDR=data[0], dADDR=data[1], SEQ=self.sendCounter))
             print ('{DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
 
             # - preparaiamo il bytearray con i dati da inviare

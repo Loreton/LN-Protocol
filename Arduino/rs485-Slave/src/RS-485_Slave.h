@@ -8,4 +8,12 @@
     #define Addr0             A7
     #define Addr1             A6
 
+    enum payLoadMap  {  DATALEN=0,
+                        SENDER_ADDR,
+                        DESTINATION_ADDR,
+                        SEQNO_HIGH,
+                        SEQNO_LOW,
+                        PAYLOAD,
+                    };
+
 #endif

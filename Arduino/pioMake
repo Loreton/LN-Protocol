@@ -116,9 +116,12 @@ function clearLibraryLink {
 
     dirNames='RCSwitch LnFunctions RS485_protocol VirtualWire115 MAX7219 Adafruit-ST7735-Library Adafruit_GFX'
     dirNames='LnFunctions RS485_protocol'
+    VERBOSE='--verbose'
+    VERBOSE=''
 
     clearLibraryLink
     createLibraryLink
+
     if [[ "$action" =~ "c" ]]; then
         echo "Cleaning project ....: $PWD"
         Esegui "platformio run --target clean"
@@ -130,19 +133,17 @@ function clearLibraryLink {
         Esegui "platformio run --environment nano"
     fi
 
-    VERBOSE='--verbose'
-    VERBOSE=''
     if [[ "$action" =~ "u" ]]; then
         [[ "$device" == "" ]] && echo "Enter USB port: ttyUSB0, ttyUSB1, slave01, ...." && exit
         [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
         Esegui "platformio run $VERBOSE --target upload --upload-port $device"
     fi
 
+    # set -x
+    clearLibraryLink
 
     if [[ "$action" =~ "s" ]]; then
         [[ "$device" == "" ]] && echo "Enter USB port: /dev/ttyUSB0, /dev/ttyUSB1, ...." && exit
         [[ ! -c "$device" ]] && echo "$device is NOT a character device" && exit
         Esegui "platformio device monitor -p $device"
     fi
-
-    clearLibraryLink

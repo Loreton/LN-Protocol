@@ -48,7 +48,7 @@ def Main(gv, action):
         rs485.baudRate                      = 9600
         rs485.mode                          = 'ascii'
         rs485.CRC                           = True
-        print ('.............sonoqui')
+        # print ('.............sonoqui')
 
         if fDEBUG:rs485.printTree()
 
@@ -61,8 +61,6 @@ def Main(gv, action):
         port.ETX                        = rs485.ETX
         port.CRC                        = rs485.CRC
 
-        port.ClosePortAfterEachCall(False)
-        print(port.__repr__())
 
         # ===================================================
         # = serial port monitor

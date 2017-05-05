@@ -6,7 +6,7 @@
 // impostazione di un indirizzo fisso in EEPROM. Comodo per Rs-485
 #include <EEPROM.h>
 
-const byte myAddress        = 12;
+const byte myAddress        = 13;
 const byte maxAddress       = 20;
 
 const bool updateAddress    = false;

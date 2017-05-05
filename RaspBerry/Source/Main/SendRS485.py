@@ -18,10 +18,47 @@ def SendRS485(gv, sendPort):
     logger  = gv.Ln.SetLogger(package=__name__)
     C       = gv.Ln.LnColor()
 
+    sendPort.ClosePortAfterEachCall(True)
+    print(sendPort.__repr__())
+
+
 
     fDEBUG   = gv.input.fDEBUG
-    TYPE = 4
+        # ===================================================
+        # = RS-485 sendMessage
+        # ===================================================
+    print ('... press ctrl-c to stop the process.')
 
+    # gv.input.rs485Address = [11, 12]
+
+    sourceAddr  = bytes([0]) # MASTER
+    sourceAddr = int.from_bytes(sourceAddr, 'little')
+    basedata = 'Loreto.'
+
+    seqNO = 0
+    while True:
+        for destAddress in gv.input.rs485Address:
+            destAddr   = bytes([destAddress])
+            destAddr   = int.from_bytes(destAddr, 'little')
+
+            try:
+                seqNO += 1
+                print(seqNO)
+                dataStr  = '{DATA}.{INX:04}'.format(DATA=basedata, INX=seqNO)
+                # dataSent = sendPort.writeDataSDD(sourceAddr, destAddr, dataStr, fDEBUG=True)
+                dataSent = sendPort.writeDataSDD(sourceAddr, destAddr, basedata, fDEBUG=True)
+
+                time.sleep(10)
+
+
+            except (KeyboardInterrupt) as key:
+                print ("Keybord interrupt has been pressed")
+                sys.exit()
+
+
+
+    '''
+    TYPE = 4
     if TYPE == 1:
             # ===================================================
             # = RS-485 sendMessage
@@ -129,15 +166,15 @@ def SendRS485(gv, sendPort):
         basedata = 'Loreto.'
 
         while True:
+            index = 0
             for destAddress in gv.input.rs485Address:
                 destAddr   = bytes([destAddress])
                 destAddr   = int.from_bytes(destAddr, 'little')
-                # print (destAddress)
-                index = 0
 
                 try:
                     index += 1
-                    dataStr = '{DATA}.{INX:04}'.format(DATA=basedata, INX=index)
+                    print(index)
+                    dataStr  = '{DATA}.{INX:04}'.format(DATA=basedata, INX=index)
                     dataSent = sendPort.writeDataSDD(sourceAddr, destAddr, dataStr, fDEBUG=True)
                     time.sleep(10)
 
@@ -146,3 +183,4 @@ def SendRS485(gv, sendPort):
                     print ("Keybord interrupt has been pressed")
                     sys.exit()
 
+    '''
