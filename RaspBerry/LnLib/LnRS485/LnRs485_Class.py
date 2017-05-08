@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-05-05_15.08.12'
+__version__  = 'LnVer_2017-05-08_14.44.11'
 __status__   = 'Beta'
 
 import os
@@ -33,7 +33,7 @@ PARITY   = serial.PARITY_NONE
 STOPBITS = 1
 """Default value for the number of stopbits (int)."""
 
-TIMEOUT  = 0.05
+read_TIMEOUT  = 0.05
 """Default value for the timeout value in seconds (float)."""
 
 # CLOSE_PORT_AFTER_EACH_CALL = False
@@ -96,7 +96,7 @@ class LnRs485_Instrument():
                                                     rtscts   = False,
                                                     xonxoff  = False,
                                                     dsrdtr   = False,
-                                                    timeout  = TIMEOUT)
+                                                    timeout  = read_TIMEOUT)
 
 
 
@@ -388,7 +388,7 @@ class LnRs485_Instrument():
             for i in line:
                 # if byte >= ord(' ') and byte <= ord('~'):  # Handle only printable ASCII
                 if i >= 32 and i <= 126:                    # Handle only printable ASCII
-                    printableChars.append(chr(byte))
+                    printableChars.append(chr(i))
                 else:
                     printableChars.append(" ")
 

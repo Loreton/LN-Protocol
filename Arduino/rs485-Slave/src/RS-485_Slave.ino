@@ -11,7 +11,7 @@
 #include <EEPROM.h>
 
 // Author:             Loreto notarantonio
-char myVersion[] = "LnVer_2017-05-05_15.24.05";
+char myVersion[] = "LnVer_2017-05-08_16.55.45";
 
 SoftwareSerial serialRs485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
@@ -94,20 +94,20 @@ void setup() {
 // ################################################################
 void loop() {
     pData->timeout = 10000;
-    byte rCode = recvMsg (fAvailable, fRead, pData);
+    byte rCode = recvMsg (pData, fRead, fAvailable);
 
     if (rCode == LN_OK) {
         processRequest(pData);
         Serial.println();
     }
 
-    // else if (pData->rx[0] == 0) {
-    //     Serial.print(myID);
-    //     Serial.print(F("rCode: "));Serial.print(rCode);
-    //     Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));
-    //     Serial.print(pData->timeout);
-    //     Serial.println();
-    // }
+    else if (pData->rx[0] == 0) {
+        Serial.print(myID);
+        Serial.print(F("rCode: "));Serial.print(rCode);
+        Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));
+        Serial.print(pData->timeout);
+        Serial.println();
+    }
 
     else {
         rxDisplayData(rCode, pData);
@@ -159,7 +159,7 @@ void sendMessage(byte destAddr, byte data[], byte dataLen, RXTX_DATA *pData) {
         // send to RS-485 bus
     delay(responseDelay);
     digitalWrite(RS485_ENABLE_PIN, ENA_TX);               // enable sending
-    sendMsg(fWrite, pData);
+    sendMsg(pData, fWrite);
     digitalWrite(RS485_ENABLE_PIN, ENA_RX);                // set in receive mode
     txDisplayData(0, pData);
 }

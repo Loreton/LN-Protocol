@@ -42,6 +42,11 @@ def ParseInput(gVars, args, programVersion=None):
             'rs485'      : "read LnRs485 formatted data from USB data",
             },
 
+        'master': {
+            'raw'        : "read RAW data from serial Port and display it",
+            'rs485'      : "diventa master per un bus rs485 appoggiandosi ad un arduino-relay rs485 ",
+            },
+
         # 'virtualwire': {
         #     'monitor'      : ".....",
         #     },
@@ -119,7 +124,7 @@ def prepareArgParse(positionalActionsDict, programVersion):
         totalCMDLIST.append('      * {0}'.format(key))
         if isinstance(val, dict):
             for key1, val1 in val.items():
-                totalCMDLIST.append('          {0:<30} : {1}'.format(key1, val1))
+                totalCMDLIST.append('          {0:<15} : {1}'.format(key1, val1))
     cmdLIST = '\n'.join(totalCMDLIST)
 
     mainHelp="""
@@ -406,6 +411,32 @@ def SERIAL(myParser, action):
 
     _debugOptions(myParser)
 
+
+
+
+# ---------------------------
+# - A C T I O N s
+# ---------------------------
+def MASTER(myParser, action):
+    from . import ParseInput_RS485 as rs485
+
+    rs485.SetGlobals(C, gv.Ln)
+    rs485.ExecuteOptions(myParser, required=False)
+
+    if action.lower() in ['rs485']:
+        rs485.SerialPort(myParser, required=True)
+        rs485.Rs485Address(myParser, required=True)
+
+
+    else:
+        print("""
+            Action: [{0}] non prevista.
+            valori previsti sono:
+            """.format(action)
+            )
+        sys.exit()
+
+    _debugOptions(myParser)
 
 
 # ---------------------------

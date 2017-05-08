@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-05-08_10.01.38
+    Version:   LnVer_2017-05-08_17.33.39
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -129,14 +129,16 @@ byte c, sentByte;
 void sendMsg (RXTX_DATA *pData, WriteCallback fSend) {
     const char LN_SEND_CALLER_DATA[] = "libSEND-data";
     const char LN_SEND_CALLER_RAW[]  = "libSEND-raw ";
-    byte CRC8value = crc8(&pData->tx[1], pData->tx[LEN]);   // calcoliamo il CRC
+    byte txLen = pData->tx[LEN];
+
+    byte CRC8value = crc8(&pData->tx[1], txLen);   // calcoliamo il CRC
     pData->raw[LEN] = 0;
     pMyID = pData->myID;
 
     fSend (STX);  // STX
     pData->raw[++pData->raw[LEN]] = STX;
 
-    for (byte i=1; i<=pData->tx[LEN]; i++)
+    for (byte i=1; i<=txLen; i++)
         sendComplemented (fSend, pData->tx[i], pData);
 
 
@@ -180,6 +182,7 @@ byte recvMsg (RXTX_DATA *pData,
 
     unsigned long start_time = millis();
     pData->raw[LEN] = 0;            // azzeramento dataLen
+    pData->rx[LEN] = 0;            // azzeramento dataLen
     while ((millis() - start_time) < pData->timeout) {
         if (fAvailable () > 0) {
             byte inByte = fRead();
@@ -279,7 +282,7 @@ byte recvMsg (RXTX_DATA *pData,
                     if (unexpextedCounter == 0) {
                         Serial.println();
                         Serial.print(pMyID);
-                        printHexPDS("unexpexted byte(s): ", inByte, "");
+                        printHexPDS("libRECV - unexpexted byte(s): ", inByte, "");
                     }
 
                     printHexPDS(" ", inByte, "");

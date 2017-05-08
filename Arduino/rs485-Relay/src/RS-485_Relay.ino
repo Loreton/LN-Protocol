@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-05-08_10.17.16
+version:    LnVer_2017-05-08_17.33.47
 
 Scope:      Funzione di relay. Prende i dati provenienti da una seriale collegata a RaspBerry
             ed inoltra il comando sul bus RS485.
@@ -106,24 +106,32 @@ void setup() {
 // #
 // ################################################################
 void loop() {
-
-    /*
+byte rCode;
+        // ------------------------------------
+        // - riceviamo i dati da RaspBerry
+        // - comunque con protocollo LnRs485
+        // ------------------------------------
     pData->timeout = 10000;
-    byte rCode = recvMsgPi(pData);
+    rCode = recvMsgPi(pData);
+    Serial.print(myID);Serial.print(rCode);
     if (rCode == LN_OK) {
-        processRequest(pData);
-        Serial.println();
+        // processRequest(pData);
+        byte payload[] = "Ricevuto messaggio da PI";
+        sendMessage(pData->rx[SENDER_ADDR], payload, sizeof(payload), pData);
+        sendMsgPi(pData);
     }
-    */
+    else {
+        // OK per inviare dati in modo fisso sul BUS
+        pData->rx[SEQNO_HIGH] = 0;
+        pData->rx[SEQNO_LOW]  = 1;
 
-    pData->rx[SEQNO_HIGH] = 0;
-    pData->rx[SEQNO_LOW]  = 1;
 
-    serialPi.print(F("   (Request is for me) ... answering"));
-    byte response[] = "Loreto....";
+        serialPi.print(F("   dummy send of relay...."));
+        byte payload[] = "Loreto....";
+        sendMessage(11, payload, sizeof(payload), pData);
+        delay(5000);
 
-    sendMessage(11, response, sizeof(response), pData);
-    delay(5000);
+    }
 
     /*
     pData->timeout = 10000;
@@ -163,9 +171,9 @@ void processRequest(RXTX_DATA *pData) {
 
     if (destAddr == myEEpromAddress) {    // sono io.... rispondi sulla RS485
         Serial.print(F("   (Request is for me) ... answering"));
-        byte response[] = "Loreto....";
+        byte payload[] = "Loreto....";
         // char *xx = LnUtoa(myEEpromAddress, 3, '0');
-        sendMessage(senderAddr, response, sizeof(response), pData);
+        sendMessage(senderAddr, payload, sizeof(payload), pData);
     }
     else {                                // non sono io.... commento sulla seriale
         Serial.print(F("   (Request is NOT for me)"));
