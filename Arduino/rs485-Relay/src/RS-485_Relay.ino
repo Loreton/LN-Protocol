@@ -1,77 +1,88 @@
 /*
-    http://www.gammon.com.au/forum/?id=11428
+Author:     Loreto Notarantonio
+version:    LnVer_2017-05-08_10.17.16
+
+Scope:      Funzione di relay. Prende i dati provenienti da una seriale collegata a RaspBerry
+            ed inoltra il comando sul bus RS485.
+            Provvede ovviamente a catturare la risposta e reinoltrarla a RaspBerry.
+
+Ref:        http://www.gammon.com.au/forum/?id=11428
 */
 
 #include <LnFunctions.h>                //  D2X(dest, val, 2), printHex
 #include <LnRS485_protocol.h>
 #include <SoftwareSerial.h>
 
-#include "RS-485_Slave.h"                      //  pin definitions
+
+#include "RS-485_Relay.h"                      //  pin definitions
+// definiti nel .h
+// HardwareSerial & serialPi = Serial; // rename della Serial per comodità
+// SoftwareSerial  arduino485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
 #include <EEPROM.h>
 
-// Author:             Loreto notarantonio
-char myVersion[] = "LnVer_2017-05-05_15.24.05";
 
-SoftwareSerial serialRs485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
+// ------ RS485 callback routines
+// void arduinofWrite(const byte what)   {       Serial485.write (what); }
+// int  arduinofAvailable()              {return Serial485.available (); }
+// int  arduinofRead()                   {return Serial485.read (); }
 
-// ------ callback routines
-void fWrite(const byte what)   {       serialRs485.write (what); }
-int  fAvailable()              {return serialRs485.available (); }
-int  fRead()                   {return serialRs485.read (); }
+// ------ RS485 callback routines
+// void pifWrite(const byte what)   {       piSerial.write (what); }
+// int  pifAvailable()              {return piSerial.available (); }
+// int  pifRead()                   {return piSerial.read (); }
 
-// void fWrite(const byte what)  {Serial.write (what); }
-// int fAvailable()              {return Serial.available (); }
-// int fRead()                   {return Serial.read (); }
-
-// #define DATALEN     0
-// #define SENDER_ADDR      1
-// #define DESTINATION_ADDR 2
-// #define SEQNO_HIGH    3
-// #define SEQNO_LOW     4
-// #define PAYLOAD     5
 #define ENA_TX       HIGH
 #define ENA_RX       LOW
 #define DIS_TX       LOW
 
 byte        myEEpromAddress;        // who we are
 RXTX_DATA   RxTx, *pData;             // struttura dati
-//.............01234567890123
-char myID[] = "rn[xxx] - ";
+//.............0 1 234567890123
+char myID[] = "\r\n[xxx] - "; // i primi due byte saranno CR e LF
+/*
+      .............01234567890123
+    char myID[] = "rn[xxx] - "; // i primi due byte saranno CR e LF
+      ............. 0 1 234567890123
+    char myID[] = "\r\n[xxx] - "; // i primi due byte saranno CR e LF
+*/
 unsigned long responseDelay = 0;
 
 
 
 //python3.4 -m serial.tools.list_ports
 void setup() {
-    pData      = &RxTx;
-
-    pData->displayData = false;    // data display dei byt hex inviatie ricevuti (lo fa direttamente la libreria)
-
-    Serial.begin(9600);             // SERIAL_8N1 (the default)
-    serialRs485.begin(9600);
+        // -----------------------------
+        // inizializzazione bus RS485
+        // e relativa struttura dati
+        // -----------------------------
+    arduino485.begin(9600);
+    pData               = &RxTx;
+    pData->displayData  = false;    // data display dei byt hex inviatie ricevuti (lo fa direttamente la libreria)
     pinMode (RS485_ENABLE_PIN, OUTPUT);  // enable rx by default
     digitalWrite(RS485_ENABLE_PIN, ENA_RX);  // set in receive mode
 
-    pinMode (LED_PIN, OUTPUT);          // built-in LED
+        // -----------------------------
+        // inizializzazione porta seriale
+        // di comunicazione con raspBerry
+        // -----------------------------
+    serialPi.begin(9600);             // SERIAL_8N1 (the default)
 
-    /* ------------------------
-        preparazione myID con indirizzo
-        1. convert integer myAddress to string
-        2. copy string into myID array
-    */
+        // --------------------------------------------
+        // preparazione myID con indirizzo di Arduino
+        // 1. convert integer myAddress to string
+        // 2. copy string into myID array
+        // --------------------------------------------
     myEEpromAddress = EEPROM.read(0);
     char *xx = LnUtoa(myEEpromAddress, 3, '0');
-    myID[0] = 13;   // CR
-    myID[1] = 10;   // NL
+    // myID[0] = 13;   // CR
+    // myID[1] = 10;   // NL
     myID[3] = xx[0];
     myID[4] = xx[1];
     myID[5] = xx[2];
     pData->myID = myID;
 
-    // delay(5*1000);
-
-    Serial.println(myID);
+    // piSerial.println(myID);
 
     /* ----
         bit_time = 1/baud_rate
@@ -86,6 +97,8 @@ void setup() {
     ---- */
     responseDelay = (myEEpromAddress-10)*500; // Es.: Addr 12, delay = (12-10)*500=1000mS
 
+    pinMode (LED_PIN, OUTPUT);          // built-in LED
+
 }
 
 
@@ -93,8 +106,28 @@ void setup() {
 // #
 // ################################################################
 void loop() {
+
+    /*
     pData->timeout = 10000;
-    byte rCode = recvMsg (fAvailable, fRead, pData);
+    byte rCode = recvMsgPi(pData);
+    if (rCode == LN_OK) {
+        processRequest(pData);
+        Serial.println();
+    }
+    */
+
+    pData->rx[SEQNO_HIGH] = 0;
+    pData->rx[SEQNO_LOW]  = 1;
+
+    serialPi.print(F("   (Request is for me) ... answering"));
+    byte response[] = "Loreto....";
+
+    sendMessage(11, response, sizeof(response), pData);
+    delay(5000);
+
+    /*
+    pData->timeout = 10000;
+    byte rCode = recvMsg (arduinofAvailable, arduinofRead, pData);
 
     if (rCode == LN_OK) {
         processRequest(pData);
@@ -113,7 +146,7 @@ void loop() {
         rxDisplayData(rCode, pData);
         Serial.println();
     }
-
+    */
 }
 
 // #############################################################
@@ -159,7 +192,7 @@ void sendMessage(byte destAddr, byte data[], byte dataLen, RXTX_DATA *pData) {
         // send to RS-485 bus
     delay(responseDelay);
     digitalWrite(RS485_ENABLE_PIN, ENA_TX);               // enable sending
-    sendMsg(fWrite, pData);
+    sendMsgArduino(pData);
     digitalWrite(RS485_ENABLE_PIN, ENA_RX);                // set in receive mode
     txDisplayData(0, pData);
 }
@@ -179,30 +212,4 @@ void txDisplayData(byte rCode, RXTX_DATA *pData) {
 
 
 
-/*
-Configurazione
-
-rs485_01 - pennetta
-rs485_02 - pennetta
-rs485_03 - pennetta
-
-arduino11 - Arduino nano
-arduino12 - Arduino nano
-
-rs485_01 - trasmette sia per arduino11 che per arduino12
-
-
-rs485_01        rs482_02        arduino11         - arduino12
-
-send->11        -               -                   -
--               00-->11         -                   -
--               -               OK                   -
--               -               00<--reply           -
--               00<--11         -                   -
--               -                 -                   -
--               -                 -                   -
--               -                 -                   -
--               -                 -                   -
-
-*/
 

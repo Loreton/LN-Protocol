@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-04-26_10.44.21
+// Version: LnVer_2017-05-08_10.02.16
 // ########################################
 
 
@@ -59,17 +59,11 @@
 
 
 
-    void sendMsg (WriteCallback fSend,
-                  RXTX_DATA *rxData);
+    void sendMsg (RXTX_DATA *rxData, WriteCallback fSend);
+    byte recvMsg (RXTX_DATA *rxData, ReadCallback fRead, AvailableCallback fAvailable);
 
-    byte recvMsg (  AvailableCallback fAvailable,
-                    ReadCallback fRead,
-                    RXTX_DATA *rxData);
 
         // dataLen is byte data[0]
-    // void displayDebugMessage(const char *msgText, const byte *data);
-    // void displayDebugMessage(byte errMscType, const byte *data);
-    // void displayDebugMessage_(byte errMscType, const byte *data);
     void displayDebugMessage(const char *caller, byte errMscType, const byte *data);
     void prova(const char *caller);
 

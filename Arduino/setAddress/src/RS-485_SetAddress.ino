@@ -6,18 +6,18 @@
 // impostazione di un indirizzo fisso in EEPROM. Comodo per Rs-485
 #include <EEPROM.h>
 
-const byte myAddress        = 13;
+const byte myAddress        = 10;
 const byte maxAddress       = 20;
 
-const bool updateAddress    = false;
+const bool updateAddress    = true;
 
 void setup () {
 
     if (updateAddress) {
         if (EEPROM.read (0) != myAddress)
             EEPROM.write (0, myAddress);
-        if (EEPROM.read  (1) != maxAddress)
-            EEPROM.write (1, maxAddress);
+        // if (EEPROM.read  (1) != maxAddress)
+        //     EEPROM.write (1, maxAddress);
     }
 
         // debugging prints

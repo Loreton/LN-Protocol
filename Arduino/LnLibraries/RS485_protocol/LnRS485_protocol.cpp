@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-05-03_09.54.32
+    Version:   LnVer_2017-05-08_10.01.38
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -126,7 +126,7 @@ byte c, sentByte;
 // ###########################################################
 // - il primo byte di pData->tx è la lunghezza dei dati.
 // ###########################################################
-void sendMsg (WriteCallback fSend, RXTX_DATA *pData) {
+void sendMsg (RXTX_DATA *pData, WriteCallback fSend) {
     const char LN_SEND_CALLER_DATA[] = "libSEND-data";
     const char LN_SEND_CALLER_RAW[]  = "libSEND-raw ";
     byte CRC8value = crc8(&pData->tx[1], pData->tx[LEN]);   // calcoliamo il CRC
@@ -159,9 +159,10 @@ void sendMsg (WriteCallback fSend, RXTX_DATA *pData) {
 // - if nothing received, or an error (eg. bad CRC, bad data) return 1 (by Loreto per fare comunque il display dei dati ricevuti)
 // - otherwise, returns length of received data
 // ###########################################################
-byte recvMsg (AvailableCallback fAvailable,   // return available count
-              ReadCallback fRead,             // read one byte
-              RXTX_DATA *pData) {
+byte recvMsg (RXTX_DATA *pData,
+                ReadCallback fRead,              // read one byte
+                AvailableCallback fAvailable)   // return available count
+                {
 
     bool have_stx   = false;
     const char LN_RECV_CALLER_RAW[]  = "libRECV-raw ";
