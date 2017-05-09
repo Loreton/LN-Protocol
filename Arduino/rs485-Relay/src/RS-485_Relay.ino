@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-05-08_17.33.47
+version:    LnVer_2017-05-09_18.29.25
 
 Scope:      Funzione di relay. Prende i dati provenienti da una seriale collegata a RaspBerry
             ed inoltra il comando sul bus RS485.
@@ -111,14 +111,22 @@ byte rCode;
         // - riceviamo i dati da RaspBerry
         // - comunque con protocollo LnRs485
         // ------------------------------------
-    pData->timeout = 10000;
+    pData->timeout = 5000;
     rCode = recvMsgPi(pData);
-    Serial.print(myID);Serial.print(rCode);
+
+    serialPi.print(myID);
+    serialPi.print(F("rCode: "));serialPi.print(rCode);
+    serialPi.print(F(" commandCode: "));serialPi.println(pData->rx[COMMAND]);
+
     if (rCode == LN_OK) {
+        if (pData->rx[COMMAND] == ECHO_CMD) {
+            serialPi.print("ciao2");
+            // sendEcho(pData);
+        }
         // processRequest(pData);
-        byte payload[] = "Ricevuto messaggio da PI";
-        sendMessage(pData->rx[SENDER_ADDR], payload, sizeof(payload), pData);
-        sendMsgPi(pData);
+        // byte payload[] = "Ricevuto messaggio da PI";
+        // sendMessage(pData->rx[SENDER_ADDR], payload, sizeof(payload), pData);
+        // sendMsgPi(pData);
     }
     else {
         // OK per inviare dati in modo fisso sul BUS
@@ -203,6 +211,24 @@ void sendMessage(byte destAddr, byte data[], byte dataLen, RXTX_DATA *pData) {
     sendMsgArduino(pData);
     digitalWrite(RS485_ENABLE_PIN, ENA_RX);                // set in receive mode
     txDisplayData(0, pData);
+}
+
+// #############################################################
+// # invia il msg ricevuto solo con SA/DA inveriti
+// #############################################################
+void sendEcho(RXTX_DATA *pData) {
+    byte dataLen = pData->rx[DATALEN];
+
+    for (byte i = 0; i<dataLen; i++)
+        pData->tx[i] = pData->rx[i];         // copiamo i dati nel buffer da inviare
+
+    pData->tx[SENDER_ADDR]      = pData->rx[DESTINATION_ADDR];    // SA
+    pData->tx[DESTINATION_ADDR] = pData->rx[SENDER_ADDR];    // DA
+
+    // send to PI RS-485 bus
+    // delay(responseDelay);
+    sendMsgPi(pData);
+
 }
 
 // ################################################################

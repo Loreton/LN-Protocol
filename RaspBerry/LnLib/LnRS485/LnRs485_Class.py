@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-05-08_14.44.11'
+__version__  = 'LnVer_2017-05-09_18.23.13'
 __status__   = 'Beta'
 
 import os
@@ -372,39 +372,36 @@ class LnRs485_Instrument():
     def readRawData(self, EOD=None, hex=False, text=False, char=False):
         logger = self._setLogger(package=__name__)
 
-        # printableIChars = [ord(c) for c in string.printable]
+        data = self._readRawBuffer(EOD=EOD)
 
-        line = self._readRawBuffer(EOD=EOD)
-        # hexData         = ' '.join('{0:02x}'.format(x) for x in line)
-        # print (hexData)
+        if data:
+            validChars = list(range(31,126))
+            validChars.append(10) # aggiungiamo il newline in modo che venga displayato
 
-        if line:
-            if isinstance(line, bytes):
-                line = line.decode('utf-8')
-
+            if isinstance(data, bytes):
+                data = data.decode('utf-8')
 
 
-            printableChars = []
-            for i in line:
-                # if byte >= ord(' ') and byte <= ord('~'):  # Handle only printable ASCII
-                if i >= 32 and i <= 126:                    # Handle only printable ASCII
-                    printableChars.append(chr(i))
+            lineToPrint = []
+            for i in data:
+                if i in validChars:                    # Handle only printable ASCII
+                    lineToPrint.append(chr(i))
                 else:
-                    printableChars.append(" ")
+                    lineToPrint.append(" ")
 
 
             if hex:
-                hexData         = ' '.join('{0:02x}'.format(x) for x in line)
+                hexData         = ' '.join('{0:02x}'.format(x) for x in data)
                 print ('{DESCR:^10}:  {DATA}'.format(DESCR="raw", DATA=hexData))
 
             if char:
-                print ('{DESCR:^10}:  {DATA}'.format(DESCR="chr", DATA='  '.join(printableChars)))
+                print ('{DESCR:^10}:  {DATA}'.format(DESCR="chr", DATA='  '.join(lineToPrint)))
 
             if text:
-                print ('{DESCR:^10}:  {DATA}'.format(DESCR="line", DATA=''.join(printableChars)))
+                print ('{DESCR:^10}:  {DATA}'.format(DESCR="line", DATA=''.join(lineToPrint)))
 
 
-        return line
+        return data
 
 
 
@@ -421,6 +418,7 @@ class LnRs485_Instrument():
 
         buffer = bytearray()
 
+        logger.debug( "reading buffer")
         chInt=-1
         while chInt != self.STX:
             ch = self.serial.read(1)       # ch e' un bytes
@@ -581,17 +579,19 @@ class LnRs485_Instrument():
     # - writeDataCMD - con parametri di input diversi
     # -    richiama comunque writeData
     #######################################################################
-    def writeDataCMD(self, command, fDEBUG=False):
+    def writeDataCMD(self, CMD, fDEBUG=False):
         ''' formato CLASS dei parametri '''
         dataToSend = bytearray()
-        dataToSend.append(command.sourceAddr)
-        dataToSend.append(command.destAddr)
+        dataToSend.append(CMD.sourceAddr)
+        dataToSend.append(CMD.destAddr)
 
         yy = self._getSendCounter()
         dataToSend.append(yy[0])  # high byte
         dataToSend.append(yy[1])  # Low byte
 
-        for x in command.dataStr:
+        dataToSend.append(CMD.commandNO)
+
+        for x in CMD.dataStr:
             dataToSend.append(ord(x))
 
         dataSent = self.writeData(dataToSend, fDEBUG=fDEBUG)

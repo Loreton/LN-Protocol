@@ -13,6 +13,10 @@
                         SEQNO_HIGH,
                         SEQNO_LOW,
                         PAYLOAD,
+                        COMMAND=PAYLOAD,
+                    };
+
+    enum rs485_Commands  {  ECHO_CMD=1,
                     };
 
     // definizione delle seriali

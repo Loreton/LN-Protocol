@@ -20,6 +20,8 @@ def MonitorRaw(gv, monPort):
 
     fDEBUG   = gv.input.fDEBUG
     print ('... press ctrl-c to stop the process.\n')
+    monPort.ClosePortAfterEachCall(False) # ho notato che altrimenti perdo qualche byte
+    print(monPort.__repr__())
 
 
     # ===================================================
@@ -30,7 +32,6 @@ def MonitorRaw(gv, monPort):
     EOD = int('0x0A', 16) # integer
     EOD = int('0x03', 16) # integer
     EOD = None
-    monPort.ClosePortAfterEachCall(False) # ho notato che altrimenti perdo qualche byte
     try:
         while True:
             data = monPort.readRawData(EOD=gv.input.eod_char, hex=gv.input.fHEX, text=gv.input.fLINE, char=gv.input.fCHAR)

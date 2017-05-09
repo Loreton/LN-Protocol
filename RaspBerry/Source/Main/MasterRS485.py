@@ -9,6 +9,7 @@
 
 import sys
 import time
+class LnClass(): pass
 
 ################################################################################
 # - serialRelayPort: porta seriale dove si trova un Arduino che rilancia
@@ -27,23 +28,37 @@ def MasterRS485(gv, serialRelayPort):
         # = RS-485 sendMessage
         # ===================================================
     print ('... press ctrl-c to stop the process.')
+    CMD = LnClass()
 
-    sourceAddr = bytes([0]) # MASTER
-    sourceAddr = int.from_bytes(sourceAddr, 'little')
-    basedata   = 'Loreto.'
+    sourceAddr  = bytes([0]) # MASTER
+    ECHO_CMD    = bytes([1]) # comando di ECHO
 
-    seqNO = 0
+    '''
+    EOD = None
+    try:
+        while True:
+            data = serialRelayPort.readRawData(EOD=None, hex=False, text=True, char=False)
+            if data: print()
+
+    except (KeyboardInterrupt) as key:
+        print ("Keybord interrupt has been pressed")
+        sys.exit()
+    '''
+
+
+
+
+    # seqNO = 0
     while True:
         for destAddress in gv.input.rs485Address:
-            destAddr   = bytes([destAddress])
-            destAddr   = int.from_bytes(destAddr, 'little')
-
+            destAddr        = bytes([destAddress])
             try:
-                seqNO += 1
-                print(seqNO)
-                dataStr  = '{DATA}.{INX:04}'.format(DATA=basedata, INX=seqNO)
-                dataSent = serialRelayPort.writeDataSDD(sourceAddr, destAddr, basedata, fDEBUG=True)
-                # time.sleep(10)
+                CMD.dataStr        = 'Loreto.'
+                CMD.sourceAddr  = int.from_bytes(sourceAddr, 'little')
+                CMD.destAddr    = int.from_bytes(destAddr, 'little')
+                CMD.commandNO   = int.from_bytes(ECHO_CMD, 'little')
+                dataSent        = serialRelayPort.writeDataCMD(CMD, fDEBUG=True)
+
 
 
             except (KeyboardInterrupt) as key:
@@ -51,17 +66,26 @@ def MasterRS485(gv, serialRelayPort):
                 sys.exit()
 
 
+
+
+            # print ('\n'*3 ,'waiting for response....')
                 # read response
             try:
-                while True:
-                    data = serialRelayPort.readRawData(EOD=None, hex=True, text=True, char=True)
+                timeOut = 100
+                while timeOut>0:
+                    # data = monPort.readRawData(EOD=gv.input.eod_char, hex=gv.input.fHEX, text=gv.input.fLINE, char=gv.input.fCHAR)
+                    # if data: print()
+
+                    data = serialRelayPort.readRawData(EOD=None, hex=True, text=True, char=False)
                     if data:
-                        # print(data)
                         print()
                     else:
-                        print ('...nothing')
+                        timeOut -= 1
+
+
                     '''
-                    payLoad, rowData = monPort.readData(fDEBUG=True)
+
+                    payLoad, rowData = serialRelayPort.readData(fDEBUG=True)
                     if not payLoad:
                         print ('payLoad ERROR....')
                     print()
