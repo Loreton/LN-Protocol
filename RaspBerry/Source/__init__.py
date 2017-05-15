@@ -6,10 +6,11 @@
 ####################################################
 
 from . Main.Main                    import  Main
-from . Main.MonitorRS485               import  MonitorRS485
-from . Main.MasterRS485               import  MasterRS485
-from . Main.MonitorRaw               import  MonitorRaw
-from . Main.SendRS485                    import  SendRS485
+
+from . Actions.MonitorRS485               import  MonitorRS485
+from . Actions.MasterRS485               import  MasterRS485
+from . Actions.MonitorRaw               import  MonitorRaw
+from . Actions.SendRS485                    import  SendRS485
 
 
 from . Setup.SetupEnv               import  SetupEnv
@@ -17,7 +18,7 @@ from . Setup.SetupLog               import  SetupLog
 from . Setup.ParseInput             import  ParseInput
 from . Setup.ImportLib              import  ImportLib
 
-from . Functions.KeepAlive              import  KeepAlive
+from . Functions.EchoTest              import  EchoTest
 
 
 

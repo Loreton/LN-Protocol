@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-05-15_12.08.39'
+__version__  = 'LnVer_2017-05-15_16.29.09'
 __status__   = 'Beta'
 
 import os
@@ -527,8 +527,8 @@ class LnRs485_Instrument():
         # bufferData = self._readBuffer()
         # bufferData = self._read_SOD_EOD_Buffer(SOD=self.STX, EOD=self.ETX, TIMEOUT=1000)
         bufferData = self._readSerialBuffer(SOD=self.STX, EOD=self.ETX, TIMEOUT=TIMEOUT, fDEBUG=fDEBUG)
-        msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='full data', LEN=len(bufferData), DATA=' '.join('{:02X}'.format(x) for x in bufferData))
-        if fDEBUG: print(msg)
+        msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='readDataLib: full data', LEN=len(bufferData), DATA=' '.join('{:02X}'.format(x) for x in bufferData))
+        # if fDEBUG: print(msg)
         logger.debug(msg)
 
             # Prendiamo i dati fissi
@@ -601,10 +601,11 @@ class LnRs485_Instrument():
             return bytearray(), bufferData
 
         if fDEBUG:
-            print ('readDataLib: from addr: {sADDR:03} ---> {dADDR:03} [{SEQ:05}]'.format(sADDR=payLoad[0], dADDR=payLoad[1], SEQ=seqNumber))
-            print ('readDataLib: {DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in bufferData)))
-            print ('readDataLib: {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in payLoad)))
-            print ('readDataLib: {DESCR:<18}  {DATA}'.format(DESCR="payload text", DATA=' '.join('{0:>2}'.format(chr(x)) for x in payLoad[2:])))
+            print ('readDataLib:')
+            print ('    from addr: {sADDR:03} ---> {dADDR:03} [{SEQ:05}]'.format(sADDR=payLoad[0], dADDR=payLoad[1], SEQ=seqNumber))
+            print ('    {DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in bufferData)))
+            print ('    {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in payLoad)))
+            print ('    {DESCR:<18}  {DATA}'.format(DESCR="payload text", DATA=' '.join('{0:>2}'.format(chr(x)) for x in payLoad[2:])))
 
 
         return payLoad, bufferData
@@ -673,9 +674,10 @@ class LnRs485_Instrument():
         ''' formato in bytearray dei parametri '''
         logger = self._setLogger(package=__name__)
         if fDEBUG:
-            print()
-            print ('sendDataLib: source: {sADDR:03}  dest: {dADDR:03} [{SEQ:05}]'.format(sADDR=data[0], dADDR=data[1], SEQ=self.sendCounter))
-            print ('sendDataLib: {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
+            # print()
+            print ('sendDataLib:')
+            print ('    source: {sADDR:03}  dest: {dADDR:03} [{SEQ:05}]'.format(sADDR=data[0], dADDR=data[1], SEQ=self.sendCounter))
+            print ('    {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
 
             # - preparaiamo il bytearray con i dati da inviare
         dataToSend=bytearray()
@@ -710,7 +712,7 @@ class LnRs485_Instrument():
             self.serial.close()
 
         if fDEBUG:
-            print ('sendDataLib: {DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in dataToSend)))
+            print ('    {DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in dataToSend)))
 
         return dataToSend
 

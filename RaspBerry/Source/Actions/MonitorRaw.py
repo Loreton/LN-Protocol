@@ -31,10 +31,10 @@ def MonitorRaw(gv, monPort):
     print ('... RAW format... until char:', gv.input.eod_char)
     EOD = int('0x0A', 16) # integer
     EOD = int('0x03', 16) # integer
-    EOD = None
+    if not gv.input.eod_char: EOD = []
     try:
         while True:
-            data = monPort.readRawData(EOD=gv.input.eod_char, hex=gv.input.fHEX, text=gv.input.fLINE, char=gv.input.fCHAR)
+            data = monPort.readRawData(EOD=EOD, hex=gv.input.fHEX, text=gv.input.fLINE, char=gv.input.fCHAR)
             if data: print()
 
     except (KeyboardInterrupt) as key:

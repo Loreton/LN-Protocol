@@ -45,6 +45,7 @@ def ParseInput(gVars, args, programVersion=None):
         'master': {
             'raw'        : "read RAW data from serial Port and display it",
             'rs485'      : "diventa master per un bus rs485 appoggiandosi ad un arduino-relay rs485 ",
+            'echo'       : "invia dati su arduino-relay il quale fa echo del messaggio verso pi e lo inoltra nel bus RS485 ",
             },
 
         # 'virtualwire': {
@@ -426,6 +427,10 @@ def MASTER(myParser, action):
     if action.lower() in ['rs485']:
         rs485.SerialPort(myParser, required=True)
         rs485.Rs485Address(myParser, required=True)
+
+    if action.lower() in ['echo']:
+        rs485.SerialPort(myParser, required=True)
+
 
 
     else:

@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-05-15_11.39.01
+version:    LnVer_2017-05-15_17.26.50
 
 Scope:      Funzione di relay. Prende i dati provenienti da una seriale collegata a RaspBerry
             ed inoltra il comando sul bus RS485.
@@ -106,61 +106,21 @@ void setup() {
 // # - M A I N     Loop
 // ################################################################
 void loop() {
-byte rCode;
-// byte fDEBUG = false;
+// byte rCode;
         // ------------------------------------
         // - riceviamo i dati da RaspBerry
         // - con protocollo LnRs485
         // ------------------------------------
     pData->timeout = 5000;
     pData->rx[DATALEN] = 0;
-    rCode = recvMsgPi(pData);
-    delay(20);
-
-    // if (fDEBUG) {
-    //     serialPi.print(myID);
-    //     serialPi.print(F("rCode: "));serialPi.print(rCode);
-    //     serialPi.print(F(" commandCode: "));serialPi.println(pData->rx[COMMAND]);
-    //     rxDisplayData(LN_DEBUG, pData);
-    // }
+    byte rCode = recvMsgPi(pData);
 
     if (rCode == LN_OK) {
-        // if (pData->rx[COMMAND] == KEEPALIVE_CMD) {
-            // if (fDEBUG) serialPi.print("ricevuto keepAlive");
-            // keepAliveReply(pData);
-        // }
         forwardMessage(pData);
-        // processRequest(pData);
-        // byte payload[] = "Ricevuto messaggio da PI";
-        // forwardMessage(pData);
-        // sendMsgPi(pData);
     }
     /*
-    else {
-        delay(500);
-        simulateKeepAliveReply(pData);
-    }
-
-    pData->timeout = 10000;
-    byte rCode = recvMsg (arduinofAvailable, arduinofRead, pData);
-
-    if (rCode == LN_OK) {
-        processRequest(pData);
-        Serial.println();
-    }
-
-    // else if (pData->rx[0] == 0) {
-    //     Serial.print(myID);
-    //     Serial.print(F("rCode: "));Serial.print(rCode);
-    //     Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));
-    //     Serial.print(pData->timeout);
-    //     Serial.println();
-    // }
-
-    else {
-        rxDisplayData(rCode, pData);
-        Serial.println();
-    }
+    simulateEcho(pData);
+    delay(1000);
     */
 }
 
@@ -182,8 +142,13 @@ void forwardMessage(RXTX_DATA *pData) {
     pData->tx[DESTINATION_ADDR] = pData->rx[SENDER_ADDR];
     pData->tx[SENDER_ADDR]      = myEEpromAddress;
 
+    // printHexPDS( "ECHO_CMD : ", ECHO_CMD);
+    // printHexPDS( " - RxCommand: ", pData->rx[COMMAND]);
+    // Serial.println();
+
+
         // invia il messaggio indietro anche a raspBerry
-    if (pData->rx[COMMAND] == KEEPALIVE_CMD) {
+    if (pData->rx[COMMAND] == ECHO_CMD) {
         sendMsgPi(pData);
     }
 
@@ -194,31 +159,6 @@ void forwardMessage(RXTX_DATA *pData) {
 
 }
 
-// #############################################################
-// # keepAliveReply()
-// #    invia il msg ricevuto solo con SA/DA inveriti
-// #############################################################
-void keepAliveReply(RXTX_DATA *pData) {
-    byte dataLen = pData->rx[DATALEN];
-
-        // - copy ALL rx to tx
-    for (byte i = 0; i<=dataLen; i++)
-        pData->tx[i] = pData->rx[i];         // copiamo i dati nel buffer da inviare
-
-        // - invert SA with DA
-    pData->tx[SENDER_ADDR]      = pData->rx[DESTINATION_ADDR];
-    pData->tx[DESTINATION_ADDR] = pData->rx[SENDER_ADDR];
-
-
-    // invia il messaggio indietro a raspBerry
-    sendMsgPi(pData);
-
-    // inoltra il comando sul bus RS485
-    digitalWrite(RS485_ENABLE_PIN, ENA_TX);               // enable sending
-    sendMsgArduino(pData);
-    digitalWrite(RS485_ENABLE_PIN, ENA_RX);                // set in receive mode
-
-}
 
 
 
@@ -226,31 +166,39 @@ void keepAliveReply(RXTX_DATA *pData) {
 
 
 // #############################################################
-// #
+// # Prepariamo un pacchetto come se fosse arrivato dal Master PI
 // #############################################################
-void simulateKeepAliveReply(RXTX_DATA *pData) {
-    pData->tx[SENDER_ADDR]      = myEEpromAddress;    // SA
-    pData->tx[DESTINATION_ADDR] = 0;    // DA
-    pData->tx[SEQNO_HIGH]       = 0;
-    pData->tx[SEQNO_LOW]        = 1;
+// int seqNO = 0;
+void simulateEcho(RXTX_DATA *pData) {
+    static int seqNO = 0;
+
+    pData->rx[SENDER_ADDR]      = 0;    // SA
+    pData->rx[DESTINATION_ADDR] = myEEpromAddress;    // DA
+    pData->rx[SEQNO_HIGH]       = seqNO >> 8;
+    pData->rx[SEQNO_LOW]        = seqNO & 0x00FF;
+    pData->rx[COMMAND]          = ECHO_CMD;
 
 
-    byte data[]  = "simulated keepAlive";
+    byte data[]  = "simulated echo";
     byte dataLen = sizeof(data);
     byte index = PAYLOAD;
     for (byte i=0; i<dataLen; i++)
-        pData->tx[index++] = data[i];         // copiamo i dati nel buffer da inviare
+        pData->rx[index++] = data[i];         // copiamo i dati nel buffer da inviare
 
-    pData->tx[DATALEN] = index;  // set dataLen
+    pData->rx[DATALEN] = index;  // set dataLen
+
+    forwardMessage(pData);
+    /*
+        // send to PI
+    sendMsgPi(pData);
 
         // send to RS-485 bus
     digitalWrite(RS485_ENABLE_PIN, ENA_TX);               // enable sending
     sendMsgArduino(pData);
     digitalWrite(RS485_ENABLE_PIN, ENA_RX);                // set in receive mode
+    */
+    seqNO++;
 
-        // send to PI
-    sendMsgPi(pData);
-    // txDisplayData(0, pData);
 }
 
 // ################################################################

@@ -12,11 +12,11 @@
                         DESTINATION_ADDR,
                         SEQNO_HIGH,
                         SEQNO_LOW,
+                        COMMAND,
                         PAYLOAD,
-                        COMMAND=PAYLOAD,
                     };
 
-    enum rs485_Commands  {  KEEPALIVE_CMD=1,
+    enum rs485_Commands  {  ECHO_CMD=1,
                     };
 
     // definizione delle seriali
