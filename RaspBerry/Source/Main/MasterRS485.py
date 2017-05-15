@@ -2,14 +2,14 @@
 # -*- coding: iso-8859-1 -*-
 #
 # Scope:  Programma per ...........
-# modified:  by Loreto notarantonio 2017-03-28 09.59.40
+# modified:  by Loreto notarantonio LnVer_2017-05-15_12.00.03
 #
 # ######################################################################################
 
 
 import sys
 import time
-class LnClass(): pass
+# class LnClass(): pass
 
 ################################################################################
 # - serialRelayPort: porta seriale dove si trova un Arduino che rilancia
@@ -18,7 +18,7 @@ class LnClass(): pass
 def MasterRS485(gv, serialRelayPort):
     logger  = gv.Ln.SetLogger(package=__name__)
     C       = gv.Ln.LnColor()
-    fDEBUG   = gv.input.fDEBUG
+    fDEBUG  = gv.input.fDEBUG
 
 
     serialRelayPort.ClosePortAfterEachCall(False)
@@ -28,36 +28,29 @@ def MasterRS485(gv, serialRelayPort):
         # = RS-485 sendMessage
         # ===================================================
     print ('... press ctrl-c to stop the process.')
-    CMD = LnClass()
+    # CMD = LnClass()
+    CMD = gv.Ln.LnDict()
 
-    sourceAddr  = bytes([0]) # MASTER
-    ECHO_CMD    = bytes([1]) # comando di ECHO
+    sourceAddr     = bytes([0]) # MASTER
 
-    '''
-    EOD = None
-    try:
-        while True:
-            data = serialRelayPort.readRawData(EOD=None, hex=False, text=True, char=False)
-            if data: print()
-
-    except (KeyboardInterrupt) as key:
-        print ("Keybord interrupt has been pressed")
-        sys.exit()
-    '''
-
-
-
+    CMD.sourceAddr = int.from_bytes(sourceAddr, 'little')
 
     # seqNO = 0
     while True:
         for destAddress in gv.input.rs485Address:
-            destAddr        = bytes([destAddress])
+            CMD.destAddr    = destAddress; # print (type(CMD.destAddr), CMD.destAddr )
+
+
+            gv.Prj.KeepAlive(gv, serialRelayPort, CMD)
+            time.sleep(3)
+            # gv.Ln.getKeyboardInput('press ENTER to continue...', validKeys='ENTER', exitKey='X', deepLevel=1, keySep="|", fDEBUG=False)
+            continue
+
+
             try:
-                CMD.dataStr        = 'Loreto.'
-                CMD.sourceAddr  = int.from_bytes(sourceAddr, 'little')
-                CMD.destAddr    = int.from_bytes(destAddr, 'little')
+                CMD.dataStr     = 'Loreto.'
                 CMD.commandNO   = int.from_bytes(ECHO_CMD, 'little')
-                dataSent        = serialRelayPort.writeDataCMD(CMD, fDEBUG=True)
+                dataSent        = serialRelayPort.sendDataCMD(CMD, fDEBUG=True)
 
 
 
@@ -85,7 +78,7 @@ def MasterRS485(gv, serialRelayPort):
 
                     '''
 
-                    payLoad, rowData = serialRelayPort.readData(fDEBUG=True)
+                    payLoad, rawData = serialRelayPort.readData(fDEBUG=True)
                     if not payLoad:
                         print ('payLoad ERROR....')
                     print()

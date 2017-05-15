@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-05-08_17.33.39
+    Version:   LnVer_2017-05-15_10.53.34
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -317,53 +317,7 @@ void displayDebugMessage(const char *caller, byte rCode, const byte *data) {
         Serial.print(F(" ["));Serial.print(LnUtoa(dataLen, 3, ' '));Serial.print(F("] - "));
         printHex(&data[1], dataLen);
     }
-    // else {
-        // Serial.println();
-    // }
 
     return;
 }
 
-
-
-#if 0
-// #############################################################
-// # const char* text : per ricevere una stringa constante es: "Loreto"
-// #############################################################
-void displayData(void) {
-    byte dataLen = myRawData[LEN];
-
-    Serial.print(F(" raw->  ("));Serial.print(dataLen);Serial.print(F(") - "));
-    if (dataLen > 0)
-        printHex(&myRawData[1], dataLen); // contiene LEN STX ...data... ETX
-
-
-    return;
-}
-
-// #############################################################
-// #
-// #############################################################
-void printPayload(RXTX_DATA *ptr) {
-    byte dataLen = pData->data[LEN];
-    Serial.print(F(" pData-> ("));Serial.print(pData->data[LEN]);Serial.print(F(") - "));
-    if (dataLen > 0)
-        printHex(&pData->data[1], pData->data[LEN], "\r\n");
-
-    return;
-}
-
-// #############################################################
-// # const char* text : per ricevere una stringa constante es: "Loreto"
-// #############################################################
-void printData(void) {
-    byte dataLen = myRawData[LEN];
-
-    if (dataLen > 0) {
-        Serial.print(F(" raw-> ("));Serial.print(dataLen);Serial.print(F(") - "));
-        printHex(&myRawData[1], dataLen); // contiene LEN STX ...data... ETX
-    }
-
-    return;
-}
-#endif

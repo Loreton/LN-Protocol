@@ -16,7 +16,7 @@
                         COMMAND=PAYLOAD,
                     };
 
-    enum rs485_Commands  {  ECHO_CMD=1,
+    enum rs485_Commands  {  KEEPALIVE_CMD=1,
                     };
 
     // definizione delle seriali
@@ -30,9 +30,9 @@
     int  funcReadArduino485()                   {return arduino485.read (); }
 
     // ------ RS485 callback routines
-    void funcWritePi(const byte what)   {       serialPi.write (what); }
-    int  funcAvailablePi()              {return serialPi.available (); }
-    int  funcReadPi()                   {return serialPi.read (); }
+    void funcWritePi(const byte what)           {       Serial.write (what); }
+    int  funcAvailablePi()                      {return Serial.available (); }
+    int  funcReadPi()                           {return Serial.read (); }
 
 
 
@@ -46,6 +46,10 @@
     }
 
 
+
+
+
+    // ------ funzioni di comodo per chiamare direttamente la seriale desiderata
     inline void sendMsgPi(RXTX_DATA *rxData, WriteCallback fSend=funcWritePi) {
         sendMsg (rxData, fSend);
     }

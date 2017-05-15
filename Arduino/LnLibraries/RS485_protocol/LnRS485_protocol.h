@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-05-08_10.02.16
+// Version: LnVer_2017-05-12_09.26.18
 // ########################################
 
 
@@ -30,7 +30,7 @@
                         LN_DEBUG,
                     };
 
-        #define MAX_DATA_SIZE     20
+        #define MAX_DATA_SIZE     30
 
 
     #else
