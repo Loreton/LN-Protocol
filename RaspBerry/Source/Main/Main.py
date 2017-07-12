@@ -37,12 +37,10 @@ def Main(gv, action):
         # ===================================================
         # = RS-485
         # ===================================================
-    # if gv.input.actionCommand in ['send.rs485', 'read.rs485', 'monitor.rs485', 'monitor.raw']:
     cmd, subcmd = gv.input.actionCommand.split('.')
     if subcmd in ['rs485', 'raw', 'echo']:
         LnRs485                             = gv.Ln.LnRs485    # short pointer alla classe
         rs485                               = gv.LnDict()
-        # rs485.Class                         = gv.Ln.LnRs485    # short pointer alla classe
         rs485.MASTER_ADDRESS                = 0
         rs485.STX                           = int('0x02', 16)
         rs485.ETX                           = int('0x03', 16)
@@ -50,7 +48,6 @@ def Main(gv, action):
         rs485.baudRate                      = 9600
         rs485.mode                          = 'ascii'
         rs485.CRC                           = True
-        # print ('.............sonoqui')
 
         if fDEBUG:rs485.printTree()
 
@@ -58,10 +55,14 @@ def Main(gv, action):
             # ----------------------------------------------------
             # = RS-485 open/initialize port
             # ----------------------------------------------------
-        port = LnRs485(port=rs485.usbDevPath, baudrate=rs485.baudRate, mode=rs485.mode, logger=gv.Ln.SetLogger)  # port name, slave address (in decimal)
-        port.STX                        = rs485.STX
-        port.ETX                        = rs485.ETX
-        port.CRC                        = rs485.CRC
+        port = LnRs485(port=rs485.usbDevPath, baudrate=rs485.baudRate, mode=rs485.mode, logger=gv.Ln.SetLogger)
+        port.STX = rs485.STX
+        port.ETX = rs485.ETX
+        port.CRC = rs485.CRC
+
+
+    port.ClosePortAfterEachCall(False)
+    print(port.__repr__())
 
 
         # ===================================================

@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-05-15_10.53.34
+    Version:   LnVer_2017-05-16_09.58.36
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -47,14 +47,16 @@
 
 #define I_AM_RS485_PROTOCOL_CPP
 
-#include <LnFunctions.h>
+#include <LnFunctions.h>            // per printHex o altro
 #include "LnRS485_protocol.h"
 
 #define xxxCRC_DEBUG // debug in caso di errore del CRC
 
-const byte STX = 0x02;
-const byte ETX = 0x03;
-#define LEN 0
+// const byte STX = 0x02;
+// const byte ETX = 0x03;
+
+#define     LEN     0
+
 char *pMyID;
 
 const char *errMsg[]    = { " - OK......:",

@@ -426,12 +426,10 @@ def MASTER(myParser, action):
 
     if action.lower() in ['rs485']:
         rs485.SerialPort(myParser, required=True)
-        rs485.Rs485Address(myParser, required=True)
+        # rs485.Rs485Address(myParser, required=True)
 
-    if action.lower() in ['echo']:
+    elif action.lower() in ['echo']:
         rs485.SerialPort(myParser, required=True)
-
-
 
     else:
         print("""

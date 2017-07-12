@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-05-15_17.26.50
+version:    LnVer_2017-05-16_10.04.04
 
 Scope:      Funzione di relay. Prende i dati provenienti da una seriale collegata a RaspBerry
             ed inoltra il comando sul bus RS485.
@@ -9,18 +9,15 @@ Scope:      Funzione di relay. Prende i dati provenienti da una seriale collegat
 Ref:        http://www.gammon.com.au/forum/?id=11428
 */
 
+#define     _I_AM_ARDUINO_NANO_
+#define     _SIMULATE_ECHO_
 #include <LnFunctions.h>                //  D2X(dest, val, 2), printHex
 #include <LnRS485_protocol.h>
 #include <SoftwareSerial.h>
 
-
 #include "RS-485_Relay.h"                      //  pin definitions
-// definiti nel .h
-// HardwareSerial & serialPi = Serial; // rename della Serial per comodità
-// SoftwareSerial  arduino485 (RS485_RX_PIN, RS485_TX_PIN);  // receive pin, transmit pin
 
 #include <EEPROM.h>
-
 
 // ------ RS485 callback routines
 // void arduinofWrite(const byte what)   {       Serial485.write (what); }
@@ -28,13 +25,12 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // int  arduinofRead()                   {return Serial485.read (); }
 
 // ------ RS485 callback routines
-// void pifWrite(const byte what)   {       piSerial.write (what); }
-// int  pifAvailable()              {return piSerial.available (); }
-// int  pifRead()                   {return piSerial.read (); }
+// void pifWrite(const byte what)       {       Serial.write (what); }
+// int  pifAvailable()                  {return Serial.available (); }
+// int  pifRead()                       {return Serial.read (); }
 
-#define ENA_TX       HIGH
-#define ENA_RX       LOW
-#define DIS_TX       LOW
+
+
 
 byte        myEEpromAddress;        // who we are
 RXTX_DATA   RxTx, *pData;             // struttura dati
@@ -106,7 +102,6 @@ void setup() {
 // # - M A I N     Loop
 // ################################################################
 void loop() {
-// byte rCode;
         // ------------------------------------
         // - riceviamo i dati da RaspBerry
         // - con protocollo LnRs485
@@ -118,11 +113,11 @@ void loop() {
     if (rCode == LN_OK) {
         forwardMessage(pData);
     }
-    /*
-    simulateEcho(pData);
-    delay(1000);
-    */
 }
+
+
+
+
 
 
 
@@ -165,6 +160,41 @@ void forwardMessage(RXTX_DATA *pData) {
 
 
 
+
+// ################################################################
+// # --- DISPLAY DATA
+// ################################################################
+
+void rxDisplayData(byte rCode, RXTX_DATA *pData) {
+    displayDebugMessage("inoRECV-data", rCode, pData->rx);
+    displayDebugMessage("inoRECV-raw ", rCode, pData->raw);
+}
+void txDisplayData(byte rCode, RXTX_DATA *pData) {
+    displayDebugMessage("inoSEND-data", rCode, pData->tx);
+    displayDebugMessage("inoSEND-raw ", rCode, pData->raw);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ##########################################################
+// se vogliamo che Arduino invii un echo autonomamente
+// ##########################################################
+void loop_simulate() {
+    simulateEcho(pData);
+    delay(1000);
+}
+
+
 // #############################################################
 // # Prepariamo un pacchetto come se fosse arrivato dal Master PI
 // #############################################################
@@ -188,32 +218,7 @@ void simulateEcho(RXTX_DATA *pData) {
     pData->rx[DATALEN] = index;  // set dataLen
 
     forwardMessage(pData);
-    /*
-        // send to PI
-    sendMsgPi(pData);
 
-        // send to RS-485 bus
-    digitalWrite(RS485_ENABLE_PIN, ENA_TX);               // enable sending
-    sendMsgArduino(pData);
-    digitalWrite(RS485_ENABLE_PIN, ENA_RX);                // set in receive mode
-    */
     seqNO++;
 
 }
-
-// ################################################################
-// # --- DISPLAY DATA
-// ################################################################
-
-void rxDisplayData(byte rCode, RXTX_DATA *pData) {
-    displayDebugMessage("inoRECV-data", rCode, pData->rx);
-    displayDebugMessage("inoRECV-raw ", rCode, pData->raw);
-}
-void txDisplayData(byte rCode, RXTX_DATA *pData) {
-    displayDebugMessage("inoSEND-data", rCode, pData->tx);
-    displayDebugMessage("inoSEND-raw ", rCode, pData->raw);
-}
-
-
-
-

@@ -28,7 +28,7 @@ getVALUE_DATA  = C.printGreenH
 # # l'alberatura delle key di un dictionary
 # #    [level - keyName ]
 # #######################################################
-def PrintDictionary(myDict, myDictTYPES=[], keyList=[], level=0, printTYPE='LTKV', fPRINT=False, fEXIT=False, MaxLevel=10, header=None, stackLevel=2):
+def PrintDictionary(myDict, myDictTYPES=[], keyList=[], level=0, displayField='LTKV', fPRINT=False, fEXIT=False, MaxLevel=10, header=None, stackLevel=2):
     if level == 0:
         PrintHeader('START - ', header, stackLevel=stackLevel+1)
         # LINEDATA_LIST = []
@@ -53,16 +53,16 @@ def PrintDictionary(myDict, myDictTYPES=[], keyList=[], level=0, printTYPE='LTKV
             # line0 = '[{LVL:2}] {TYPE:<8} {TAB}{KEY}'.format(LVL=level, TAB=myTAB, TYPE=thisTYPE, KEY=key)
 
             line0 = ''
-            if 'L' in printTYPE: line0 = '[{LVL:2}]'.format(LVL=level)
-            if 'T' in printTYPE: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=thisTYPE)
-            if 'K' in printTYPE: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
+            if 'L' in displayField: line0 = '[{LVL:2}]'.format(LVL=level)
+            if 'T' in displayField: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=thisTYPE)
+            if 'K' in displayField: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
             DICT_LINE(line0, tab=4)
             # LINEDATA_LIST.append(line0)
             # ---- recursive iteration
-            PrintDictionary(val, myDictTYPES=myDictTYPES, keyList=keyList, level=level+1, printTYPE=printTYPE, fPRINT=fPRINT, MaxLevel=MaxLevel)    # in questo caso il return value non mi interessa
+            PrintDictionary(val, myDictTYPES=myDictTYPES, keyList=keyList, level=level+1, displayField=displayField, fPRINT=fPRINT, MaxLevel=MaxLevel)    # in questo caso il return value non mi interessa
 
         else:
-            getDictValue(key, val, level, myDictTYPES, printTYPE=printTYPE, fPRINT=True)
+            getDictValue(key, val, level, myDictTYPES, displayField=displayField, fPRINT=True)
 
 
     if level == 0:
@@ -127,7 +127,7 @@ def PrintHeader(prefix, header, stackLevel=3):
 # # Stampa i soli valori contenuti in un ramo, indicato
 # #  da dotQualifers, partendo dal dict myDictRoot
 # #######################################################
-def getDictValue(key, value, level, myDictTYPES, printTYPE='LT', fPRINT=True):
+def getDictValue(key, value, level, myDictTYPES, displayField='LT', fPRINT=True):
 
     # level = 0
     myTAB=' '*4*level
@@ -174,15 +174,16 @@ def getDictValue(key, value, level, myDictTYPES, printTYPE='LT', fPRINT=True):
     # = P R I N T
     # =========================================
         # - print della riga con la key a lunghezza fissa baseStartValue
-    baseStartValue = 52
+    baseStartValue = 25
+    if 'L' in displayField and 'T' in displayField: baseStartValue = 52
     # line0 = '[{LVL:2}] {TYPE:<8} {TAB}{KEY}'.format(LVL=level, TAB=myTAB*level, TYPE=valueTYPE, KEY=key)
     line0 = ''
-    if 'L' in printTYPE: line0 = '[{LVL:2}]'.format(LVL=level)
-    if 'T' in printTYPE: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=valueTYPE)
-    if 'K' in printTYPE: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
+    if 'L' in displayField: line0 = '[{LVL:2}]'.format(LVL=level)
+    if 'T' in displayField: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=valueTYPE)
+    if 'K' in displayField: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
 
     line0 = line0.ljust(baseStartValue)
-    if not 'V' in printTYPE:
+    if not 'V' in displayField:
         VALUE_LINE(line0, tab=4)
         return
 

@@ -2,14 +2,14 @@
 # -*- coding: iso-8859-1 -*-
 #
 # Scope:  Programma per ...........
-# modified:  by Loreto notarantonio LnVer_2017-05-15_12.00.03
+# modified:  by Loreto notarantonio LnVer_2017-05-19_16.49.45
 #
 # ######################################################################################
 
 
 import sys
 import time
-# class LnClass(): pass
+
 
 ################################################################################
 # - serialRelayPort: porta seriale dove si trova un Arduino che rilancia
@@ -21,20 +21,33 @@ def MasterRS485(gv, serialRelayPort):
     fDEBUG  = gv.input.fDEBUG
 
 
-    serialRelayPort.ClosePortAfterEachCall(False)
-    print(serialRelayPort.__repr__())
-
         # ===================================================
-        # = RS-485 sendMessage
+        # = Elaborazione del file.ini
+        # = ed inizio controllo.
         # ===================================================
     print ('... press ctrl-c to stop the process.')
-    # CMD = LnClass()
+
     CMD = gv.Ln.LnDict()
+
 
     sourceAddr     = bytes([0]) # MASTER
 
     CMD.sourceAddr = int.from_bytes(sourceAddr, 'little')
+    gv.ini.printTree(displayField='KV')
 
+    # --------------------------------------------------------------------
+    # - analizziamo le section del file e identifichiamo, inizialmente,
+    # - come valide solo quelle che hanno un deviceAddress
+    # --------------------------------------------------------------------
+    for sectionName in gv.ini.keys():
+        sectID = gv.ini[sectionName]
+        if 'deviceAddress' in sectID:
+            print (sectionName)
+            for key, val in sectID.items():
+                print ('    ', key)
+            print()
+
+    '''
     # seqNO = 0
     while True:
         for destAddress in gv.input.rs485Address:
@@ -76,15 +89,15 @@ def MasterRS485(gv, serialRelayPort):
                         timeOut -= 1
 
 
-                    '''
 
-                    payLoad, rawData = serialRelayPort.readData(fDEBUG=True)
-                    if not payLoad:
-                        print ('payLoad ERROR....')
-                    print()
-                    '''
+
+                    # payLoad, rawData = serialRelayPort.readData(fDEBUG=True)
+                    # if not payLoad:
+                    #     print ('payLoad ERROR....')
+                    # print()
 
 
             except (KeyboardInterrupt) as key:
                 print ("Keybord interrupt has been pressed")
                 sys.exit()
+    '''

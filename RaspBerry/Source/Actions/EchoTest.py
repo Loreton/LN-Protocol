@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # Scope:        KeepAlive sul bus RS485
-# modified:     by Loreto notarantonio LnVer_2017-05-15_16.24.05
+# modified:     by Loreto notarantonio LnVer_2017-05-16_08.29.19
 #
 # ######################################################################################
 
@@ -20,9 +20,6 @@ def EchoTest(gv, serialRelayPort):
     C       = gv.Ln.LnColor()
     fDEBUG  = gv.input.fDEBUG
 
-
-    serialRelayPort.ClosePortAfterEachCall(False)
-    print(serialRelayPort.__repr__())
 
         # ===================================================
         # = RS-485 sendMessage

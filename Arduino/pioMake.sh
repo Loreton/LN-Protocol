@@ -122,15 +122,21 @@ function clearLibraryLink {
     clearLibraryLink
     createLibraryLink
 
+    if [[ "$action" =~ "v" ]]; then
+        echo "setting VERBOSE option"
+        VERBOSE='--verbose'
+    fi
+
+
     if [[ "$action" =~ "c" ]]; then
         echo "Cleaning project ....: $PWD"
-        Esegui "platformio run --target clean"
+        Esegui "platformio run $VERBOSE --target clean"
     fi
 
     if [[ "$action" =~ "b" ]]; then
         echo
         echo "Building .... from dir: $PWD"
-        Esegui "platformio run --environment nano"
+        Esegui "platformio run $VERBOSE --environment nano"
     fi
 
     if [[ "$action" =~ "u" ]]; then

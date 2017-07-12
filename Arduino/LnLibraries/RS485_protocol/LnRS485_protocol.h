@@ -1,27 +1,29 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-05-12_09.26.18
+// Version: LnVer_2017-05-16_10.03.18
 // ########################################
+
+#if defined(ARDUINO) && ARDUINO >= 100
+    #include "Arduino.h"
+#else
+    #include "WConstants.h"
+#endif
 
 
 #if not defined I_AM_RS485_PROTOCOL_H
-
-
     #define I_AM_RS485_PROTOCOL_H
-    #if defined(ARDUINO) && ARDUINO >= 100
-      #include "Arduino.h"
-    #else
-      #include "WConstants.h"
-    #endif
 
+    const byte STX    = 0x02;
+    const byte ETX    = 0x03;
 
-    // extern enum errorType;
+    const byte ENA_TX = HIGH;
+    const byte ENA_RX = LOW;
+    const byte DIS_TX = LOW;
+
     extern const char *errMsg[];
-    // extern const byte LN_SEND_CALLER[];
-    // extern const byte LN_RECV_CALLER[];
 
     #if not defined LN_RCV_OK
-    enum errorType  {   LN_OK=0,
+        enum errorType  {   LN_OK=0,
                         LN_OVERFLOW,
                         LN_BADCRC,
                         LN_BADCHAR,
