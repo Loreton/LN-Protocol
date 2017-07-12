@@ -46,9 +46,6 @@
     }
 
 
-
-
-
     // ------ funzioni di comodo per chiamare direttamente la seriale desiderata
     inline void sendMsgPi(RXTX_DATA *rxData, WriteCallback fSend=funcWritePi) {
         sendMsg (rxData, fSend);

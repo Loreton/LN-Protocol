@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-05-16_10.03.18
+// Version: LnVer_2017-07-12_17.29.32
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -19,6 +19,9 @@
     const byte ENA_TX = HIGH;
     const byte ENA_RX = LOW;
     const byte DIS_TX = LOW;
+
+    const byte ENA_485_TX = HIGH;
+    const byte ENA_485_RX = LOW;
 
     extern const char *errMsg[];
 
