@@ -9,17 +9,17 @@ import inspect, os
 import sys
 
 from ..LnCommon.LnColor  import LnColor
-C=LnColor()
+cPrint=LnColor()
 
 # colori delle righe
-DICT_LINE   = C.printCyanH
-# VALUE_LINE  = C.printYellow
-VALUE_LINE  = C.printCyan
-VALUE_DATA  = C.printGreenH
+DICT_LINE   = cPrint.CyanH
+# VALUE_LINE  = cPrint.Yellow
+VALUE_LINE  = cPrint.Cyan
+VALUE_DATA  = cPrint.GreenH
 
-getDICT_LINE   = C.getCyanH
-getVALUE_LINE  = C.printCyan
-getVALUE_DATA  = C.printGreenH
+getDICT_LINE   = cPrint.getCyanH
+getVALUE_LINE  = cPrint.Cyan
+getVALUE_DATA  = cPrint.GreenH
 
 # LINEDATA_LIST=[]
 # #######################################################
@@ -28,12 +28,12 @@ getVALUE_DATA  = C.printGreenH
 # # l'alberatura delle key di un dictionary
 # #    [level - keyName ]
 # #######################################################
-def PrintDictionary(myDict, myDictTYPES=[], keyList=[], level=0, displayField='LTKV', fPRINT=False, fEXIT=False, MaxLevel=10, header=None, stackLevel=2):
+def PrintDictionary(myDict, myDictTYPES=[], keyList=[], level=0, whatPrint='LTKV', fPRINT=False, fEXIT=False, maxDepth=10, header=None, stackLevel=2):
     if level == 0:
         PrintHeader('START - ', header, stackLevel=stackLevel+1)
         # LINEDATA_LIST = []
 
-    if level > MaxLevel: return
+    if level > maxDepth: return
 
     # per evitare LOOP
     if level > 100: sys.exit()
@@ -53,16 +53,16 @@ def PrintDictionary(myDict, myDictTYPES=[], keyList=[], level=0, displayField='L
             # line0 = '[{LVL:2}] {TYPE:<8} {TAB}{KEY}'.format(LVL=level, TAB=myTAB, TYPE=thisTYPE, KEY=key)
 
             line0 = ''
-            if 'L' in displayField: line0 = '[{LVL:2}]'.format(LVL=level)
-            if 'T' in displayField: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=thisTYPE)
-            if 'K' in displayField: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
+            if 'L' in whatPrint: line0 = '[{LVL:2}]'.format(LVL=level)
+            if 'T' in whatPrint: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=thisTYPE)
+            if 'K' in whatPrint: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
             DICT_LINE(line0, tab=4)
             # LINEDATA_LIST.append(line0)
             # ---- recursive iteration
-            PrintDictionary(val, myDictTYPES=myDictTYPES, keyList=keyList, level=level+1, displayField=displayField, fPRINT=fPRINT, MaxLevel=MaxLevel)    # in questo caso il return value non mi interessa
+            PrintDictionary(val, myDictTYPES=myDictTYPES, keyList=keyList, level=level+1, whatPrint=whatPrint, fPRINT=fPRINT, maxDepth=maxDepth)    # in questo caso il return value non mi interessa
 
         else:
-            getDictValue(key, val, level, myDictTYPES, displayField=displayField, fPRINT=True)
+            getDictValue(key, val, level, myDictTYPES, whatPrint=whatPrint, fPRINT=True)
 
 
     if level == 0:
@@ -115,10 +115,10 @@ def PrintHeader(prefix, header, stackLevel=3):
 
 
     print()
-    C.printCyan("*"*60, tab=8)
-    C.printCyan("*     {0}".format(caller), tab=8)
-    if header: C.printCyan("*     {0}{1}".format(prefix, header), tab=8)
-    C.printCyan("*"*60, tab=8)
+    cPrint.Cyan("*"*60, tab=8)
+    cPrint.Cyan("*     {0}".format(caller), tab=8)
+    if header: cPrint.Cyan("*     {0}{1}".format(prefix, header), tab=8)
+    cPrint.Cyan("*"*60, tab=8)
 
 
 
@@ -127,7 +127,7 @@ def PrintHeader(prefix, header, stackLevel=3):
 # # Stampa i soli valori contenuti in un ramo, indicato
 # #  da dotQualifers, partendo dal dict myDictRoot
 # #######################################################
-def getDictValue(key, value, level, myDictTYPES, displayField='LT', fPRINT=True):
+def getDictValue(key, value, level, myDictTYPES, whatPrint='LT', fPRINT=True):
 
     # level = 0
     myTAB=' '*4*level
@@ -161,7 +161,7 @@ def getDictValue(key, value, level, myDictTYPES, displayField='LT', fPRINT=True)
         """
             # indentiamo leggermete i valori
         for item in value:
-            listOfValue.append(C.getMagenta('   {0}'.format(item)))
+            listOfValue.append(cPrint.getMagenta('   {0}'.format(item)))
 
         listOfValue.append(']')
 
@@ -174,16 +174,15 @@ def getDictValue(key, value, level, myDictTYPES, displayField='LT', fPRINT=True)
     # = P R I N T
     # =========================================
         # - print della riga con la key a lunghezza fissa baseStartValue
-    baseStartValue = 25
-    if 'L' in displayField and 'T' in displayField: baseStartValue = 52
+    baseStartValue = 52
     # line0 = '[{LVL:2}] {TYPE:<8} {TAB}{KEY}'.format(LVL=level, TAB=myTAB*level, TYPE=valueTYPE, KEY=key)
     line0 = ''
-    if 'L' in displayField: line0 = '[{LVL:2}]'.format(LVL=level)
-    if 'T' in displayField: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=valueTYPE)
-    if 'K' in displayField: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
+    if 'L' in whatPrint: line0 = '[{LVL:2}]'.format(LVL=level)
+    if 'T' in whatPrint: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=valueTYPE)
+    if 'K' in whatPrint: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
 
     line0 = line0.ljust(baseStartValue)
-    if not 'V' in displayField:
+    if not 'V' in whatPrint:
         VALUE_LINE(line0, tab=4)
         return
 

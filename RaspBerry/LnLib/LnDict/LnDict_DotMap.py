@@ -10,15 +10,9 @@ try:
     LORETO = True
 
 except (Exception) as why:
-    print ('.............', str(why))
-    try:
-        import DictToList
-        import PrintDictionaryTree
-        LORETO = True
-    except:
-        print ('.............', str(why))
-        LORETO = False
-        print ('LORETO:', LORETO)
+    print (__name__, '.............1', str(why))
+    LORETO = False
+    print (__name__, '.......LORETO:', LORETO)
 
 
 class DotMap(OrderedDict):
@@ -162,8 +156,8 @@ class DotMap(OrderedDict):
             return DictToList.KeyList(self, myDictTYPES=MY_DICT_TYPES)
 
 
-        def PrintTree(self, fEXIT=False, MaxLevel=10, header=None, displayField='LTKV', stackLevel=1):
-            PrintDictionaryTree.PrintDictionary(self, myDictTYPES=MY_DICT_TYPES, displayField=displayField, fEXIT=fEXIT, MaxLevel=MaxLevel, header=header, stackLevel=stackLevel+1)
+        def PrintTree(self, fEXIT=False, maxDepth=10, header=None, whatPrint='LTKV', stackLevel=1):
+            PrintDictionaryTree.PrintDictionary(self, myDictTYPES=MY_DICT_TYPES, whatPrint=whatPrint, fEXIT=fEXIT, maxDepth=maxDepth, header=header, stackLevel=stackLevel+1)
 
         printDict = PrintTree
         printTree = PrintTree

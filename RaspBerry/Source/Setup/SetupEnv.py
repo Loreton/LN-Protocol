@@ -3,18 +3,20 @@
 import sys, os
 import time
 
-class LnClass(): pass
-
-def SetupEnv(gv, fDEBUG=False):
-    # print (gv.Ln.pyVer)
+def SetupEnv(gv, prjName, fDEBUG=False):
     if gv.Ln.pyVer >= '340':
-        # setupEnv340(gv)
-        setupEnv300(gv, fDEBUG=fDEBUG)
+        # setupEnv340(gv, fDEBUG=False)
+        setupEnv300(gv, prjName, fDEBUG=fDEBUG)
     else:
-        setupEnv300(gv, fDEBUG=fDEBUG)
+        setupEnv300(gv, prjName, fDEBUG=fDEBUG)
 
-def setupEnv300(gv, fDEBUG=False):
-    C = gv.Ln.LnColor()
+def setupEnv300(gv, prjName, fDEBUG=False):
+    cPrint        = gv.Ln.LnColor()
+    gv.env        = gv.Ln.LnDict()              # default = _dynamic = False
+    gv.env.name   = prjName
+    gv.env.prefix = gv.env.name
+
+
         # ------------------------------------------
         # - Preparazione directories
         # ------------------------------------------
@@ -34,49 +36,51 @@ def setupEnv300(gv, fDEBUG=False):
         # ---------------------------------------------------------
         # - file di configurazione
         # ---------------------------------------------------------
-    iniFileName = os.path.abspath(os.path.join(configDIR, gv.Prj.name + '_config.ini'))
+    iniFileName = os.path.abspath(os.path.join(configDIR, gv.env.name + '_config.ini'))
 
 
-
-    gv.Prj.scriptName  = scriptName
-    gv.Prj.prjBaseDIR  = prjBaseDIR
-    gv.Prj.configDIR   = configDIR
-    gv.Prj.dataDIR     = dataDIR
-    gv.Prj.iniFileName = iniFileName
+    gv.env.scriptName    = scriptName
+    gv.env.prjBaseDIR    = prjBaseDIR
+    # gv.env.configDIR     = configDIR
+    gv.env.mainConfigDIR = configDIR
+    gv.env.dataDIR       = dataDIR
+    gv.env.iniFileName   = iniFileName
 
 
     now             = time.localtime()
-    gv.Prj.now      = now
-    gv.Prj.today    = '{YY:04}.{MM:02}.{DD:02}'.format(YY=now.tm_year, MM=now.tm_mon, DD=now.tm_mday)
-    gv.Prj.DATE     = '{YY:04}{MM:02}{DD:02}'.format(YY=now.tm_year, MM=now.tm_mon, DD=now.tm_mday)
-    gv.Prj.TIME     = '{HH:02}{MM:02}{SS:02}'.format(HH=now.tm_hour, MM=now.tm_min, SS=now.tm_sec)
+    gv.env.now      = now
+    gv.env.today    = '{YY:04}.{MM:02}.{DD:02}'.format(YY=now.tm_year, MM=now.tm_mon, DD=now.tm_mday)
+    gv.env.DATE     = '{YY:04}{MM:02}{DD:02}'.format(YY=now.tm_year, MM=now.tm_mon, DD=now.tm_mday)
+    gv.env.TIME     = '{HH:02}{MM:02}{SS:02}'.format(HH=now.tm_hour, MM=now.tm_min, SS=now.tm_sec)
 
     if fDEBUG:
-        C.printYellow('.'*10 + __name__ + '.'*10, tab=4)
-        C.printCyan('scriptName       {0}'.format(gv.Prj.scriptName), tab=8)
-        C.printCyan('prjBaseDIR       {0}'.format(gv.Prj.prjBaseDIR), tab=8)
-        C.printCyan('configDIR        {0}'.format(gv.Prj.configDIR), tab=8)
-        C.printCyan('dataDIR          {0}'.format(gv.Prj.dataDIR), tab=8)
-        C.printCyan('iniFileName      {0}'.format(gv.Prj.iniFileName), tab=8)
+        cPrint.Yellow('.'*10 + __name__ + '.'*10, tab=4)
+        cPrint.Cyan('scriptName       {0}'.format(gv.env.scriptName), tab=8)
+        cPrint.Cyan('prjBaseDIR       {0}'.format(gv.env.prjBaseDIR), tab=8)
+        cPrint.Cyan('configDIR        {0}'.format(gv.env.configDIR), tab=8)
+        cPrint.Cyan('dataDIR          {0}'.format(gv.env.dataDIR), tab=8)
+        cPrint.Cyan('iniFileName      {0}'.format(gv.env.iniFileName), tab=8)
         print ()
-        C.printCyan('today            {0}'.format(gv.Prj.today), tab=8)
-        C.printCyan('DATE - TIME      {0} - {1}'.format(gv.Prj.DATE, gv.Prj.TIME), tab=8)
-        C.printCyan('now              {0}'.format(gv.Prj.now), tab=8)
-        C.printYellow('.'*10 + __name__ + '.'*10, tab=4)
+        cPrint.Cyan('today            {0}'.format(gv.env.today), tab=8)
+        cPrint.Cyan('DATE - TIME      {0} - {1}'.format(gv.env.DATE, gv.env.TIME), tab=8)
+        cPrint.Cyan('now              {0}'.format(gv.env.now), tab=8)
+        cPrint.Yellow('.'*10 + __name__ + '.'*10, tab=4)
         print ()
 
-    gv.Prj.LnDict = LnClass
 
 
 
-def setupEnv340(gv):
+def setupEnv340(gv, fDEBUG=False):
+    fDEBUG=True
     import pathlib as p         # dalla versione 3.4
-    C = gv.Ln.Colors()
+    cPrint = gv.Ln.LnColor()
         # ------------------------------------------
         # - Preparazione directories
         # ------------------------------------------
     scriptMain  = p.Path(sys.argv[0]).resolve()
-    scriptMain  = os.path.abspath(os.path.join(__file__, '../../../'))
+    print (scriptMain)
+    # scriptMain  = os.path.abspath(os.path.join(__file__, '../../../'))
+    # print (scriptMain)
     prjBaseDIR  = scriptMain.parent
     scriptName  = scriptMain.name
     prjName     = prjBaseDIR.stem
@@ -89,35 +93,46 @@ def setupEnv340(gv):
         # ---------------------------------------------------------
         # - file di configurazione
         # ---------------------------------------------------------
-    iniFileName = configDIR.joinpath(gv.Prj.prefix + '_' + gv.Prj.Version + '.ini')
+    iniFileName = p.PurePath(configDIR).joinpath(gv.env.prefix + '_config.ini')
 
 
-    gv.Prj.scriptName  = str(scriptName)
-    gv.Prj.prjBaseDIR  = str(prjBaseDIR)
-    gv.Prj.configDIR   = str(configDIR)
-    gv.Prj.dataDIR     = str(dataDIR)
-    gv.Prj.iniFileName = str(iniFileName)
+    # gv.env.scriptName    = str(scriptName)
+    # gv.env.prjBaseDIR    = str(prjBaseDIR)
+    # gv.env.mainConfigDIR = str(configDIR)
+    # gv.env.dataDIR       = str(dataDIR)
+    # gv.env.iniFileName   = str(iniFileName)
+
+    gv.env.scriptName    = scriptName
+    gv.env.prjBaseDIR    = prjBaseDIR
+    gv.env.mainConfigDIR = configDIR
+    gv.env.dataDIR       = dataDIR
+    gv.env.iniFileName   = iniFileName
 
 
     now     = time.localtime()
-    now      = str(datetime.datetime.now()).split('.')[0]
-    gv.Prj.now     = now
-    gv.Prj.today   = '{YY:04}.{MM:02}.{DD:02}'.format(YY=now.tm_year, MM=now.tm_mon, DD=now.tm_mday)
-    gv.Prj.DATE    = '{YY:04}{MM:02}{DD:02}'.format(YY=now.tm_year, MM=now.tm_mon, DD=now.tm_mday)
-    gv.Prj.TIME    = '{HH:02}{MM:02}{SS:02}'.format(HH=now.tm_hour, MM=now.tm_min, SS=now.tm_sec)
+    gv.env.now     = now
+    gv.env.today   = '{YY:04}.{MM:02}.{DD:02}'.format(YY=now.tm_year, MM=now.tm_mon, DD=now.tm_mday)
+    gv.env.DATE    = '{YY:04}{MM:02}{DD:02}'.format(YY=now.tm_year, MM=now.tm_mon, DD=now.tm_mday)
+    gv.env.TIME    = '{HH:02}{MM:02}{SS:02}'.format(HH=now.tm_hour, MM=now.tm_min, SS=now.tm_sec)
 
-    if gv.fDEBUG:
-        C.printYellow('.'*10 + __name__ + '.'*10, tab=4)
-        C.printCyan('scriptName       {0}'.format(gv.Prj.scriptName), tab=8)
-        C.printCyan('prjBaseDIR       {0}'.format(gv.Prj.prjBaseDIR), tab=8)
-        C.printCyan('configDIR        {0}'.format(gv.Prj.configDIR), tab=8)
-        C.printCyan('dataDIR          {0}'.format(gv.Prj.dataDIR), tab=8)
-        C.printCyan('iniFileName      {0}'.format(gv.Prj.iniFileName), tab=8)
+    if fDEBUG:
+        cPrint.Yellow('.'*10 + __name__ + '.'*10, tab=4)
+        cPrint.Cyan('scriptName       {0}'.format(gv.env.scriptName), tab=8)
+        cPrint.Cyan('prjBaseDIR       {0}'.format(gv.env.prjBaseDIR), tab=8)
+        cPrint.Cyan('mainConfigDIR    {0}'.format(gv.env.mainConfigDIR), tab=8)
+        cPrint.Cyan('dataDIR          {0}'.format(gv.env.dataDIR), tab=8)
+        cPrint.Cyan('iniFileName      {0}'.format(gv.env.iniFileName), tab=8)
         print ()
-        C.printCyan('today            {0}'.format(gv.Prj.today), tab=8)
-        C.printCyan('DATE - TIME      {0} - {1}'.format(gv.Prj.DATE, gv.Prj.TIME), tab=8)
-        C.printCyan('now              {0}'.format(gv.Prj.now), tab=8)
-        C.printYellow('.'*10 + __name__ + '.'*10, tab=4)
+        cPrint.Cyan('scriptName       {0}'.format(p.PurePosixPath(gv.env.scriptName)), tab=8)
+        cPrint.Cyan('prjBaseDIR       {0}'.format(p.PurePosixPath(gv.env.prjBaseDIR)), tab=8)
+        cPrint.Cyan('mainConfigDIR    {0}'.format(p.PurePosixPath(gv.env.mainConfigDIR)), tab=8)
+        cPrint.Cyan('dataDIR          {0}'.format(p.PurePosixPath(gv.env.dataDIR)), tab=8)
+        cPrint.Cyan('iniFileName      {0}'.format(p.PurePosixPath(gv.env.iniFileName)), tab=8)
+        print ()
+        cPrint.Cyan('today            {0}'.format(gv.env.today), tab=8)
+        cPrint.Cyan('DATE - TIME      {0} - {1}'.format(gv.env.DATE, gv.env.TIME), tab=8)
+        cPrint.Cyan('now              {0}'.format(gv.env.now), tab=8)
+        cPrint.Yellow('.'*10 + __name__ + '.'*10, tab=4)
         print ()
 
 

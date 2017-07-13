@@ -23,7 +23,7 @@ EXIT_STACK  = -32
 # =======================================================================
 def Exit(rcode, text, printStack=False, stackLevel=9, console=True):
     logger  = SetLogger(package=__name__)
-    C       = LnColor()
+    cPrint       = LnColor()
 
     if text == None:
         textList = ['No error message passed']
@@ -37,10 +37,10 @@ def Exit(rcode, text, printStack=False, stackLevel=9, console=True):
         # - Display dell'Errore
         # -------------------------------
     if rcode == 0:
-        printColor = C.printGreen
+        printColor = cPrint.Green
         logWrite = logger.debug
     else:
-        printColor = C.printERROR
+        printColor = cPrint.ERROR
         logWrite = logger.error
 
 

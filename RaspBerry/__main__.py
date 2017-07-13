@@ -24,10 +24,10 @@ if __name__ == "__main__":
     gv           = Ln.LnDict()              # default = _dynamic=False
     gv.Prj       = Prj
     gv.Ln        = Ln
-    Prj.name     = 'LnProtocol'
-    Prj.prefix   = Prj.name
+    # Prj.name     = 'LnProtocol'
+    # Prj.prefix   = Prj.name
 
-        # decidiamo quale dict vogliamo usare
+
 
         # ===================================================
         # - per iniziare disabilitiamo il LOG
@@ -38,14 +38,14 @@ if __name__ == "__main__":
         # ===================================================
         # - SetUp dell'ambiente
         # ===================================================
-    Prj.SetupEnv(gv, fDEBUG=False)
+    Prj.SetupEnv(gv, 'LnProtocol', fDEBUG=False)
     gv.LnDict = gv.Ln.LnDict      # DotMap()
 
 
         # ===================================================
         # - Lettura del file ini
         # ===================================================
-    iniFile = gv.Ln.ReadIniFile(gv.Prj.iniFileName)
+    iniFile = gv.Ln.ReadIniFile(gv.env.iniFileName)
     iniFile.read()
     gv.ini = gv.Ln.LnDict(iniFile.dict)
 

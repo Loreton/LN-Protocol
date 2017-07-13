@@ -1,7 +1,7 @@
 #!/usr/bin/python3.4
 
 # sudo update-alternatives --config python
-
+__version__ = 'LnVer_2017-07-13_09.27.04'
 
 import sys
 import os
@@ -29,7 +29,7 @@ def ImportLib(libName, fDEBUG=False):
     # -       mainDir/Source
     # -       mainDir/Conf
     # ---------------------------------------------------------------------
-        # dir che devo esistere per cercare la mainDir
+        # dir che devono esistere per cercare la mainDir
     keyDirs = ['bin', 'conf', 'Conf', 'Sourcex']
         # nome dello zipFile della LnLib
     zipFile     = '{0}.zip'.format(libName)

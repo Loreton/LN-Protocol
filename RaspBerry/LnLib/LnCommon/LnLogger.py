@@ -2,8 +2,13 @@
 # -*- coding: iso-8859-15 -*-
 # -O Optimize e non scrive il __debug__
 #
-# Version 0.01 08/04/2010:  Starting
+# -----------------------------------------------
+__author__  = 'Loreto Notarantonio'
+__version__ = 'LnVer_2017-03-30_09.38.23'
+# -----------------------------------------------
+
 # ####################################################################################################################
+
 # http://stackoverflow.com/questions/13649664/how-to-use-logging-with-pythons-fileconfig-and-configure-the-logfile-filename
 import sys, os
 import logging

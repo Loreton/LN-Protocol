@@ -4,11 +4,14 @@
 import getpass
 import os, sys
 
+__author__  = 'Loreto Notarantonio'
+__version__ = 'LnVer_2017-07-03_11.23.13'
+
 # #########################################################
 # - SetUp del log
 # #########################################################
 def SetupLog(gv):
-    if gv.input.LOGGER:
+    if gv.inputParam.LOGGER:
         C       = gv.Ln.LnColor()
 
         logFileName         = '/tmp/{PREFIX}_{USER}.log'.format(PREFIX=gv.Prj.prefix, USER=getpass.getuser())
@@ -27,9 +30,9 @@ def SetupLog(gv):
             gv.Ln.InitLogger(   iniLogFile=logConfigFileName,
                                 logFileName=logFileName,
                                 package=gv.Prj.name,
-                                LOGGER=gv.input.LOGGER,
-                                logCONSOLE=gv.input.logCONSOLE,
-                                logMODULE=gv.input.logMODULE,
+                                LOGGER=gv.inputParam.LOGGER,
+                                logCONSOLE=gv.inputParam.logCONSOLE,
+                                logMODULE=gv.inputParam.logMODULE,
                                 packageQualifiers=8
                             )
 

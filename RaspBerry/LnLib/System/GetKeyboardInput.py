@@ -2,7 +2,11 @@
 # -*- coding: iso-8859-15 -*-
 # -O Optimize e non scrive il __debug__
 #
-# Version 0.01 08/04/2010:  Starting
+# -----------------------------------------------
+__author__  = 'Loreto Notarantonio'
+__version__ = 'LnVer_2017-06-28_16.34.25'
+# -----------------------------------------------
+#
 # ####################################################################################################################
 import sys, os
 import inspect
@@ -20,7 +24,7 @@ from ..LnCommon.Exit     import Exit
 # ###########################################################################
 def getKeyboardInput(msg, validKeys='ENTER', exitKey='X', deepLevel=1, keySep="|", fDEBUG=False):
     logger = SetLogger(package=__name__)
-    C       = LnColor()
+    cPrint = LnColor()
     exitKeyUPP = exitKey.upper()
 
     if keySep in validKeys:
@@ -40,8 +44,8 @@ def getKeyboardInput(msg, validKeys='ENTER', exitKey='X', deepLevel=1, keySep="|
 
     if fDEBUG:
         funcName = __name__.split('.')[-1]
-        C.printCyan(" {0} - exitKeyLIST....: {1}".format(funcName, exitKeyLIST), tab=4)
-        C.printCyan(" {0} - validKeyLIST...: {1}".format(funcName, validKeyLIST), tab=4)
+        cPrint.Cyan(" {0} - exitKeyLIST....: {1}".format(funcName, exitKeyLIST), tab=4)
+        cPrint.Cyan(" {0} - validKeyLIST...: {1}".format(funcName, validKeyLIST), tab=4)
         print()
         caller = _calledBy(deepLevel)
         msg = "<{CALLER}> - [{MSG} - ({VALKEY})] ({EXITKEY} to exit) ==> ".format(CALLER=caller, MSG=msg, VALKEY=validKeys, EXITKEY=exitKey)
@@ -52,7 +56,7 @@ def getKeyboardInput(msg, validKeys='ENTER', exitKey='X', deepLevel=1, keySep="|
         while True:
             choice      = input(msg).strip()    # non mi accetta il colore
             choiceUPP   = choice.upper()
-            if fDEBUG: C.printCyan("choice: [{0}]".format(choice))
+            if fDEBUG: cPrint.Cyan("choice: [{0}]".format(choice))
 
             if choice == '':    # diamo priorità alla exit
                 if "ENTER" in exitKeyLIST:
@@ -60,7 +64,7 @@ def getKeyboardInput(msg, validKeys='ENTER', exitKey='X', deepLevel=1, keySep="|
                 elif "ENTER" in validKeys:
                     return ''
                 else:
-                    C.printCyan('\n... please enter something\n')
+                    cPrint.Cyan('\n... please enter something\n')
 
             elif choiceUPP in exitKeyLIST:
                 Exit(9998, "Exiting on user request new.", printStack=True)
@@ -69,7 +73,7 @@ def getKeyboardInput(msg, validKeys='ENTER', exitKey='X', deepLevel=1, keySep="|
                 break
 
             else:
-                C.printCyan('\n... try again\n')
+                cPrint.Cyan('\n... try again\n')
 
     except Exception as why:
         Exit(8, "Error running program [{ME}]\n\n ....{WHY}\n".format(ME=sys.argv[0], WHY=why) )
