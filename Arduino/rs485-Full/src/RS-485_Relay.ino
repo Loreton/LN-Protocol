@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-12_20.10.18
+version:    LnVer_2017-07-13_08.29.44
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -62,42 +62,3 @@ void forwardMessage(RXTX_DATA *pData) {
 }
 
 
-
-#ifdef SIMULATE_ECHO
-// ##########################################################
-// se vogliamo che Arduino invii un echo autonomamente
-// ##########################################################
-void loop_Simulate() {
-    simulateEcho(pData);
-    delay(1000);
-}
-
-
-// #############################################################
-// # Prepariamo un pacchetto come se fosse arrivato dal Master PI
-// #############################################################
-// int seqNO = 0;
-void simulateEcho(RXTX_DATA *pData) {
-    static int seqNO = 0;
-
-    pData->rx[SENDER_ADDR]      = 0;    // SA
-    pData->rx[DESTINATION_ADDR] = myEEpromAddress;    // DA
-    pData->rx[SEQNO_HIGH]       = seqNO >> 8;
-    pData->rx[SEQNO_LOW]        = seqNO & 0x00FF;
-    pData->rx[COMMAND]          = ECHO_CMD;
-
-
-    byte data[]  = "simulated echo";
-    byte dataLen = sizeof(data);
-    byte index = PAYLOAD;
-    for (byte i=0; i<dataLen; i++)
-        pData->rx[index++] = data[i];         // copiamo i dati nel buffer da inviare
-
-    pData->rx[DATALEN] = index;  // set dataLen
-
-    forwardMessage(pData);
-
-    seqNO++;
-
-}
-#endif

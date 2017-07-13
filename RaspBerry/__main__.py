@@ -39,7 +39,6 @@ if __name__ == "__main__":
         # - SetUp dell'ambiente
         # ===================================================
     Prj.SetupEnv(gv, fDEBUG=False)
-    gv.LnDict = gv.Prj.LnDict     # Lnclass()
     gv.LnDict = gv.Ln.LnDict      # DotMap()
 
 
@@ -57,9 +56,9 @@ if __name__ == "__main__":
         # - Nel caso specifico abbiamo un argomento multiValue
         # -   e quindi passiamo i valori validi per detto argomento.
         # ===================================================
-    Input           = Prj.ParseInput(gv, args=sys.argv[1:])
+    Input     = Prj.ParseInput(gv, args = sys.argv[1:])
     gv.input  = gv.Ln.LnDict(Input)
-    gv.fDEBUG       = gv.input.fDEBUG
+    gv.fDEBUG = gv.input.fDEBUG
 
     # gv.input.PrintTree(MaxLevel=3, fEXIT=True)
 

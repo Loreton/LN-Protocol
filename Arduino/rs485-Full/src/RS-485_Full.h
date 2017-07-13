@@ -14,7 +14,8 @@
         RXTX_DATA   RxTx, *pData;             // struttura dati
 
         //.............0 1 234567890123
-        char myID[] = "\r\n[xxx] - "; // i primi due byte saranno CR e LF
+        char myID[] = "\r\n?[xxx] - "; // i primi due byte saranno CR e LF
+                                        // ? E:Echo-Simulate, R:Relay S:Slave
         unsigned long responseDelay = 0;
 
     // #else

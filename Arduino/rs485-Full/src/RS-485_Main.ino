@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-12_20.09.13
+version:    LnVer_2017-07-13_08.39.47
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -16,7 +16,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #define     _I_AM_ARDUINO_NANO_
 #define     I_AM_MAIN__
 
-#define     SIMULATE_ECHOxxx
+#define     SIMULATE_ECHOxxxx
 #include    <LnFunctions.h>                //  D2X(dest, val, 2), printHex
 #include    <LnRS485_protocol.h>
 #include    <SoftwareSerial.h>
@@ -50,14 +50,16 @@ void setup() {
         // ================================================
     myEEpromAddress = EEPROM.read(0);
     char *xx        = LnUtoa(myEEpromAddress, 3, '0');
-    // myID[0] = 13;   // CR già pre-configurati nella definizione
-    // myID[1] = 10;   // NL già pre-configurati nella definizione
-    myID[3] = xx[0];
-    myID[4] = xx[1];
-    myID[5] = xx[2];
+    // myID[0] = 13;   // CR già pre-configurato nella definizione
+    // myID[1] = 10;   // NL già pre-configurato nella definizione
+    // myID[2] = 'Y';  // E:Echo-Simulate, R:Relay S:Slave
+    // myID[3] = '[';  // [ già pre-configurato nella definizione
+    myID[4] = xx[0];
+    myID[5] = xx[1];
+    myID[6] = xx[2];
     pData->myID = myID;
 
-    // piSerial232.println(myID);
+    Serial232.print(myID);
 
     /* ----
         bit_time = 1/baud_rate
@@ -84,15 +86,32 @@ void setup() {
 void loop() {
 
 #ifdef SIMULATE_ECHO
+    myID[2] = 'E';    // E:Echo-Simulate, R:Relay S:Slave
     loop_Simulate();
 #else
-    if (myEEpromAddress == 1)   loop_Relay();
-    else                        loop_Slave();
+    if (myEEpromAddress <= 10) {
+        myID[2] = 'R';    // E:Echo-Simulate, R:Relay S:Slave
+        loop_Relay();
+    }
+    else {
+        myID[2] = 'S';    // E:Echo-Simulate, R:Relay S:Slave
+        loop_Slave();
+    }
 #endif
 
 }
 
 
 
-// void loop_Slave() {};
-// void loop_Relay() {};
+// ################################################################
+// # --- DISPLAY DATA
+// ################################################################
+void rxDisplayData(byte rCode, RXTX_DATA *pData) {
+    displayDebugMessage("inoRECV-data", rCode, pData->rx);
+    displayDebugMessage("inoRECV-raw ", rCode, pData->raw);
+}
+void txDisplayData(byte rCode, RXTX_DATA *pData) {
+    displayDebugMessage("inoSEND-data", rCode, pData->tx);
+    displayDebugMessage("inoSEND-raw ", rCode, pData->raw);
+}
+
