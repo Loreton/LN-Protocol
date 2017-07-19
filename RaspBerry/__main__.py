@@ -56,9 +56,9 @@ if __name__ == "__main__":
         # - Nel caso specifico abbiamo un argomento multiValue
         # -   e quindi passiamo i valori validi per detto argomento.
         # ===================================================
-    Input     = Prj.ParseInput(gv, args = sys.argv[1:])
-    gv.input  = gv.Ln.LnDict(Input)
-    gv.fDEBUG = gv.input.fDEBUG
+    Input           = Prj.ParseInput(gv, args = sys.argv[1:])
+    gv.inputParam   = gv.Ln.LnDict(Input)
+    gv.fDEBUG       = gv.inputParam.fDEBUG
 
     # gv.input.PrintTree(MaxLevel=3, fEXIT=True)
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         # - Inizio applicazione
         # ===================================================
 
-    Prj.Main(gv, gv.input.actionCommand )
+    Prj.Main(gv, gv.inputParam.actionCommand )
     gv.Ln.Exit(0, "completed", printStack=False, stackLevel=9, console=True)
     sys.exit()
 

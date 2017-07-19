@@ -64,8 +64,8 @@
 
 
     // ------ funzioni di comodo per chiamare direttamente la seriale desiderata
-    inline void sendMsg485(RXTX_DATA *rxData, WriteCallback fSend=WriteSerial485 ) {
-        sendMsg (rxData, fSend);
+    inline void sendMsg485(RXTX_DATA *txData, WriteCallback fSend=WriteSerial485 ) {
+        sendMsg (txData, fSend);
     }
 
     inline byte recvMsg485(RXTX_DATA *rxData, ReadCallback fRead=ReadSerial485, AvailableCallback fAvailable=AvailableSerial485) {
@@ -74,8 +74,8 @@
 
 
     // ------ funzioni di comodo per chiamare direttamente la seriale desiderata
-    inline void sendMsg232(RXTX_DATA *rxData, WriteCallback fSend=Write232) {
-        sendMsg (rxData, fSend);
+    inline void sendMsg232(RXTX_DATA *txData, WriteCallback fSend=Write232) {
+        sendMsg (txData, fSend);
     }
 
     inline byte recvMsg232(RXTX_DATA *rxData, ReadCallback fRead=Read232, AvailableCallback fAvailable=Available232) {

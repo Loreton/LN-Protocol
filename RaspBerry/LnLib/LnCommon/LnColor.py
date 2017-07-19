@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-15 -*-
 
 import sys
-import colorama
+from . import colorama
 
 class LnColor:
     colorama.init(autoreset=True)

@@ -1,8 +1,15 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 #
-# Scope:        KeepAlive sul bus RS485
-# modified:     by Loreto notarantonio LnVer_2017-05-16_08.29.19
+# Scope:  Master per protocollo Ln-Rs485
+#         Invia il comando di echo sul Relay collegato sulla porta seriale
+#         Il Relay ritrasmette il comando sia sulla Rs485 sia sulla seriale
+#         e quindi catturato da questo programma.
+#         Siccome destAddr=0 nessuno dovrebbe risponere ma...
+#         ...sulle seriali degli Arduino si dovrebbe leggere qualcosa tipo:
+#         S[011] - inoRECV from: 10 to  : 0 [00059]   (Request is NOT for me)
+#
+# modified:     by Loreto notarantonio LnVer_2017-07-19_10.08.13
 #
 # ######################################################################################
 
@@ -17,24 +24,22 @@ import time
 ########################################################
 def EchoTest(gv, serialRelayPort):
     logger  = gv.Ln.SetLogger(package=__name__)
-    C       = gv.Ln.LnColor()
-    fDEBUG  = gv.input.fDEBUG
+    cPrint  = gv.Ln.LnColor()
+    fDEBUG  = gv.inputParam.fDEBUG
+    myCMD   = gv.myCMD
 
 
         # ===================================================
         # = RS-485 sendMessage
         # ===================================================
-    print ('... press ctrl-c to stop the process.')
+    cPrint.YellowH ('... press ctrl-c to stop the process.')
 
-    ECHO_CMD        = bytes([1]) # comando di ECHO = x01
-
-    sourceAddr      = bytes([0]) # MASTER
 
     CMD             = gv.Ln.LnDict()
     CMD.dataStr     = 'echo test'
-    CMD.commandNO   = int.from_bytes(ECHO_CMD,  'little')
-    CMD.destAddr    = 10                                    # Arduino 10 per  keepAlive
-    CMD.sourceAddr  = int.from_bytes(sourceAddr, 'little')
+    CMD.commandNO   = int.from_bytes(myCMD.echo,  'little')
+    CMD.sourceAddr  = int.from_bytes(gv.myCMD.masterAddr, 'little')
+    CMD.destAddr    = int.from_bytes(gv.myCMD.relayAddr, 'little')
 
 
     while True:

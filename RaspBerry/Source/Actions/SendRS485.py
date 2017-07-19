@@ -23,13 +23,13 @@ def SendRS485(gv, sendPort):
 
 
 
-    fDEBUG   = gv.input.fDEBUG
+    fDEBUG   = gv.inputParam.fDEBUG
         # ===================================================
         # = RS-485 sendMessage
         # ===================================================
     print ('... press ctrl-c to stop the process.')
 
-    # gv.input.rs485Address = [11, 12]
+    # gv.inputParam.rs485Address = [11, 12]
 
     sourceAddr  = bytes([0]) # MASTER
     sourceAddr = int.from_bytes(sourceAddr, 'little')
@@ -37,7 +37,7 @@ def SendRS485(gv, sendPort):
 
     seqNO = 0
     while True:
-        for destAddress in gv.input.rs485Address:
+        for destAddress in gv.inputParam.rs485Address:
             destAddr   = bytes([destAddress])
             destAddr   = int.from_bytes(destAddr, 'little')
 
@@ -67,7 +67,7 @@ def SendRS485(gv, sendPort):
             print ('... press ctrl-c to stop the process.')
 
             sourceAddr  = bytes([0]) # MASTER
-            destAddr    = bytes([gv.input.rs485Address])
+            destAddr    = bytes([gv.inputParam.rs485Address])
             sourceAddr  = int.from_bytes(sourceAddr, 'little')
             destAddr    = int.from_bytes(destAddr, 'little')
             # print ('sourceAddr: x{0:02x}'.format(sourceAddr))
@@ -105,7 +105,7 @@ def SendRS485(gv, sendPort):
             print ('... press ctrl-c to stop the process.')
 
             sourceAddr  = bytes([0]) # MASTER
-            destAddr    = bytes([gv.input.rs485Address])
+            destAddr    = bytes([gv.inputParam.rs485Address])
             basedata = 'Loreto.'
 
             cmd = LnClass()
@@ -134,7 +134,7 @@ def SendRS485(gv, sendPort):
             print ('... press ctrl-c to stop the process.')
 
             sourceAddr  = bytes([0]) # MASTER
-            destAddr    = bytes([gv.input.rs485Address])
+            destAddr    = bytes([gv.inputParam.rs485Address])
 
             sourceAddr = int.from_bytes(sourceAddr, 'little')
             destAddr   = int.from_bytes(destAddr, 'little')
@@ -159,7 +159,7 @@ def SendRS485(gv, sendPort):
             # ===================================================
         print ('... press ctrl-c to stop the process.')
 
-        # gv.input.rs485Address = [11, 12]
+        # gv.inputParam.rs485Address = [11, 12]
 
         sourceAddr  = bytes([0]) # MASTER
         sourceAddr = int.from_bytes(sourceAddr, 'little')
@@ -167,7 +167,7 @@ def SendRS485(gv, sendPort):
 
         while True:
             index = 0
-            for destAddress in gv.input.rs485Address:
+            for destAddress in gv.inputParam.rs485Address:
                 destAddr   = bytes([destAddress])
                 destAddr   = int.from_bytes(destAddr, 'little')
 

@@ -28,23 +28,32 @@ def Main(gv, action):
     C       = gv.Ln.LnColor()
 
 
-    fEXECUTE = gv.input.fEXECUTE
-    fDEBUG   = gv.input.fDEBUG
+    fEXECUTE = gv.inputParam.fEXECUTE
+    fDEBUG   = gv.inputParam.fDEBUG
+
+    gv.myCMD            = gv.Ln.LnDict()
+    gv.myCMD.echo       = bytes([ 1])        # x01
+    gv.myCMD.readPin    = bytes([ 2])        # x02
+    gv.myCMD.writePin   = bytes([ 3])        # x03
+
+    gv.myCMD.masterAddr = bytes([ 0])        # Master Address
+    gv.myCMD.relayAddr  = bytes([10])       # Arduino Relay Address - di fanno non usato mai in quanto raggiunto tramite la seriale
+    gv.myCMD.arduino11  = bytes([11])
+    gv.myCMD.arduino12  = bytes([12])
 
 
-
-    print ('.{}.'.format(gv.input.actionCommand))
+    print ('.{}.'.format(gv.inputParam.actionCommand))
         # ===================================================
         # = RS-485
         # ===================================================
-    cmd, subcmd = gv.input.actionCommand.split('.')
+    cmd, subcmd = gv.inputParam.actionCommand.split('.')
     if subcmd in ['rs485', 'raw', 'echo']:
         LnRs485                             = gv.Ln.LnRs485    # short pointer alla classe
         rs485                               = gv.LnDict()
         rs485.MASTER_ADDRESS                = 0
         rs485.STX                           = int('0x02', 16)
         rs485.ETX                           = int('0x03', 16)
-        rs485.usbDevPath                    = gv.input.usbPort
+        rs485.usbDevPath                    = gv.inputParam.usbPort
         rs485.baudRate                      = 9600
         rs485.mode                          = 'ascii'
         rs485.CRC                           = True
@@ -68,42 +77,42 @@ def Main(gv, action):
         # ===================================================
         # = serial port monitor
         # ===================================================
-    if gv.input.actionCommand == 'serial.read':
+    if gv.inputParam.actionCommand == 'serial.read':
         gv.Prj.Monitor(gv, port)
 
-    elif gv.input.actionCommand == 'read.raw':
+    elif gv.inputParam.actionCommand == 'read.raw':
         gv.Prj.Monitor(gv, port)
 
-    elif gv.input.actionCommand == 'master.rs485':
+    elif gv.inputParam.actionCommand == 'master.rs485':
         gv.Prj.MasterRS485(gv, port)
 
-    elif gv.input.actionCommand == 'master.echo':
+    elif gv.inputParam.actionCommand == 'master.echo':
         gv.Prj.EchoTest(gv, port)
 
-    elif gv.input.actionCommand == 'monitor.rs485':
+    elif gv.inputParam.actionCommand == 'monitor.rs485':
         gv.Prj.MonitorRS485(gv, port)
 
-    elif gv.input.actionCommand == 'monitor.raw':
+    elif gv.inputParam.actionCommand == 'monitor.raw':
         gv.Prj.MonitorRaw(gv, port)
 
-    elif gv.input.actionCommand == 'send.rs485':
+    elif gv.inputParam.actionCommand == 'send.rs485':
         gv.Prj.SendRS485(gv, port)
 
-    elif gv.input.actionCommand == 'send.raw':
+    elif gv.inputParam.actionCommand == 'send.raw':
         print ('... not yet implemented.\n')
 
 
         # ===================================================
         # = serial port send
         # ===================================================
-    elif gv.input.actionCommand == 'serial.send':
-        if gv.input.fRS485:
+    elif gv.inputParam.actionCommand == 'serial.send':
+        if gv.inputParam.fRS485:
             gv.Prj.SendMsg(gv, port, rs485)
-        elif gv.input.fRAW:
+        elif gv.inputParam.fRAW:
             print ('... not yet implemented.\n')
 
 
     else:
-        print(gv.input.actionCommand, 'not available')
+        print(gv.inputParam.actionCommand, 'not available')
         return
 

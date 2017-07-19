@@ -18,7 +18,7 @@ def MonitorRS485(gv, monPort):
     C       = gv.Ln.LnColor()
 
 
-    fDEBUG   = gv.input.fDEBUG
+    fDEBUG   = gv.inputParam.fDEBUG
     print ('... press ctrl-c to stop the process.\n')
 
         # ===================================================

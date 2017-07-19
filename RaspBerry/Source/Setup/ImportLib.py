@@ -1,7 +1,7 @@
 #!/usr/bin/python3.4
 
 # sudo update-alternatives --config python
-__version__ = 'LnVer_2017-07-13_09.27.04'
+__version__ = 'LnVer_2017-07-13_14.32.46'
 
 import sys
 import os
@@ -58,6 +58,7 @@ def ImportLib(libName, fDEBUG=False):
             # - se non l'abbiamo trovata saliamo di un livello
         if LOOP:
             mainDir = os.path.dirname(mainDir)
+
 
     binDir      = os.path.join(mainDir, 'bin')
     SourceDir   = os.path.join(mainDir, 'Source')

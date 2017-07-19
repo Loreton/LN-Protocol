@@ -18,7 +18,7 @@ def MonitorRaw(gv, monPort):
     C       = gv.Ln.LnColor()
 
 
-    fDEBUG   = gv.input.fDEBUG
+    fDEBUG   = gv.inputParam.fDEBUG
     print ('... press ctrl-c to stop the process.\n')
     monPort.ClosePortAfterEachCall(False) # ho notato che altrimenti perdo qualche byte
     print(monPort.__repr__())
@@ -28,13 +28,13 @@ def MonitorRaw(gv, monPort):
     # = R A W
     # ===================================================
 
-    print ('... RAW format... until char:', gv.input.eod_char)
+    print ('... RAW format... until char:', gv.inputParam.eod_char)
     EOD = int('0x0A', 16) # integer
     EOD = int('0x03', 16) # integer
-    if not gv.input.eod_char: EOD = []
+    if not gv.inputParam.eod_char: EOD = []
     try:
         while True:
-            data = monPort.readRawData(EOD=EOD, hex=gv.input.fHEX, text=gv.input.fLINE, char=gv.input.fCHAR)
+            data = monPort.readRawData(EOD=EOD, hex=gv.inputParam.fHEX, text=gv.inputParam.fLINE, char=gv.inputParam.fCHAR)
             if data: print()
 
     except (KeyboardInterrupt) as key:
