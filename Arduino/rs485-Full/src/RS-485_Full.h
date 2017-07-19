@@ -6,6 +6,7 @@
     #define RS485_ENABLE_PIN    4   // D4  DE/RE up-->DE-->TX  down-->RE-->RX
     #define LED_PIN             13
 
+    #define MASTER_ADDRESS      0
 
 
     // #if defined I_AM_MAIN__
@@ -32,11 +33,28 @@
                         SEQNO_HIGH,
                         SEQNO_LOW,
                         COMMAND,
-                        PAYLOAD,
+                        RCODE,
+                        USER_DATA,
                     };
 
-    enum rs485_Commands  {  ECHO_CMD=1,
-                    };
+
+/*
+    gv.myCMD            = gv.Ln.LnDict()
+    gv.myCMD.echo       = bytes([ 1])        # x01
+    gv.myCMD.polling    = bytes([ 2])
+    gv.myCMD.readPin    = bytes([21])
+    gv.myCMD.writePin   = bytes([22])
+*/
+    enum rs485_DEFINE {
+                            CMD_ECHO        = 1,
+                            CMD_POLLING     = 2,
+                            CMD_READPIN     = 21,
+                            CMD_WRITEPIN    = 22,
+
+                            ERROR_RS485     = 9,    // ERRORE nel ricevere dati da rs485
+                            ERROR_TIMEOUT   = 8,    // TIMEOUT nel ricevere dati da rs485
+
+                        };
 
     // ##########################################
     // # definizione delle seriali

@@ -9,7 +9,7 @@
 #         ...sulle seriali degli Arduino si dovrebbe leggere qualcosa tipo:
 #         S[011] - inoRECV from: 10 to  : 0 [00059]   (Request is NOT for me)
 #
-# modified:     by Loreto notarantonio LnVer_2017-07-19_10.08.13
+# modified:     by Loreto notarantonio LnVer_2017-07-19_10.28.38
 #
 # ######################################################################################
 
@@ -26,7 +26,8 @@ def EchoTest(gv, serialRelayPort):
     logger  = gv.Ln.SetLogger(package=__name__)
     cPrint  = gv.Ln.LnColor()
     fDEBUG  = gv.inputParam.fDEBUG
-    myCMD   = gv.myCMD
+    # myCMD   = gv.myCMD
+    # myDEV   = gv.myDEV
 
 
         # ===================================================
@@ -37,10 +38,9 @@ def EchoTest(gv, serialRelayPort):
 
     CMD             = gv.Ln.LnDict()
     CMD.dataStr     = 'echo test'
-    CMD.commandNO   = int.from_bytes(myCMD.echo,  'little')
-    CMD.sourceAddr  = int.from_bytes(gv.myCMD.masterAddr, 'little')
-    CMD.destAddr    = int.from_bytes(gv.myCMD.relayAddr, 'little')
-
+    CMD.commandNO   = int.from_bytes(gv.myCMD.echo,  'little')
+    CMD.sourceAddr  = int.from_bytes(gv.myDEV.master, 'little')
+    CMD.destAddr    = int.from_bytes(gv.myDEV.relay, 'little')
 
     while True:
         print ()

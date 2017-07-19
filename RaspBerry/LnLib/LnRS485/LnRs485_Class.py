@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-07-13_15.25.31'
+__version__  = 'LnVer_2017-07-19_18.05.48'
 __status__   = 'Beta'
 
 import os
@@ -50,6 +50,13 @@ MODE_ASCII = 'ascii'
 ##############################
 ## Modbus instrument object ##
 ##############################
+
+
+Ln_SOURCE_ADDR = 0
+Ln_DEST_ADDR   = 1
+Ln_SEQNO_HIGH  = 2
+Ln_SEQNO_LOW   = 3
+Ln_COMMAND     = 4
 
 
 # -----------------------------------------------------------------------
@@ -623,6 +630,7 @@ class LnRs485_Instrument():
         return payLoad, bufferData
 
 
+
     def _getSendCounter(self):
         self.sendCounter += 1
         yy = self.sendCounter.to_bytes(2, byteorder='big')
@@ -687,8 +695,9 @@ class LnRs485_Instrument():
         logger = self._setLogger(package=__name__)
         if fDEBUG:
             # print()
-            print ('sendDataLib:')
-            print ('    source: {sADDR:03}  dest: {dADDR:03} [{SEQ:05}]'.format(sADDR=data[0], dADDR=data[1], SEQ=self.sendCounter))
+            seqNO = data[Ln_SEQNO_LOW]+data[Ln_SEQNO_HIGH]*256
+            print ('sendDataLib: dataLen=', len(data))
+            print ('    source:{sADDR:03}  dest:{dADDR:03} CMD:{CMD:03} seqNo:{SEQ:05}'.format(sADDR=data[Ln_SOURCE_ADDR], dADDR=data[Ln_DEST_ADDR], SEQ=seqNO, CMD=data[Ln_COMMAND]))
             print ('    {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
 
             # - preparaiamo il bytearray con i dati da inviare

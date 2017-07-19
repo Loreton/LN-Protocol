@@ -12,6 +12,7 @@ from . Actions.MasterRS485  import MasterRS485
 from . Actions.MonitorRaw   import MonitorRaw
 from . Actions.SendRS485    import SendRS485
 from . Actions.EchoTest     import EchoTest
+from . Actions.Polling      import Polling
 
 
 from . Setup.SetupEnv       import SetupEnv

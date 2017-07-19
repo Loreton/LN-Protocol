@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-13_08.39.47
+version:    LnVer_2017-07-19_18.30.01
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -33,7 +33,7 @@ void setup() {
         // ===================================
     Serial485.begin(9600);
     pData               = &RxTx;
-    pData->displayData  = false;                // data display dei byte hex inviati e ricevuti
+
     pinMode(RS485_ENABLE_PIN, OUTPUT);          // enable rx by default
     digitalWrite(RS485_ENABLE_PIN, ENA_485_RX);     // set in receive mode
 

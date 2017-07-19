@@ -33,13 +33,15 @@ def Main(gv, action):
 
     gv.myCMD            = gv.Ln.LnDict()
     gv.myCMD.echo       = bytes([ 1])        # x01
-    gv.myCMD.readPin    = bytes([ 2])        # x02
-    gv.myCMD.writePin   = bytes([ 3])        # x03
+    gv.myCMD.polling    = bytes([ 2])
+    gv.myCMD.readPin    = bytes([21])
+    gv.myCMD.writePin   = bytes([22])
 
-    gv.myCMD.masterAddr = bytes([ 0])        # Master Address
-    gv.myCMD.relayAddr  = bytes([10])       # Arduino Relay Address - di fanno non usato mai in quanto raggiunto tramite la seriale
-    gv.myCMD.arduino11  = bytes([11])
-    gv.myCMD.arduino12  = bytes([12])
+    gv.myDEV            = gv.Ln.LnDict()
+    gv.myDEV.master     = bytes([ 0])        # Master Address
+    gv.myDEV.relay      = bytes([10])       # Arduino Relay Address - di fanno non usato mai in quanto raggiunto tramite la seriale
+    gv.myDEV.arduino11  = bytes([11])
+    gv.myDEV.arduino12  = bytes([12])
 
 
     print ('.{}.'.format(gv.inputParam.actionCommand))
@@ -47,7 +49,8 @@ def Main(gv, action):
         # = RS-485
         # ===================================================
     cmd, subcmd = gv.inputParam.actionCommand.split('.')
-    if subcmd in ['rs485', 'raw', 'echo']:
+    port = None
+    if subcmd in ['rs485', 'raw', 'echo', 'polling']:
         LnRs485                             = gv.Ln.LnRs485    # short pointer alla classe
         rs485                               = gv.LnDict()
         rs485.MASTER_ADDRESS                = 0
@@ -70,13 +73,19 @@ def Main(gv, action):
         port.CRC = rs485.CRC
 
 
-    port.ClosePortAfterEachCall(False)
-    print(port.__repr__())
+        port.ClosePortAfterEachCall(False)
+        print(port.__repr__())
+
 
 
         # ===================================================
         # = serial port monitor
         # ===================================================
+
+    if not port:
+        print("non e' stato possibile selezionare alcuna porta per il comando immesso...")
+        sys.exit()
+
     if gv.inputParam.actionCommand == 'serial.read':
         gv.Prj.Monitor(gv, port)
 
@@ -88,6 +97,9 @@ def Main(gv, action):
 
     elif gv.inputParam.actionCommand == 'master.echo':
         gv.Prj.EchoTest(gv, port)
+
+    elif gv.inputParam.actionCommand == 'master.polling':
+        gv.Prj.Polling(gv, port)
 
     elif gv.inputParam.actionCommand == 'monitor.rs485':
         gv.Prj.MonitorRS485(gv, port)

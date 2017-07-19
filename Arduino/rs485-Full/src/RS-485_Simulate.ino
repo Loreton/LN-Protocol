@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-13_08.32.32
+version:    LnVer_2017-07-19_18.12.21
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -39,7 +39,7 @@ void simulateEcho(RXTX_DATA *pData) {
 
     byte data[]  = "simulated echo";
     byte dataLen = sizeof(data);
-    byte index = PAYLOAD;
+    byte index = USER_DATA;
     for (byte i=0; i<dataLen; i++)
         pData->rx[index++] = data[i];         // copiamo i dati nel buffer da inviare
 

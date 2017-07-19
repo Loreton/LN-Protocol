@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-13_07.51.17
+version:    LnVer_2017-07-19_18.24.15
 
 Scope:      Process di una richiesta
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -11,7 +11,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 
 
 
-
+#if 0
 // #############################################################
 // #
 // #############################################################
@@ -35,7 +35,6 @@ void processRequest(RXTX_DATA *pData) {
 }
 
 
-
 // #############################################################
 // #
 // #############################################################
@@ -45,7 +44,7 @@ void sendMessage(byte destAddr, byte data[], byte dataLen, RXTX_DATA *pData) {
     pData->tx[SEQNO_HIGH]       = pData->rx[SEQNO_HIGH];    // riscrivi il seqNO
     pData->tx[SEQNO_LOW]        = pData->rx[SEQNO_LOW];    // DA
 
-    byte index = PAYLOAD;
+    byte index = USER_DATA;
     for (byte i = 0; i<dataLen; i++)
         pData->tx[index++] = data[i];         // copiamo i dati nel buffer da inviare
 
@@ -59,3 +58,4 @@ void sendMessage(byte destAddr, byte data[], byte dataLen, RXTX_DATA *pData) {
     digitalWrite(RS485_ENABLE_PIN, ENA_RX);                // set in receive mode
     txDisplayData(0, pData);
 }
+#endif

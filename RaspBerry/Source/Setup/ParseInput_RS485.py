@@ -48,6 +48,21 @@ def SerialPort(myParser, required):
 ####################################
 # -
 ####################################
+def RelayPort(myParser, required):
+    mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
+
+    myParser.add_argument( "--relay",
+                            type=isUsbDevice,
+                            required=required,
+                            dest="usbPort",
+                            default=None,
+                            help=mandatory + LnColor.getYellow("""nome della porta USB dove si trova il relay-Arduino.
+    [DEFAULT: None]
+    """))
+
+####################################
+# -
+####################################
 def Rs485Address(myParser, required):
     mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
 
