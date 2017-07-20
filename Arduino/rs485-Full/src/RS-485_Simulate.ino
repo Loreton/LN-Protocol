@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-19_18.12.21
+version:    LnVer_2017-07-20_10.21.30
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -16,9 +16,10 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // se vogliamo che Arduino invii un echo autonomamente
 // ##########################################################
 void loop_Simulate() {
-    // Serial232.println("\r\nSono in simulation mode\r\n");
+    Serial232.print(myID);Serial232.println(F("Sono in simulation mode"));
     simulateEcho(pData);
-    delay(1000);
+    Serial232.println();
+    delay(6000);
 }
 
 // #############################################################
@@ -29,23 +30,21 @@ void loop_Simulate() {
 // int seqNO = 0;
 void simulateEcho(RXTX_DATA *pData) {
     static int seqNO = 0;
+    pData->displayData          = true;
 
-    pData->rx[SENDER_ADDR]      = 0;    // SA
-    pData->rx[DESTINATION_ADDR] = myEEpromAddress;    // DA
+    pData->rx[SENDER_ADDR]      = myEEpromAddress; // SA
+    pData->rx[DESTINATION_ADDR] = myEEpromAddress;  // DA
     pData->rx[SEQNO_HIGH]       = seqNO >> 8;
     pData->rx[SEQNO_LOW]        = seqNO & 0x00FF;
     pData->rx[COMMAND]          = ECHO_CMD;
-
+    pData->rx[RCODE]            = OK;
+    pData->rx[DATALEN]          = 6;
 
     byte data[]  = "simulated echo";
-    byte dataLen = sizeof(data);
-    byte index = USER_DATA;
-    for (byte i=0; i<dataLen; i++)
-        pData->rx[index++] = data[i];         // copiamo i dati nel buffer da inviare
+    prepareMessage(pData, data, sizeof(data));
 
-    pData->rx[DATALEN] = index;  // set dataLen
-
-    forwardMessage(pData);
+        // send to RS-485 bus
+    sendMsg485(pData);
 
     seqNO++;
 

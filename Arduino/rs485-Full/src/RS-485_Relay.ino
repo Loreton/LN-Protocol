@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-19_18.34.35
+version:    LnVer_2017-07-20_08.03.05
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -31,7 +31,7 @@ void loop_Relay() {
         fwdToRs485(pData);
             // -------- E C H O  ----------
             // invia il messaggio anche indietro a raspBerry
-        if (pData->rx[COMMAND] == CMD_ECHO) {
+        if (pData->rx[COMMAND] == ECHO_CMD) {
             fwdToRaspBerry(pData);
         }
         else {
@@ -58,9 +58,9 @@ void waitRs485Response(RXTX_DATA *pData) {
     }
 
     else if (pData->rx[DATALEN] == 0) {
-        pData->tx[RCODE] = ERROR_TIMEOUT;
+        pData->tx[RCODE] = TIMEOUT_ERROR;
         byte errorMsg[] = "Nessuna richiesta ricevuta in un tempo di 10 sec.";
-        prepareErrorMessage(pData, errorMsg, sizeof(errorMsg));
+        prepareMessage(pData, errorMsg, sizeof(errorMsg));
     }
 }
 
@@ -88,28 +88,4 @@ void fwdToRaspBerry(RXTX_DATA *pData) {
     copyRxMessageToTx(pData);
     sendMsg232(pData);
 
-}
-
-
-// ################################################################
-// # - Copia l'intero messaggio
-// # -  RxBuffer --> TxBuffer
-// ################################################################
-void copyRxMessageToTx(RXTX_DATA *pData) {
-        // - copy ALL rx to tx
-    for (byte i = 0; i<=pData->rx[DATALEN]; i++)
-        pData->tx[i] = pData->rx[i];         // copiamo i dati nel buffer da inviare
-}
-
-
-// #############################################################
-// # Inserisce nel messaggio il testo di errore
-// #############################################################
-void prepareErrorMessage(RXTX_DATA *pData, byte data[], byte dataLen) {
-    byte index = USER_DATA;
-    for (byte i=0; (i<dataLen) && (i<MAX_DATA_SIZE); i++)
-        pData->tx[index++] = data[i];         // copiamo i dati nel buffer da inviare
-
-
-    pData->tx[DATALEN] = index;  // update dataLen
 }

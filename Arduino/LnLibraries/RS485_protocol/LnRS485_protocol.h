@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-07-12_17.29.32
+// Version: LnVer_2017-07-20_18.20.49
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -42,6 +42,8 @@
     #endif
 
 
+//  identifica il byte che contiene la lunghezza dati
+    #define pDATALEN     0
 
 
     // the data we broadcast to each other device
@@ -50,7 +52,8 @@
         byte            tx[MAX_DATA_SIZE];        // byte[0] is dataLen
         byte            raw[MAX_DATA_SIZE*2+2];   // byte[0] is dataLen SIZE = dataLen + STX+ETX
         unsigned long   timeout  = 10000;        // send/receive timeout
-        byte            displayData = false;     // per fare il print del rawData
+        byte            displayData = false;     // per fare il print dei data
+        // byte            displayRawData = false;     // per fare il print del rawData
         char            *myID;    // pointer identificativo di Arduino
     }  RXTX_DATA, *pRXTX_DATA;
 
@@ -70,6 +73,7 @@
 
         // dataLen is byte data[0]
     void displayDebugMessage(const char *caller, byte errMscType, const byte *data);
+    void displayMyData(const char *caller, byte errMscType, RXTX_DATA *pData);
     void prova(const char *caller);
 
 #endif

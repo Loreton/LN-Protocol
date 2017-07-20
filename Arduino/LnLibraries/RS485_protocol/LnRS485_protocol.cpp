@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-05-16_09.58.36
+    Version:   LnVer_2017-07-20_18.38.21
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -52,20 +52,16 @@
 
 #define xxxCRC_DEBUG // debug in caso di errore del CRC
 
-// const byte STX = 0x02;
-// const byte ETX = 0x03;
-
-#define     LEN     0
 
 char *pMyID;
 
-const char *errMsg[]    = { " - OK......:",
-                            " - OVERFLOW:",
-                            " - BAD-CRC.:",
-                            " - BAD-CHAR:",
-                            " - TIMEOUT.:",
-                            " - PAYLOAD.:",
-                            " - DEBUG...:",
+const char *errMsg[]    = { "OK",
+                            "OVERFLOW",
+                            "BAD-CRC",
+                            "BAD-CHAR",
+                            "TIMEOUT",
+                            "PAYLOAD",
+                            "DEBUG",
                         };
 // calculate 8-bit CRC
 static byte crc8(const byte *data, byte len) {
@@ -114,13 +110,13 @@ byte c, sentByte;
     c = what >> 4;
     sentByte = (c << 4) | (c ^ 0x0F);
     fSend (sentByte);
-    pData->raw[++pData->raw[LEN]] = sentByte;
+    pData->raw[++pData->raw[pDATALEN]] = sentByte;
 
     // low nibble
     c = what & 0x0F;
     sentByte = (c << 4) | (c ^ 0x0F);
     fSend (sentByte);
-    pData->raw[++pData->raw[LEN]] = sentByte;
+    pData->raw[++pData->raw[pDATALEN]] = sentByte;
 
 
 }  // end of sendComplemented
@@ -129,30 +125,24 @@ byte c, sentByte;
 // - il primo byte di pData->tx è la lunghezza dei dati.
 // ###########################################################
 void sendMsg (RXTX_DATA *pData, WriteCallback fSend) {
-    const char LN_SEND_CALLER_DATA[] = "libSEND-data";
-    const char LN_SEND_CALLER_RAW[]  = "libSEND-raw ";
-    byte txLen = pData->tx[LEN];
+    const char LN_SEND_CALLER_DATA[] = "TX-data";
+    // const char LN_SEND_CALLER_RAW[]  = "libSEND-raw ";
+    byte txLen = pData->tx[pDATALEN];
 
     byte CRC8value = crc8(&pData->tx[1], txLen);   // calcoliamo il CRC
-    pData->raw[LEN] = 0;
+    pData->raw[pDATALEN] = 0;
     pMyID = pData->myID;
 
-    fSend (STX);  // STX
-    pData->raw[++pData->raw[LEN]] = STX;
+    fSend (STX); pData->raw[++pData->raw[pDATALEN]] = STX;
 
     for (byte i=1; i<=txLen; i++)
         sendComplemented (fSend, pData->tx[i], pData);
 
-
     sendComplemented (fSend, CRC8value, pData);
 
-    fSend (ETX);
-    pData->raw[++pData->raw[LEN]] = ETX;
+    fSend (ETX); pData->raw[++pData->raw[pDATALEN]] = ETX;
 
-    if (pData->displayData) {
-        displayDebugMessage(LN_SEND_CALLER_RAW,  LN_OK, pData->raw);
-        displayDebugMessage(LN_SEND_CALLER_DATA, LN_OK, pData->tx);
-    }
+    displayMyData(LN_SEND_CALLER_DATA,  LN_OK, pData);
 
 }  // end of sendMsg
 
@@ -169,8 +159,8 @@ byte recvMsg (RXTX_DATA *pData,
                 {
 
     bool have_stx   = false;
-    const char LN_RECV_CALLER_RAW[]  = "libRECV-raw ";
-    const char LN_RECV_CALLER_DATA[] = "libRECV-data";
+    // const char LN_RECV_CALLER_RAW[]  = "libRECV-raw ";
+    const char LN_RECV_CALLER_DATA[] = "RX-data";
 
     byte dataLen;
     byte CRC8calc ;
@@ -183,17 +173,17 @@ byte recvMsg (RXTX_DATA *pData,
     pMyID = pData->myID;
 
     unsigned long start_time = millis();
-    pData->raw[LEN] = 0;            // azzeramento dataLen
-    pData->rx[LEN] = 0;            // azzeramento dataLen
+    pData->raw[pDATALEN] = 0;            // azzeramento dataLen
+    pData->rx[pDATALEN] = 0;            // azzeramento dataLen
     while ((millis() - start_time) < pData->timeout) {
         if (fAvailable () > 0) {
             byte inByte = fRead();
 
               // keep adding if not full
-            if (pData->raw[LEN] < maxBuffSize)
-                pData->raw[++pData->raw[LEN]] = inByte;    // save byte
+            if (pData->raw[pDATALEN] < maxBuffSize)
+                pData->raw[++pData->raw[pDATALEN]] = inByte;    // save byte
             else {
-                displayDebugMessage(LN_RECV_CALLER_RAW,  LN_OVERFLOW, pData->raw);
+                displayMyData(LN_RECV_CALLER_DATA,  LN_OVERFLOW, pData);
                 return LN_OVERFLOW;  // overflow
             }
 
@@ -202,7 +192,7 @@ byte recvMsg (RXTX_DATA *pData,
 
                 case STX:   // start of text
                     have_stx      = true;
-                    pData->raw[LEN] = 1;            // azzeramento dataLen
+                    pData->raw[pDATALEN] = 1;            // azzeramento dataLen
                     start_time    = millis();  // reset timeout period
                     break;
 
@@ -213,7 +203,7 @@ byte recvMsg (RXTX_DATA *pData,
 
                     dataLen = 0;
                         // loop partendo dal byte 2 [byte[0]=len, byte[1]=STX) e finendo prima dell'ETX
-                    for (byte i=2; i<pData->raw[LEN]; i+=2) {
+                    for (byte i=2; i<pData->raw[pDATALEN]; i+=2) {
                         highNibble          = pData->raw[i] & 0xF0;              // get high-order nibble
                         lowNibble           = pData->raw[i+1] >>4;               // get low-order nibble and join byte
                         pData->rx[++dataLen]  = highNibble | lowNibble;    // inserimento nel buffer dei dati
@@ -228,28 +218,28 @@ byte recvMsg (RXTX_DATA *pData,
                     // dataLen--;
 
                         // --- CRC è l'ultimo byte prima dell'ETX
-                    CRC8rcvd       = pData->rx[dataLen];
-                    pData->rx[LEN] = dataLen-1;       // lunghezza dati ricevuti (esclude CRC byte)
+                    CRC8rcvd       = pData->rx[pDATALEN];
+                    pData->rx[pDATALEN] = dataLen-1;       // lunghezza dati ricevuti (esclude CRC byte)
 
                     // --- calcolo del CRC escludendo il byte di CRC precedentemente salvato
-                    CRC8calc = crc8(&pData->rx[1], pData->rx[LEN]);
+                    CRC8calc = crc8(&pData->rx[1], pData->rx[pDATALEN]);
 
                     #if defined CRC_DEBUG
-                        Serial.print( "dataLen : ");Serial.println(pData->rx[LEN]);
+                        Serial.print( "dataLen : ");Serial.println(pData->rx[pDATALEN]);
                         printHexPDS(  "CRC8rcvd: ", CRC8rcvd);
                         printHexPDS(  "CRC8calc: ", CRC8calc);
                     #endif
 
 
                     if (CRC8calc != CRC8rcvd) {
-                        displayDebugMessage(LN_RECV_CALLER_RAW,  LN_BADCRC, pData->raw);
+                        displayMyData(LN_RECV_CALLER_DATA,  LN_BADCRC, pData);
                         return LN_BADCRC;  // bad crc
                     }
 
                     if (pData->displayData) {
                         Serial.print("\r\n\r\n");
-                        displayDebugMessage(LN_RECV_CALLER_RAW, LN_OK, pData->raw);
-                        displayDebugMessage(LN_RECV_CALLER_DATA,LN_OK, pData->rx);
+                        displayMyData(LN_RECV_CALLER_DATA, LN_OK, pData);
+                        // displayDebugMessage(LN_RECV_CALLER_DATA,LN_OK, pData->rx);
                     }
                     return LN_OK;
 
@@ -275,12 +265,12 @@ byte recvMsg (RXTX_DATA *pData,
                 case 0xE1:
                 case 0xF0:
                     if (!have_stx)
-                        --pData->raw[LEN]; // decrease rawLen
+                        --pData->raw[pDATALEN]; // decrease rawLen
 
                     break;
 
                 default:
-                    --pData->raw[LEN]; // decrease rawLen
+                    --pData->raw[pDATALEN]; // decrease rawLen
                     if (unexpextedCounter == 0) {
                         Serial.println();
                         Serial.print(pMyID);
@@ -298,7 +288,8 @@ byte recvMsg (RXTX_DATA *pData,
     } // end of while not timed out2
 
     // Serial.println();
-    displayDebugMessage(LN_RECV_CALLER_RAW, LN_TIMEOUT, pData->raw);
+    displayMyData(LN_RECV_CALLER_DATA, LN_TIMEOUT, pData);
+
 
     return LN_TIMEOUT;  // timeout
 
@@ -310,7 +301,7 @@ byte recvMsg (RXTX_DATA *pData,
 // # const char* text : per ricevere una stringa constante es: "Loreto"
 // #############################################################
 void displayDebugMessage(const char *caller, byte rCode, const byte *data) {
-    byte dataLen = data[LEN];
+    byte dataLen = data[pDATALEN];
     Serial.print(pMyID);
     Serial.print(caller);
     Serial.print(errMsg[rCode]);
@@ -322,4 +313,145 @@ void displayDebugMessage(const char *caller, byte rCode, const byte *data) {
 
     return;
 }
+
+
+
+
+
+// #############################################################
+// # const char* text : per ricevere una stringa constante es: "Loreto"
+// #############################################################
+void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
+    const byte *data;
+    const byte *raw;
+    byte rawIndex=0;
+
+    if (pData->displayData) {
+
+        raw = pData->raw;
+        if (caller[0] == 'T')
+            data = pData->tx;
+        else if (caller[0] == 'R')
+            data = pData->rx;
+        else
+            return;
+
+        // solo per semplificare il DEBUG... se viene modificato il mapping verificare
+        enum RXTX_MAP  {    DATALEN=0,
+                            SENDER_ADDR,
+                            DESTINATION_ADDR,
+                            SEQNO_HIGH,
+                            SEQNO_LOW,
+                            COMMAND,
+                            RCODE,
+                            USER_DATA,
+                        };
+
+        // const byte *rawData = pData->raw;
+        int seqNo = data[SEQNO_LOW] + data[SEQNO_HIGH]*256;
+
+        byte dataLen = data[0];
+        byte rawLen  = raw[0];
+        Serial.print(pMyID);
+        Serial.print(caller);
+        Serial.print(F(" - dataLen: "));Serial.print(LnUtoa (dataLen, 3, ' ') );
+        Serial.print(F(" - SeqNO: "));Serial.print(LnUtoa (seqNo, 5, '0') );
+        Serial.print(F(" - retCode: "));Serial.println(errMsg[rCode]);
+
+
+        if (dataLen > 0) {
+            Serial.print(F("full data - len:["));Serial.print(LnUtoa(data[0], 3, '0'));Serial.print(F("] - "));
+            printHex(&data[1], data[0]); Serial.println();
+            byte lun=dataLen-RCODE-1;
+            Serial.print(F("user data - len:["));Serial.print(LnUtoa(lun, 3, '0'));Serial.print(F("] - "));
+                    printHex(&data[dataIndex], lun);Serial.println();
+            Serial.println();
+
+            rawIndex  = 2;      // skip datalen + STX
+            Serial.print(F("SourceAddr 0x : "));printHex(data[SENDER_ADDR]);
+                    Serial.print(F("      | "));printHex(&raw[rawIndex], 2); Serial.println();
+
+            rawIndex += 2;
+            Serial.print(F("DestAddr   0x : "));printHex(data[DESTINATION_ADDR]);
+                    Serial.print(F("      | "));printHex(&raw[rawIndex], 2); Serial.println();
+
+            rawIndex += 2;
+            Serial.print(F("SEQNO      0x : "));printHex(&data[SEQNO_HIGH], 2);
+                    Serial.print(F("  | "));printHex(&raw[rawIndex], 4); Serial.println();
+
+            dataIndex += 2; rawIndex += 4;
+            Serial.print(F("Command    0x : "));printHex(data[COMMAND]);
+                    Serial.print(F("      | "));printHex(&raw[rawIndex], 2); Serial.println();
+
+            rawIndex += 2;
+            Serial.print(F("rCode      0x : "));printHex(data[RCODE]);
+                    Serial.print(F("      | "));printHex(&raw[rawIndex], 2); Serial.println();
+
+
+
+            Serial.println(F("user raw : "));printHex(&raw[rawIndex], rawLen-rawIndex-2);Serial.println();
+
+
+            Serial.println();
+            Serial.println();
+            Serial.print(F("full raw  - len:["));Serial.print(LnUtoa(raw[0], 3, '0'));Serial.println(F("] - "));
+            printHex(&raw[1], raw[0]); Serial.println();
+
+        }
+
+    }
+
+}
+
+
+// #############################################################
+// # const char* text : per ricevere una stringa constante es: "Loreto"
+// #############################################################
+void displayMyData_OK(const char *caller, byte rCode, RXTX_DATA *pData) {
+    const byte *data;
+    if (pData->displayData) {
+
+        if (caller[0] == 'T')
+            data = pData->tx;
+        else if (caller[0] == 'R')
+            data = pData->rx;
+        else
+            return;
+
+        // solo per semplificare il DEBUG... se viene modificato il mapping verificare
+        enum RXTX_MAP  {    DATALEN=0,
+                            SENDER_ADDR,
+                            DESTINATION_ADDR,
+                            SEQNO_HIGH,
+                            SEQNO_LOW,
+                            COMMAND,
+                            RCODE,
+                            USER_DATA,
+                        };
+
+        // const byte *rawData = pData->raw;
+        int seqNo = data[SEQNO_LOW] + data[SEQNO_HIGH]*256;
+
+        byte dataLen = data[pDATALEN];
+        Serial.print(pMyID);
+        Serial.print(caller);
+        Serial.print(F(" - dataLen: "));Serial.print(LnUtoa (dataLen, 3, ' ') );
+        Serial.print(F(" - SeqNO: "));Serial.print(LnUtoa (seqNo, 5, '0') );
+        Serial.print(F(" - retCode: "));Serial.println(errMsg[rCode]);
+
+        if (dataLen > 0) {
+            Serial.print(F("SourceAddr 0x : "));printHex(data[SENDER_ADDR]);Serial.println();
+            Serial.print(F("DestAddr   0x : "));printHex(data[DESTINATION_ADDR]);Serial.println();
+            Serial.print(F("SEQNO      0x : "));printHex(&data[SEQNO_HIGH], 2);Serial.println();
+            Serial.print(F("Command    0x : "));printHex(data[COMMAND]);Serial.println();
+            Serial.print(F("rCode      0x : "));printHex(data[RCODE]);Serial.println();
+            Serial.print(F("user data     : "));printHex(&data[USER_DATA], dataLen-RCODE-1);Serial.println();
+        }
+    }
+
+
+}
+
+
+
 

@@ -9,25 +9,15 @@
     #define MASTER_ADDRESS      0
 
 
-    // #if defined I_AM_MAIN__
-    // #ifdef I_AM_MAIN__
-        byte        myEEpromAddress;        // who we are
-        RXTX_DATA   RxTx, *pData;             // struttura dati
+    byte        myEEpromAddress;        // who we are
+    RXTX_DATA   RxTx, *pData;             // struttura dati
 
-        //.............0 1 234567890123
-        char myID[] = "\r\n?[xxx] - "; // i primi due byte saranno CR e LF
+    //.............0 1 234567890123
+    char myID[] = "\r\n?[xxx] - "; // i primi due byte saranno CR e LF
                                         // ? E:Echo-Simulate, R:Relay S:Slave
-        unsigned long responseDelay = 0;
 
-    // #else
-    //     extern byte    myEEpromAddress    ;        // who we are
-    //     extern RXTX_DATA   RxTx, *pData;             // struttura dati
-    //     extern char myID[]; // i primi due byte saranno CR e LF
-    //     extern unsigned long responseDelay;
 
-    // #endif
-
-    enum payLoadMap  {  DATALEN=0,
+    enum RXTX_MAP  {    DATALEN=0,
                         SENDER_ADDR,
                         DESTINATION_ADDR,
                         SEQNO_HIGH,
@@ -45,15 +35,19 @@
     gv.myCMD.readPin    = bytes([21])
     gv.myCMD.writePin   = bytes([22])
 */
-    enum rs485_DEFINE {
-                            CMD_ECHO        = 1,
-                            CMD_POLLING     = 2,
-                            CMD_READPIN     = 21,
-                            CMD_WRITEPIN    = 22,
+    enum rs485_COMMANDs {
+                            ECHO_CMD        = 1,
+                            POLLING_CMD     = 2,
+                            READPIN_CMD     = 21,
+                            WRITEPIN_CMD    = 22,
+                        };
 
-                            ERROR_RS485     = 9,    // ERRORE nel ricevere dati da rs485
-                            ERROR_TIMEOUT   = 8,    // TIMEOUT nel ricevere dati da rs485
 
+    enum rs485_ERRORs {
+                            OK            = 0,    // ERRORE nel ricevere dati da rs485
+                            RS485_ERROR   = 1,    // ERRORE nel ricevere dati da rs485
+                            TIMEOUT_ERROR = 2,    // TIMEOUT nel ricevere dati da rs485
+                            UNKNOWN_CMD   = 3,    // TIMEOUT nel ricevere dati da rs485
                         };
 
     // ##########################################
@@ -83,7 +77,9 @@
 
     // ------ funzioni di comodo per chiamare direttamente la seriale desiderata
     inline void sendMsg485(RXTX_DATA *txData, WriteCallback fSend=WriteSerial485 ) {
+        digitalWrite(RS485_ENABLE_PIN, ENA_485_TX);               // enable Rs485 sending
         sendMsg (txData, fSend);
+        digitalWrite(RS485_ENABLE_PIN, ENA_485_RX);               // set in receive mode
     }
 
     inline byte recvMsg485(RXTX_DATA *rxData, ReadCallback fRead=ReadSerial485, AvailableCallback fAvailable=AvailableSerial485) {

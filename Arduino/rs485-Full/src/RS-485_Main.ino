@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-19_18.30.01
+version:    LnVer_2017-07-20_09.28.28
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -16,7 +16,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #define     _I_AM_ARDUINO_NANO_
 #define     I_AM_MAIN__
 
-#define     SIMULATE_ECHOxxxx
+#define     SIMULATE_ECHO
 #include    <LnFunctions.h>                //  D2X(dest, val, 2), printHex
 #include    <LnRS485_protocol.h>
 #include    <SoftwareSerial.h>
@@ -61,19 +61,6 @@ void setup() {
 
     Serial232.print(myID);
 
-    /* ----
-        bit_time = 1/baud_rate
-        At 9600, bit time is 104.166666666666 microseconds.
-
-        For example 9600 8 N 1 uses 10 bits per word (1 start bit, 8 data bits, and 1 stop bit).
-        Each word  would take      10/9600 =0.00104167 sec --> 1.0417mS --> 1041.66666666 uS
-        100  words would take (100*10)/9600=0,104167   sec --> 104.17 ms
-        Quindi per evitare sovrapposizioni nelle risposte e assumendo che
-        gli indirizzi partono da 11...
-        ...calcolo il delay con (eepromAddress-10)*500
-    ---- */
-    responseDelay = (myEEpromAddress-10)*500; // Es.: Addr 12, delay = (12-10)*500=1000mS
-
     pinMode (LED_PIN, OUTPUT);          // built-in LED
 
 }
@@ -85,33 +72,22 @@ void setup() {
 // ################################################################
 void loop() {
 
-#ifdef SIMULATE_ECHO
-    myID[2] = 'E';    // E:Echo-Simulate, R:Relay S:Slave
-    loop_Simulate();
-#else
     if (myEEpromAddress <= 10) {
-        myID[2] = 'R';    // E:Echo-Simulate, R:Relay S:Slave
-        loop_Relay();
+        #ifdef SIMULATE_ECHO
+            myID[2] = 'E';    // E:Echo-Simulate, R:Relay S:Slave
+            loop_Simulate();
+            Serial232.print(myID);Serial232.println(F("Sono in simulate mode."));
+        #else
+            myID[2] = 'R';    // E:Echo-Simulate, R:Relay S:Slave
+            loop_Relay();
+        #endif
     }
     else {
         myID[2] = 'S';    // E:Echo-Simulate, R:Relay S:Slave
         loop_Slave();
     }
-#endif
 
 }
 
 
-
-// ################################################################
-// # --- DISPLAY DATA
-// ################################################################
-void rxDisplayData(byte rCode, RXTX_DATA *pData) {
-    displayDebugMessage("inoRECV-data", rCode, pData->rx);
-    displayDebugMessage("inoRECV-raw ", rCode, pData->raw);
-}
-void txDisplayData(byte rCode, RXTX_DATA *pData) {
-    displayDebugMessage("inoSEND-data", rCode, pData->tx);
-    displayDebugMessage("inoSEND-raw ", rCode, pData->raw);
-}
 
