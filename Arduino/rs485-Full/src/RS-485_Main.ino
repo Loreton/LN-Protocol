@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-21_15.27.49
+version:    LnVer_2017-07-21_16.06.12
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -16,7 +16,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #define     _I_AM_ARDUINO_NANO_
 #define     I_AM_MAIN__
 
-#define     SIMULATE_ECHO
+#define     SIMULATE_ECHOxxxx
 #include    <LnFunctions.h>                //  D2X(dest, val, 2), printHex
 #include    <LnRS485_protocol.h>
 #include    <SoftwareSerial.h>

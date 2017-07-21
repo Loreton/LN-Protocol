@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-21_11.08.06
+version:    LnVer_2017-07-21_16.48.43
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -17,11 +17,12 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - rispondiamo se siamo interessati
 // ################################################################
 void loop_Slave() {
-    pData->displayData  = false;                // data display dei byte hex inviati e ricevuti
+    pData->displayData  = true;                // data display dei byte hex inviati e ricevuti
     pData->timeout      = 10000;
 
-    byte rCode      = recvMsg485(pData);
+    Serial.println();
     Serial.print(myID);printNchar('-', 60);
+    byte rCode = recvMsg485(pData);
 
     if (rCode == LN_OK) {
         processRequest(pData);
@@ -83,10 +84,13 @@ void processRequest(RXTX_DATA *pData) {
 
     // sono io.... process request
     Serial.print(F("   (Request is for me) ... answering"));
+    Serial.println();
     switch (pData->rx[COMMAND]) {
-        // case ECHO_CMD:
-        //     copyRxMessageToTx(pData);
-        //     break;
+
+        case POLLING_CMD:
+            pData->tx[RCODE] = OK;
+            prepareMessage(pData, myMsg1, sizeof(myMsg1));
+            break;
 
         case READPIN_CMD:
             pData->tx[RCODE] = OK;

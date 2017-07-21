@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-07-21_15.34.47'
+__version__  = 'LnVer_2017-07-21_16.33.50'
 __status__   = 'Beta'
 
 import os
@@ -578,10 +578,7 @@ class LnRs485_Instrument():
 
         if fDEBUG:
             print ('readDataLib:')
-            # print ('    from addr: {0:03}'.format(payLoad[SENDER_ADDR]))
-            # print ('    to   addr: {0:03}'.format(payLoad[DESTINATION_ADDR]))
             print ('    seqNo    : {0:05}'.format(payLoad[SEQNO_HIGH]*256+payLoad[SEQNO_LOW]))
-            # print ('    command  : {0:03}'.format(payLoad[COMMAND]))
             print ('    xMitCode : {0:03}'.format(xMitCode))
             print ()
 
@@ -657,6 +654,7 @@ class LnRs485_Instrument():
         dataToSend.append(yy[1])  # Low byte
 
         dataToSend.append(CMD.commandNO)
+        dataToSend.append(CMD.xmitRcode)  # 0 per una TX
 
         for x in CMD.dataStr:
             dataToSend.append(ord(x))
@@ -675,15 +673,47 @@ class LnRs485_Instrument():
     # -  only values sent would be (in hex):
     # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
     #######################################################################
-    def sendData(self, data, fDEBUG=False):
+    def sendData(self, payLoad, fDEBUG=False):
         ''' formato in bytearray dei parametri '''
         logger = self._setLogger(package=__name__)
         if fDEBUG:
             # print()
-            seqNO = data[SEQNO_LOW]+data[SEQNO_HIGH]*256
-            print ('sendDataLib: dataLen=', len(data))
-            print ('    source:{sADDR:03}  dest:{dADDR:03} CMD:{CMD:03} seqNo:{SEQ:05}'.format(sADDR=data[SENDER_ADDR], dADDR=data[DESTINATION_ADDR], SEQ=seqNO, CMD=data[COMMAND]))
-            print ('    {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
+            # seqNO = data[SEQNO_LOW]+data[SEQNO_HIGH]*256
+            # print ('sendDataLib: dataLen=', len(data))
+            # print ('    source:{sADDR:03}  dest:{dADDR:03} CMD:{CMD:03} seqNo:{SEQ:05}'.format(sADDR=data[SENDER_ADDR], dADDR=data[DESTINATION_ADDR], SEQ=seqNO, CMD=data[COMMAND]))
+            # print ('    {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
+
+            print ('sendDataLib:')
+            print ('    seqNo    : {0:05}'.format(payLoad[SEQNO_HIGH]*256+payLoad[SEQNO_LOW]))
+            print ('    xMitCode : {0:03} (0 for TX)'.format(0))
+            print ()
+
+            print ('    full data - len: [{0:03}] - '.format(len(payLoad)), end="")
+            for byte in payLoad: print ('{0:02X} '.format(byte), end="")
+            print ()
+
+            userData = payLoad[USER_DATA:]
+            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
+            print ('   '*USER_DATA, end="")
+            for byte in userData: print ('{0:02X} '.format(byte), end="")
+
+            print ('')
+            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
+            print ('   '*USER_DATA, end="")
+            print ('[', end="")
+            for byte in userData:
+                if byte in self._printableChars:   # Handle only printable ASCII
+                    print(chr(byte), end="")
+                else:
+                    print(' ', end="")
+            print (']')
+            print ('')
+            print ('    SourceAddr 0x : {0:02X}'.format(payLoad[SENDER_ADDR]))
+            print ('    DestAddr   0x : {0:02X}'.format(payLoad[DESTINATION_ADDR]))
+            print ('    SEQNO      0x : {0:02X} {1:02X}'.format(payLoad[SEQNO_HIGH], payLoad[SEQNO_LOW]))
+            print ('    Command    0x : {0:02X}'.format(payLoad[COMMAND]))
+            print ('    userRCode  0x : {0:02X}'.format(payLoad[USER_RCODE]))
+
 
             # - preparaiamo il bytearray con i dati da inviare
         dataToSend=bytearray()
@@ -692,14 +722,14 @@ class LnRs485_Instrument():
         dataToSend.append(self.STX)
 
             # - Data nell'array
-        for thisByte in data:
+        for thisByte in payLoad:
             byte1, byte2 = self._splitComplementedByte(thisByte)
             dataToSend.append(byte1)
             dataToSend.append(byte2)
 
             # - CRC nell'array
         if self.CRC:
-            CRC_value    = self._getCRC8(data)
+            CRC_value    = self._getCRC8(payLoad)
             byte1, byte2 = self._splitComplementedByte(CRC_value)
             dataToSend.append(byte1)
             dataToSend.append(byte2)

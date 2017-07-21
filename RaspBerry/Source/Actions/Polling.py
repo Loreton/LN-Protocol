@@ -9,7 +9,7 @@
 #         ...sulle seriali degli Arduino si dovrebbe leggere qualcosa tipo:
 #         S[011] - inoRECV from: 10 to  : 0 [00059]   (Request is NOT for me)
 #
-# modified:     by Loreto notarantonio LnVer_2017-07-19_10.37.37
+# modified:     by Loreto notarantonio LnVer_2017-07-21_16.35.35
 #
 # ######################################################################################
 
@@ -38,6 +38,7 @@ def Polling(gv, serialRelayPort):
     CMD.dataStr     = 'polling test'
     CMD.commandNO   = int.from_bytes(gv.myCMD.polling,  'little')
     CMD.sourceAddr  = int.from_bytes(gv.myDEV.master, 'little')
+    CMD.xmitRcode   = 0
 
     for dev, address in gv.myDEV.items():
         if dev in ('master', 'relay'): continue

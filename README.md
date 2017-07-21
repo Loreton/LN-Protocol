@@ -55,3 +55,8 @@ Sintassi generica dei comandi string Master to Slave:
     CMD: MasterAddress  ! slaveAddress    !  WritePin    ! numeroPIN, value
     RSP:                !                 !  WritePin    ! numeroPIN
 
+
+
+TAG v01.07:
+    Arduino-Relay partito in SIMULATE_ECHO. Invia il messaggio di echo sulla rs485. Con una pen_usb_rs485 collegata al RaspBerry si può monitorare il bus con il comando:
+    python3.4 /home/pi/GIT-REPO/LnProtocol/RaspBerry/__main__.py monitor rs485 --port ttyUSBxxx (pen_usb_rs485)
