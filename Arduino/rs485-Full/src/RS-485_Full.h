@@ -17,15 +17,6 @@
                                         // ? E:Echo-Simulate, R:Relay S:Slave
 
 
-    enum RXTX_MAP  {    DATALEN=0,
-                        SENDER_ADDR,
-                        DESTINATION_ADDR,
-                        SEQNO_HIGH,
-                        SEQNO_LOW,
-                        COMMAND,
-                        RCODE,
-                        USER_DATA,
-                    };
 
 
 /*

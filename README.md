@@ -1,10 +1,11 @@
 # LN-Protocol
-Tentativo di implementazione un protocollo di comunicazione per permettere la gestione ed il controllo di diversi dispositivi RaspBerry o Arduino.
+Tentativo di implementazione un protocollo di comunicazione per la gestione ed il controllo di diversi dispositivi tramite RaspBerry-->Arduino.
 
-Il protocollo si dovrebbe appoggiare al RS-485 oppure Wireless.
+Il protocollo si basa su RS-485 oppure Wireless.
+
 Non è previsto che lo Slave prenda iniziativa della trasmissione.
-Tutto il controllo è demandato al MASTER il quale tramite un protocollo di polling provvede ad interrogare tutti gli SLAVE predefiniti.
-Anche se un pò più oneroso, questo permette di evitare conflitti nelle comunicazioni.
+
+Tutto il controllo è demandato al MASTER (RaspBerr) il quale tramite un protocollo di polling provvede ad interrogare tutti gli SLAVE predefiniti. Questo permette di evitare conflitti nelle comunicazioni.
 
 Tutto il processo parte dal RaspBerry il quale conosce tutti i dispositivi e per ognuno di essi l'opportuno comando da inviare per raccogliere le informazioni.
 Nel caso di RS-485 RaspBerry è autonomo nell'inviare il comando e raccogliere le info.
@@ -13,21 +14,29 @@ Nel caso di Wireless RaspBerry si deve appoggiare ad un Arduino locale che provv
 
 Sintassi generica dei comandi string Master to Slave:
 
-    02                                                                          - STX
-    FF                                                                          - Dest Address      (FF = Broadcast)
-    00                                                                          - source Address    (00 = Master)
-        Command                                                                 - Commnad
-            ; 01 xx                                                             - readPin       - pinNumber
-            ; 02 xx                                                             - readRelè      - releNumber
-            ; 03 xx                                                             - readLED       - ledNumber
-            ; 04 I2C_address cmd byte0, byte1, ...., bytex                      - readI2C
-            ; -- --                                                             -
-            ; 81 xx ON|OFF                                                      - writePin      - pinNumber
-            ; 82 xx ON|OFF                                                      - writeRelè     - releNumber
-            ; 83 xx ON|OFF                                                      - writeLED      - ledNumber
-            ; 84 I2C_address cmd byte0, byte1, ...., bytex                      - writeI2C
-    YY                                                                          - CRC
-    03                                                                          - ETX
+    STX                           - STX
+        DATALEN                   - lunghezza dei dati escluso STX ed ETX
+        SENDER_ADDR               - Dest Address      (FF = Broadcast)
+        DESTINATION_ADDR          - source Address    (00 = Master)
+        SEQNO_HIGH                - numero del messaggio utile per associare la risposta
+        SEQNO_LOW                 -
+        COMMAND                   - comando da eseguire
+        RCODE                     - esito del comando
+        USER_DATA                 - dati necessari per l'esecuzione del comando oppure i dati di risposta
+        ....                      -
+    CRC                           - CRC
+    ETX                           - ETX
+
+    Commands Sample                                                         - Commnad
+        ; 01 xx                                                             - readPin       - pinNumber
+        ; 02 xx                                                             - readRelè      - releNumber
+        ; 03 xx                                                             - readLED       - ledNumber
+        ; 04 I2C_address cmd byte0, byte1, ...., bytex                      - readI2C
+        ; -- --                                                             -
+        ; 81 xx ON|OFF                                                      - writePin      - pinNumber
+        ; 82 xx ON|OFF                                                      - writeRelè     - releNumber
+        ; 83 xx ON|OFF                                                      - writeLED      - ledNumber
+        ; 84 I2C_address cmd byte0, byte1, ...., bytex                      - writeI2C
 
 
 

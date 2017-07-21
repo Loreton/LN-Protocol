@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-21_08.21.40
+version:    LnVer_2017-07-21_15.27.49
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -24,7 +24,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #include    <EEPROM.h>
 
 
-//python3.4 -m serial232.tools.list_ports
+//python3.4 -m serial.tools.list_ports
 void setup() {
 
         // ===================================

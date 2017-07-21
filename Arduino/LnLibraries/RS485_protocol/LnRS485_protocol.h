@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-07-21_09.08.36
+// Version: LnVer_2017-07-21_14.13.15
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -25,7 +25,7 @@
 
     extern const char *errMsg[];
 
-    #if not defined LN_RCV_OK
+    // #if not defined LN_RCV_OK
         enum errorType  {   LN_OK=0,
                         LN_OVERFLOW,
                         LN_BADCRC,
@@ -38,9 +38,20 @@
         #define MAX_DATA_SIZE     30
 
 
-    #else
-    #endif
+    // #else
+    // #endif
 
+
+
+    enum RXTX_MAP  {    DATALEN=0,
+                        SENDER_ADDR,
+                        DESTINATION_ADDR,
+                        SEQNO_HIGH,
+                        SEQNO_LOW,
+                        COMMAND,
+                        RCODE,
+                        USER_DATA,
+                    };
 
 //  identifica il byte che contiene la lunghezza dati
     #define pDATALEN     0

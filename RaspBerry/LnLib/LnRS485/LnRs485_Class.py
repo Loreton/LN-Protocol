@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-07-19_18.05.48'
+__version__  = 'LnVer_2017-07-21_15.34.47'
 __status__   = 'Beta'
 
 import os
@@ -52,11 +52,21 @@ MODE_ASCII = 'ascii'
 ##############################
 
 
-Ln_SOURCE_ADDR = 0
-Ln_DEST_ADDR   = 1
-Ln_SEQNO_HIGH  = 2
-Ln_SEQNO_LOW   = 3
-Ln_COMMAND     = 4
+# Ln_SOURCE_ADDR = 0
+# Ln_DEST_ADDR   = 1
+# Ln_SEQNO_HIGH  = 2
+# Ln_SEQNO_LOW   = 3
+# Ln_COMMAND     = 4
+
+# DATALEN             = 0     # - lunghezza dei dati escluso STX ed ETX
+SENDER_ADDR         = 0     # - Dest Address      (FF = Broadcast)
+DESTINATION_ADDR    = 1     # - source Address    (00 = Master)
+SEQNO_HIGH          = 2     # - numero del messaggio utile per associare la risposta
+SEQNO_LOW           = 3     # -
+COMMAND             = 4     # - comando da eseguire
+USER_RCODE          = 5     # - esito del comando
+USER_DATA           = 6     # - dati necessari per l'esecuzione del comando oppure i dati di risposta
+
 
 
 # -----------------------------------------------------------------------
@@ -149,12 +159,13 @@ class LnRs485_Instrument():
         """
 
         # ----   LnRs485_payLoadMap
-        self._payLoadMap = LnClass()
-        self._payLoadMap.SENDER_ADDR       = 0
-        self._payLoadMap.DESTINATION_ADDR  = 1
-        self._payLoadMap.SEQNO_HIGH        = 2
-        self._payLoadMap.SEQNO_LOW         = 3
-        self._payLoadMap.PAYLOAD           = 4
+        # self._payLoadMap = LnClass()
+        # self._payLoadMap.SENDER_ADDR       = 0
+        # self._payLoadMap.DESTINATION_ADDR  = 1
+        # self._payLoadMap.SEQNO_HIGH        = 2
+        # self._payLoadMap.SEQNO_LOW         = 3
+        # self._payLoadMap.PAYLOAD           = 4
+        self._printableChars                = list(range(31,126))
 
         self.debug = True
         """Set this to :const:'True' to print the communication details. Defaults to :const:'False'."""
@@ -425,56 +436,6 @@ class LnRs485_Instrument():
 
         return buffer
 
-    '''
-    #######################################################################
-    # - Lettura dati fino a:
-    # -     EOD = None ... fino al primo NULL byte
-    # -     EOD = xxx ... fino al char xxx
-    # - Ritorna una bytearray di integer
-    #######################################################################
-    def _readRawBuffer(self, EOD=[], TIMEOUT=1000):
-        logger = self._setLogger(package=__name__)
-
-        if self.close_port_after_each_call:
-            logger.debug('opening port...')
-            self.serial.open()
-
-        if isinstance(EOD, integer): EOD=[EOD]
-
-        buffer = bytearray()
-
-            # facciamo partire il timer
-        startRun = time.time()
-
-        while TIMEOUT:
-            ch = self.serial.read(1)       # ch e' un bytes
-            if ch == b'':
-                if EOD: continue
-                else:   break
-
-            chInt = int.from_bytes(ch, 'little')
-            buffer.append(chInt)
-
-            DEBUG
-            if EOD:
-                logger.debug( "Received byte: {0:02x}... waiting for EOD: {1:02x}".format(chInt, EOD) )
-            else:
-                logger.debug( "Received byte: {0:02x}... in RAW mode".format(chInt) )
-
-
-            if chInt in EOD:
-                break
-
-            TIMEOUT -= (time.time()-startRun)
-
-        if self.close_port_after_each_call:
-            logger.debug('closing port...')
-            self.serial.close()
-
-        print('remaining time to TIMEOUT: {}'.format(TIMEOUT))
-        return buffer
-
-    '''
 
     #######################################################################
     # - by Loreto
@@ -488,7 +449,8 @@ class LnRs485_Instrument():
         bufferData = self._readSerialBuffer(SOD=[], EOD=EOD, TIMEOUT=TIMEOUT)
 
         if bufferData:
-            validChars = list(range(31,126))
+            # validChars = list(range(31,126))
+            validChars = self._printableChars
             validChars.append(10) # aggiungiamo il newline in modo che venga displayato
 
             if isinstance(bufferData, bytes):
@@ -542,12 +504,8 @@ class LnRs485_Instrument():
     def readData(self, TIMEOUT=1000, fDEBUG=False):
         logger = self._setLogger(package=__name__)
 
-
-        # bufferData = self._readBuffer()
-        # bufferData = self._read_SOD_EOD_Buffer(SOD=self.STX, EOD=self.ETX, TIMEOUT=1000)
         bufferData = self._readSerialBuffer(SOD=self.STX, EOD=self.ETX, TIMEOUT=TIMEOUT, fDEBUG=fDEBUG)
         msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='readDataLib: full data', LEN=len(bufferData), DATA=' '.join('{:02X}'.format(x) for x in bufferData))
-        # if fDEBUG: print(msg)
         logger.debug(msg)
 
             # Prendiamo i dati fissi
@@ -607,10 +565,9 @@ class LnRs485_Instrument():
 
         logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
         logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
-        seqNumber = payLoad[self._payLoadMap.SEQNO_HIGH]*256 + payLoad[self._payLoadMap.SEQNO_LOW]
+        xMitCode = CRC_received - CRC_calculated
 
-
-        if not CRC_received == CRC_calculated:
+        if xMitCode:
             logger.error('Il valore di CRC non coincide')
             print ('ERROR: Il valore di CRC non coincide')
             print ()
@@ -621,10 +578,38 @@ class LnRs485_Instrument():
 
         if fDEBUG:
             print ('readDataLib:')
-            print ('    from addr: {sADDR:03} ---> {dADDR:03} [{SEQ:05}]'.format(sADDR=payLoad[0], dADDR=payLoad[1], SEQ=seqNumber))
-            print ('    {DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in bufferData)))
-            print ('    {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in payLoad)))
-            print ('    {DESCR:<18}  {DATA}'.format(DESCR="payload text", DATA=' '.join('{0:>2}'.format(chr(x)) for x in payLoad[2:])))
+            # print ('    from addr: {0:03}'.format(payLoad[SENDER_ADDR]))
+            # print ('    to   addr: {0:03}'.format(payLoad[DESTINATION_ADDR]))
+            print ('    seqNo    : {0:05}'.format(payLoad[SEQNO_HIGH]*256+payLoad[SEQNO_LOW]))
+            # print ('    command  : {0:03}'.format(payLoad[COMMAND]))
+            print ('    xMitCode : {0:03}'.format(xMitCode))
+            print ()
+
+            print ('    full data - len: [{0:03}] - '.format(len(payLoad)), end="")
+            for byte in payLoad: print ('{0:02X} '.format(byte), end="")
+            print ()
+
+            userData = payLoad[USER_DATA:]
+            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
+            print ('   '*USER_DATA, end="")
+            for byte in userData: print ('{0:02X} '.format(byte), end="")
+
+            print ('')
+            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
+            print ('   '*USER_DATA, end="")
+            print ('[', end="")
+            for byte in userData:
+                if byte in self._printableChars:   # Handle only printable ASCII
+                    print(chr(byte), end="")
+                else:
+                    print(' ', end="")
+            print (']')
+            print ('')
+            print ('    SourceAddr 0x : {0:02X}'.format(payLoad[SENDER_ADDR]))
+            print ('    DestAddr   0x : {0:02X}'.format(payLoad[DESTINATION_ADDR]))
+            print ('    SEQNO      0x : {0:02X} {1:02X}'.format(payLoad[SEQNO_HIGH], payLoad[SEQNO_LOW]))
+            print ('    Command    0x : {0:02X}'.format(payLoad[COMMAND]))
+            print ('    userRCode  0x : {0:02X}'.format(payLoad[USER_RCODE]))
 
 
         return payLoad, bufferData
@@ -695,9 +680,9 @@ class LnRs485_Instrument():
         logger = self._setLogger(package=__name__)
         if fDEBUG:
             # print()
-            seqNO = data[Ln_SEQNO_LOW]+data[Ln_SEQNO_HIGH]*256
+            seqNO = data[SEQNO_LOW]+data[SEQNO_HIGH]*256
             print ('sendDataLib: dataLen=', len(data))
-            print ('    source:{sADDR:03}  dest:{dADDR:03} CMD:{CMD:03} seqNo:{SEQ:05}'.format(sADDR=data[Ln_SOURCE_ADDR], dADDR=data[Ln_DEST_ADDR], SEQ=seqNO, CMD=data[Ln_COMMAND]))
+            print ('    source:{sADDR:03}  dest:{dADDR:03} CMD:{CMD:03} seqNo:{SEQ:05}'.format(sADDR=data[SENDER_ADDR], dADDR=data[DESTINATION_ADDR], SEQ=seqNO, CMD=data[COMMAND]))
             print ('    {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
 
             # - preparaiamo il bytearray con i dati da inviare
