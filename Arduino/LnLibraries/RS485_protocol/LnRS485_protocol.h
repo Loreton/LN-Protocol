@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-07-20_18.20.49
+// Version: LnVer_2017-07-21_09.08.36
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -73,7 +73,7 @@
 
         // dataLen is byte data[0]
     void displayDebugMessage(const char *caller, byte errMscType, const byte *data);
-    void displayMyData(const char *caller, byte errMscType, RXTX_DATA *pData);
+    void displayMyData(const char *caller, byte errMscType, RXTX_DATA *pData, bool fprintRAW=true);
     void prova(const char *caller);
 
 #endif

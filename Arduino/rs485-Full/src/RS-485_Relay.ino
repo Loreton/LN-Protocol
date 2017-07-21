@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-20_08.03.05
+version:    LnVer_2017-07-21_10.36.20
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -25,6 +25,8 @@ void loop_Relay() {
     pData->displayData = false;                // data display dei byte hex inviati e ricevuti
     pData->timeout     = 5000;
     pData->rx[DATALEN] = 0;
+
+    // ricezione messaggio da RaspBerry
     byte rCode         = recvMsg232(pData);
 
     if (rCode == LN_OK) {

@@ -21,14 +21,18 @@
     void printHex(const byte data);
     void printHex(const uchar data,         const char * endStr);
     void printHex(const uchar *data,        const byte len,         const char *endStr="");
-    void printHexPDS(const char *prefixStr, const byte data,        const char *suffixStr="");
+
+    void printHexPDS(const char *prefixStr, const byte data,        const char *suffixStr="\n");
 
     byte LnCRC8(const byte *data,     byte len);
 
     void LnPrint(const char *data1, const char *data2="", const char *data3="");
     void LnPrintStrHex(const char *prefix, byte value, const char *suffix="");
     char *LnUtoa(unsigned int i, byte padLen=2, byte fill=' ');
+    void printNchar(const char data, byte counter); // print un byte N volte
 
+    void printStr(const byte *data, byte len, const char *delimiter=NULL);  // print di una stringa visibile
+    // void printStr(const char *data, byte len, const char *delimiter=NULL);  // print di una stringa visibile
 
     // ARDUINO NANO
     #if defined(_I_AM_ARDUINO_NANO_)

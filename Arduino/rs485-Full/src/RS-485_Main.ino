@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-20_09.28.28
+version:    LnVer_2017-07-21_08.21.40
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -76,7 +76,6 @@ void loop() {
         #ifdef SIMULATE_ECHO
             myID[2] = 'E';    // E:Echo-Simulate, R:Relay S:Slave
             loop_Simulate();
-            Serial232.print(myID);Serial232.println(F("Sono in simulate mode."));
         #else
             myID[2] = 'R';    // E:Echo-Simulate, R:Relay S:Slave
             loop_Relay();

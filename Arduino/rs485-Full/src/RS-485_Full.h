@@ -8,7 +8,7 @@
 
     #define MASTER_ADDRESS      0
 
-
+    char TAB[] = "    ";
     byte        myEEpromAddress;        // who we are
     RXTX_DATA   RxTx, *pData;             // struttura dati
 
