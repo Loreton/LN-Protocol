@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-07-21_14.13.15
+// Version: LnVer_2017-07-24_17.17.09
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -66,6 +66,9 @@
         byte            displayData = false;     // per fare il print dei data
         // byte            displayRawData = false;     // per fare il print del rawData
         char            *myID;    // pointer identificativo di Arduino
+        byte            TxCRCcalc;    // CRC value
+        byte            RxCRCcalc;    // CRC value
+        byte            RxCRCrcvd;    // CRC value
     }  RXTX_DATA, *pRXTX_DATA;
 
 
