@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-24_14.58.24
+version:    LnVer_2017-07-25_10.34.09
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -16,7 +16,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #define     _I_AM_ARDUINO_NANO_
 #define     I_AM_MAIN__
 
-#define     SIMULATE_ECHO
+#define     POLLING_SIMULATION
 #include    <LnFunctions.h>                //  D2X(dest, val, 2), printHex
 #include    <LnRS485_protocol.h>
 #include    <SoftwareSerial.h>
@@ -49,15 +49,6 @@ void setup() {
         // -    2. copy string into myID array
         // ================================================
     myEEpromAddress = EEPROM.read(0);
-    char *xx        = LnUtoa(myEEpromAddress, 3, '0');
-    // myID[0] = 13;   // CR già pre-configurato nella definizione
-    // myID[1] = 10;   // NL già pre-configurato nella definizione
-    // myID[2] = 'Y';  // E:Echo-Simulate, R:Relay S:Slave
-    // myID[3] = '[';  // [ già pre-configurato nella definizione
-    myID[4] = xx[0];
-    myID[5] = xx[1];
-    myID[6] = xx[2];
-    pData->myID = myID;
 
     Serial232.print(myID);
 
@@ -65,26 +56,43 @@ void setup() {
 
 }
 
+bool firstRun = true;
+// char myID[] = "\r\n[Slave-xxx] - "; // i primi due byte saranno CR e LF
+void setMyID(const char *name) {
+    byte i=3;
+    byte i1;
 
+    for (i1=0; i1<5; i1++) {
+        myID[i++] = name[i1];
+    }
+    i++; // skip '-'
+
+    char *xx = LnUtoa(myEEpromAddress, 3, '0');
+    myID[i++] = xx[0];
+    myID[i++] = xx[1];
+    myID[i++] = xx[2];
+
+    pData->myID = myID;
+}
 
 // ################################################################
 // # - M A I N     Loop
 // ################################################################
 void loop() {
-
     if (myEEpromAddress <= 10) {
-        #ifdef SIMULATE_ECHO
-            myID[2] = 'E';    // E:Echo-Simulate, R:Relay S:Slave
-            loop_Simulate();
+        #ifdef POLLING_SIMULATION
+            if (firstRun) setMyID("Emula");
+            loop_PollingSimulation();
         #else
-            myID[2] = 'R';    // E:Echo-Simulate, R:Relay S:Slave
+            if (firstRun) setMyID("Relay");
             loop_Relay();
         #endif
     }
     else {
-        myID[2] = 'S';    // E:Echo-Simulate, R:Relay S:Slave
+        if (firstRun) setMyID("Slave");
         loop_Slave();
     }
+    firstRun = false;
 
 }
 

@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-21_10.05.51
+version:    LnVer_2017-07-25_09.58.17
 
 Scope:      Funzioni comuni
 
@@ -23,15 +23,15 @@ void copyRxMessageToTx(RXTX_DATA *pData) {
 // #############################################################
 // # Inserisce nella risposta un messaggio (di errore o altro)
 // #############################################################
-void prepareMessage(RXTX_DATA *pData, byte data[], byte dataLen) {
+void prepareMessage(RXTX_DATA *pData, byte cmdData[], byte dataLen) {
     // displayMyData(INO_RX,  LN_OK, pData, false);
     copyRxMessageToTx(pData); // ci portiamo anche il numero messaggio...
     // displayMyData(INO_TX,  LN_OK, pData, false);
 
 
-    byte index = USER_DATA-1;
+    byte index = COMMAND_DATA-1;
     for (byte i=0; (i<dataLen) && (i<MAX_DATA_SIZE); i++)
-        pData->tx[++index] = data[i];         // copiamo i dati nel buffer da inviare
+        pData->tx[++index] = cmdData[i];         // copiamo i dati nel buffer da inviare
 
 
     pData->tx[DATALEN] = --index;  // update dataLen
@@ -39,17 +39,6 @@ void prepareMessage(RXTX_DATA *pData, byte data[], byte dataLen) {
 }
 
 
-// ################################################################
-// # --- DISPLAY DATA
-// ################################################################
-// void rxDisplayData(byte rCode, RXTX_DATA *pData) {
-//     displayDebugMessage("RX-inoData", rCode, pData->rx);
-//     displayDebugMessage("RX-inoRaw ", rCode, pData->raw);
-// }
-// void txDisplayData(byte rCode, RXTX_DATA *pData) {
-//     displayDebugMessage("TX-inoRaw ", rCode, pData->raw);
-//     displayDebugMessage("TX-inoData", rCode, pData->tx);
-// }
 
 
 

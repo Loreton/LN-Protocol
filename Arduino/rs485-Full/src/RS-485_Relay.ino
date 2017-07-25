@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-21_16.40.29
+version:    LnVer_2017-07-25_10.00.54
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -31,15 +31,8 @@ void loop_Relay() {
 
     if (rCode == LN_OK) {
         fwdToRs485(pData);
-            // -------- E C H O  ----------
-            // invia il messaggio anche indietro a raspBerry
-        if (pData->rx[COMMAND] == ECHO_CMD) {
-            fwdToRaspBerry(pData);
-        }
-        else {
-            waitRs485Response(pData);
-            sendMsg232(pData);
-        }
+        waitRs485Response(pData);
+        sendMsg232(pData);
     }
 }
 
@@ -60,7 +53,7 @@ void waitRs485Response(RXTX_DATA *pData) {
     }
 
     else if (pData->rx[DATALEN] == 0) {
-        pData->tx[RCODE] = TIMEOUT_ERROR;
+        pData->tx[CMD_RCODE] = TIMEOUT_ERROR;
         byte errorMsg[] = "Nessuna richiesta ricevuta in un tempo di 10 sec.";
         prepareMessage(pData, errorMsg, sizeof(errorMsg));
     }

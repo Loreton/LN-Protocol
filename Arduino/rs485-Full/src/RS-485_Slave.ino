@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-21_16.48.43
+version:    LnVer_2017-07-25_11.40.12
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -17,11 +17,12 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - rispondiamo se siamo interessati
 // ################################################################
 void loop_Slave() {
-    pData->displayData  = true;                // data display dei byte hex inviati e ricevuti
-    pData->timeout      = 10000;
+    pData->displayData      = true;                // data display dei byte
+    pData->displayRawData   = false;              // display dei raw data
+    pData->timeout          = 20000;
 
     Serial.println();
-    Serial.print(myID);printNchar('-', 60);
+    // Serial.print(myID);printNchar('-', 60);
     byte rCode = recvMsg485(pData);
 
     if (rCode == LN_OK) {
@@ -50,29 +51,24 @@ void loop_Slave() {
 // #############################################################
 // #
 // #############################################################
-const char INO_RX[] = "RX-slave";
+// const char INO_RX[] = "RX-slave";
 void processRequest(RXTX_DATA *pData) {
         // - DEBUG - display comments to serial
     byte senderAddr = pData->rx[SENDER_ADDR];
     byte destAddr   = pData->rx[DESTINATION_ADDR];
-    byte comando    = pData->rx[COMMAND];
-    int seqNO       = pData->rx[SEQNO_HIGH]*256 + pData->rx[SEQNO_LOW];
+    // byte comando    = pData->rx[COMMAND];
+    // int seqNO       = pData->rx[SEQNO_HIGH]*256 + pData->rx[SEQNO_LOW];
 
-    Serial.print(myID);Serial.print(INO_RX);Serial.println();
-    Serial.print(TAB);Serial.print(F("from : ")); Serial.print(senderAddr);Serial.println();
-    Serial.print(TAB);Serial.print(F("to   : ")); Serial.print(destAddr);Serial.println();
-    Serial.print(TAB);Serial.print(F("CMD  : ")); Serial.print(comando);Serial.println();
-    Serial.print(TAB);Serial.print(F("seqNo: ")); Serial.print(LnUtoa(seqNO,5,'0'));Serial.println();
+    // Serial.print(myID);Serial.print(INO_RX);Serial.println();
+    // Serial.print(TAB);Serial.print(F("from : ")); Serial.print(senderAddr);Serial.println();
+    // Serial.print(TAB);Serial.print(F("to   : ")); Serial.print(destAddr);Serial.println();
+    // Serial.print(TAB);Serial.print(F("CMD  : ")); Serial.print(comando);Serial.println();
+    // Serial.print(TAB);Serial.print(F("seqNo: ")); Serial.print(LnUtoa(seqNO,5,'0'));Serial.println();
 
 
     if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
-        if (pData->rx[COMMAND] == ECHO_CMD) {    // ricevuto ECHO_CMD
-            Serial.print(TAB);Serial.print(F("Ricevuto ECHO COMMAND\n"));
-        }
-        else {
-            Serial.print(TAB);Serial.print(F("Request is NOT for me\n"));
-        }
-
+        Serial.println("\n\n");
+        Serial.print(TAB);Serial.print(F("Request is NOT for me\n\n\n"));
         // displayMyData(INO_RX,  LN_OK, pData, false);
         return;
     }
@@ -83,27 +79,29 @@ void processRequest(RXTX_DATA *pData) {
     byte myMsg3[] = "Comando non riconosciuto";
 
     // sono io.... process request
-    Serial.print(F("   (Request is for me) ... answering"));
-    Serial.println();
+    Serial.println("\n\n");
+    Serial.print(TAB);Serial.print(F("   (Request is for me) ... answering\n\n\n"));
     switch (pData->rx[COMMAND]) {
 
         case POLLING_CMD:
-            pData->tx[RCODE] = OK;
-            prepareMessage(pData, myMsg1, sizeof(myMsg1));
+            if (pData->rx[SUBCOMMAND] == REPLY) {
+                pData->tx[CMD_RCODE] = OK;
+                prepareMessage(pData, myMsg1, sizeof(myMsg1));
+            }
             break;
 
         case READPIN_CMD:
-            pData->tx[RCODE] = OK;
+            pData->tx[CMD_RCODE] = OK;
             prepareMessage(pData, myMsg1, sizeof(myMsg1));
             break;
 
         case WRITEPIN_CMD:
-            pData->tx[RCODE] = OK;
+            pData->tx[CMD_RCODE] = OK;
             prepareMessage(pData, myMsg2, sizeof(myMsg2));
             break;
 
         default:
-            pData->tx[RCODE] = UNKNOWN_CMD;
+            pData->tx[CMD_RCODE] = UNKNOWN_CMD;
             prepareMessage(pData, myMsg3, sizeof(myMsg3));
             break;
     }

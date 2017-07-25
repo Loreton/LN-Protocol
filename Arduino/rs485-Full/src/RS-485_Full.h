@@ -8,14 +8,14 @@
 
     #define MASTER_ADDRESS      0
 
-    char TAB[] = "    ";
     byte        myEEpromAddress;        // who we are
     RXTX_DATA   RxTx, *pData;             // struttura dati
 
     //.............0 1 234567890123
-    char myID[] = "\r\n?[xxx] - "; // i primi due byte saranno CR e LF
-                                        // ? E:Echo-Simulate, R:Relay S:Slave
+    char myID[] = "\r\n[Slave-xxx] - "; // i primi due byte saranno CR e LF
+                                        // ? Emula, Relay Slave
 
+    const char TAB[] = "\n    ";
 
 
 
@@ -31,6 +31,11 @@
                             POLLING_CMD     = 2,
                             READPIN_CMD     = 21,
                             WRITEPIN_CMD    = 22,
+                        };
+
+    enum rs485_SubCOMMANDs {
+                            NO_REPLY       = 0,
+                            REPLY          = 1,
                         };
 
 
