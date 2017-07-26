@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-07-25_17.03.54
+// Version: LnVer_2017-07-26_12.53.58
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -25,6 +25,7 @@
 
 
 
+    extern byte myEEpromAddress;
 #else
     extern const char *errMsg[];
 
@@ -74,16 +75,22 @@
 
     // the data we broadcast to each other device
     typedef struct  {
+
         byte            rx[MAX_DATA_SIZE];        // byte[0] is dataLen
         byte            tx[MAX_DATA_SIZE];        // byte[0] is dataLen
         byte            raw[MAX_DATA_SIZE*2+2];   // byte[0] is dataLen SIZE = dataLen + STX+ETX
-        unsigned long   timeout         = 10000;        // send/receive timeout
-        byte            displayData     = false;     // per fare il print dei data
-        byte            displayRawData  = false;     // per fare il print del rawData
-        char            *myID;    // pointer identificativo di Arduino
         byte            Tx_CRCcalc;    // CRC value
         byte            Rx_CRCcalc;    // CRC value
         byte            Rx_CRCrcvd;    // CRC value
+
+        bool            fDisplayData     = false;     // per fare il print dei data
+        bool            fDisplayRawData  = false;     // per fare il print del rawData
+        bool            fDisplayAllPckt  = false;     // per fare il print di tutti i pacchetti oppure solo quello che riguardano il myAddr
+
+        char            *myID;    // pointer identificativo di Arduino
+        // byte            myEEpromAddress = 0;     // porta dentro l'indirizzo del device. utile per il printMessage
+        unsigned long   timeout         = 10000;        // send/receive timeout
+
     }  RXTX_DATA, *pRXTX_DATA;
 
     typedef void (*WriteCallback)  (const byte what);   // send a byte to serial port

@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-07-26_08.56.38
+    Version:   LnVer_2017-07-26_17.44.46
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -52,8 +52,6 @@
 
 #define CRC_DEBUGxxx // debug in caso di errore del CRC
 
-
-// char *pMyID;
 
 // calculate 8-bit CRC
 static byte crc8(const byte *data, byte len) {
@@ -137,7 +135,7 @@ void sendMsg (RXTX_DATA *pData, WriteCallback fSend) {
 
     fSend (ETX); pData->raw[++pData->raw[pDATALEN]] = ETX;
 
-    if (pData->displayData) {
+    if (pData->fDisplayData) {
         // printHexPDS( "calculated CRC3: ", pData->Tx_CRCcalc, "\n");
         displayMyData(LN_SEND_CALLER_DATA,  LN_OK, pData);
         // printHexPDS( "calculated CRC4: ", pData->Tx_CRCcalc, "\n");
@@ -182,7 +180,7 @@ byte recvMsg (RXTX_DATA *pData,
             if (pData->raw[pDATALEN] < maxBuffSize)
                 pData->raw[++pData->raw[pDATALEN]] = inByte;    // save byte
             else {
-                if (pData->displayData) displayMyData(LN_RECV_CALLER_DATA,  LN_OVERFLOW, pData);
+                if (pData->fDisplayData) displayMyData(LN_RECV_CALLER_DATA,  LN_OVERFLOW, pData);
                 return LN_OVERFLOW;  // overflow
             }
 
@@ -235,13 +233,13 @@ byte recvMsg (RXTX_DATA *pData,
 
 
                     if (CRC8calc != CRC8rcvd) {
-                        if (pData->displayData) displayMyData(LN_RECV_CALLER_DATA,  LN_BADCRC, pData);
+                        if (pData->fDisplayData) displayMyData(LN_RECV_CALLER_DATA,  LN_BADCRC, pData);
                         return LN_BADCRC;  // bad crc
                     }
 
-                    if (pData->displayData) {
+                    if (pData->fDisplayData) {
                         Serial.print("\r\n\r\n");
-                        if (pData->displayData) displayMyData(LN_RECV_CALLER_DATA, LN_OK, pData);
+                        if (pData->fDisplayData) displayMyData(LN_RECV_CALLER_DATA, LN_OK, pData);
                     }
                     return LN_OK;
 
@@ -290,7 +288,7 @@ byte recvMsg (RXTX_DATA *pData,
     } // end of while not timed out2
 
     // Serial.println();
-    if (pData->displayData) displayMyData(LN_RECV_CALLER_DATA, LN_TIMEOUT, pData);
+    if (pData->fDisplayData) displayMyData(LN_RECV_CALLER_DATA, LN_TIMEOUT, pData);
 
 
     return LN_TIMEOUT;  // timeout
@@ -303,22 +301,10 @@ byte recvMsg (RXTX_DATA *pData,
 // # const char* text : per ricevere una stringa constante es: "Loreto"
 // #############################################################
 void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
-    // solo per semplificare il DEBUG... se viene modificato il mapping verificare
-    // enum RXTX_MAP  {
-    //                     DATALEN=0,
-    //                     SENDER_ADDR,
-    //                     DESTINATION_ADDR,
-    //                     SEQNO_HIGH,
-    //                     SEQNO_LOW,
-    //                     CMD_RCODE,
-    //                     COMMAND,
-    //                     SUBCOMMAND,
-    //                     COMMAND_DATA,
-    //                 };
-
     const byte *data;
     const byte *raw;
-    byte rawIndex=0;
+    byte fPrintData = false;
+    byte  rawIndex=0;
 
     raw = pData->raw;
     if (caller[0] == 'T')
@@ -328,12 +314,15 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
     else
         return;
 
+    byte isItForMe = (myEEpromAddress == data[DESTINATION_ADDR]) + (myEEpromAddress == data[SENDER_ADDR]);
+
+    if (( pData->fDisplayAllPckt) || (isItForMe) )
+        fPrintData = true;
+
     byte dataLen = data[0];
     byte rawLen  = raw[0];
 
-    // const byte *rawData = pData->raw;
 
-    // printHexPDS( "calculated CRC3a: ", pData->Tx_CRCcalc, "\n");
     if (dataLen > 0) {
         int seqNo = data[SEQNO_LOW] + data[SEQNO_HIGH]*256;
         Serial.println();
@@ -348,8 +337,19 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
                 Serial.print(F(" rcvdCode: "));Serial.print(errMsg[rCode]);Serial.print(' ');
             printNchar('-', 20);
 
+        Serial.print(TAB);Serial.print(F( "Source/Dest 0x : "));printHex(data[SENDER_ADDR]);Serial.print(" ");printHex(data[DESTINATION_ADDR]);
+
+        if (! isItForMe) {
+            printNchar(' ', 20);Serial.print(F("- it's NOT for me..."));
+        }
+
+        else {
+            printNchar(' ', 20);Serial.print(F("- WOW it's me..."));
+        }
 
 
+        if (!fPrintData) return;
+        Serial.println();
 
         // FULL COMMAND DATA (inclusi SA, DA, etc..
         Serial.print(TAB);Serial.print(F("fullData    hex - len:["));Serial.print(LnUtoa(data[0], 3, '0'));Serial.print(F("] - "));
@@ -371,7 +371,6 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
             Serial.print(TAB);printHexPDS(    "xMitted CRC 0x : ", pData->Tx_CRCcalc, "");
         }
 
-        Serial.print(TAB);Serial.print(F( "Source/Dest 0x : "));printHex(data[SENDER_ADDR]);Serial.print(" ");printHex(data[DESTINATION_ADDR]);
         Serial.print(TAB);Serial.print(F( "SEQNO       0x : "));printHex(&data[SEQNO_HIGH], 2);
         Serial.print(TAB);Serial.print(F( "CMD/subCMD  0x : "));printHex(data[COMMAND]);Serial.print(" ");printHex(data[SUBCOMMAND]);
         Serial.print(TAB);Serial.print(F( "CMD_RCode   0x : "));printHex(data[CMD_RCODE]);
@@ -380,7 +379,7 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
 
 
     if (rawLen > 0) {
-        if (pData->displayRawData) {
+        if (pData->fDisplayRawData) {
             rawIndex = COMMAND_DATA*2;
             Serial.println();
             Serial.print(TAB);Serial.print(F("full raw - len:["));Serial.print(LnUtoa(raw[0], 3, '0'));Serial.print(F("] - "));

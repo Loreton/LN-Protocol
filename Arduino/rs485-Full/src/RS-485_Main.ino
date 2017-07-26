@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-25_10.34.09
+version:    LnVer_2017-07-26_12.53.20
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -49,6 +49,7 @@ void setup() {
         // -    2. copy string into myID array
         // ================================================
     myEEpromAddress = EEPROM.read(0);
+    // pData->myEEpromAddress = myEEpromAddress;
 
     Serial232.print(myID);
 

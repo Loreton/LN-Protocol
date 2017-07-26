@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-26_09.25.19
+version:    LnVer_2017-07-26_17.41.01
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -17,8 +17,10 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - rispondiamo se siamo interessati
 // ################################################################
 void loop_Slave() {
-    pData->displayData      = true;                // display user/command data
-    pData->displayRawData   = false;                // display raw data
+    pData->fDisplayData    = true;                // display user/command data
+    pData->fDisplayRawData = false;                // display raw data
+    pData->fDisplayAllPckt = false;                // display all source/destination packets
+
     pData->timeout          = 20000;
 
     Serial.println();
@@ -67,15 +69,15 @@ void processRequest(RXTX_DATA *pData) {
 
 
     if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
-        Serial.println("\n\n");
-        Serial.print(TAB);Serial.print(F("Request is NOT for me\n\n\n"));
+        // Serial.println("\n\n");
+        // Serial.print(TAB);Serial.print(F("Request is NOT for me\n\n\n"));
         // displayMyData(INO_RX,  LN_OK, pData, false);
         return;
     }
 
     // sono io.... process request
-    Serial.println("\n\n");
-    Serial.print(TAB);Serial.print(F("   (Request is for me) ... answering\n\n\n"));
+    // Serial.println("\n\n");
+    // Serial.print(TAB);Serial.print(F("   (Request is for me) ... answering\n\n\n"));
 
     byte myMsg1[] = "risposta al polling";
     byte myMsg2[] = "devo scrivere il pin";

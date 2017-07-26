@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-26_11.54.14
+version:    LnVer_2017-07-26_12.57.33
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -22,8 +22,10 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - torniamo indietro la risposta
 // ################################################################
 void loop_Relay() {
-    pData->displayData    = false;                // display user/command data
-    pData->displayRawData = false;                // display raw data
+    pData->fDisplayData    = false;                // display user/command data
+    pData->fDisplayRawData = false;                // display raw data
+    pData->fDisplayAllPckt = false;                // display all source/destination packets
+
     pData->timeout     = 5000;
     pData->rx[DATALEN] = 0;
 
