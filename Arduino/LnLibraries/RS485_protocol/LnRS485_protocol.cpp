@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-07-25_16.16.27
+    Version:   LnVer_2017-07-26_08.56.38
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -53,20 +53,8 @@
 #define CRC_DEBUGxxx // debug in caso di errore del CRC
 
 
-char *pMyID;
-// portati qui per poterne fare il dispolay per debug
-    // byte CRC8calc ;
-    // byte CRC8rcvd ;
+// char *pMyID;
 
-
-// const char *errMsg[]    = { "OK",
-//                             "OVERFLOW",
-//                             "BAD-CRC",
-//                             "BAD-CHAR",
-//                             "TIMEOUT",
-//                             "PAYLOAD",
-//                             "DEBUG",
-//                         };
 // calculate 8-bit CRC
 static byte crc8(const byte *data, byte len) {
     byte crc = 0, i;
@@ -138,7 +126,7 @@ void sendMsg (RXTX_DATA *pData, WriteCallback fSend) {
     pData->Tx_CRCcalc = CRC8calc;
     // printHexPDS( "calculated CRC2: ", CRC8calc, "\n");
     pData->raw[pDATALEN] = 0;
-    pMyID = pData->myID;
+    // pMyID = pData->myID;
 
     fSend (STX); pData->raw[++pData->raw[pDATALEN]] = STX;
 
@@ -181,7 +169,7 @@ byte recvMsg (RXTX_DATA *pData,
 
     byte maxBuffSize    = sizeof(pData->raw);
     byte unexpextedCounter = 0;
-    pMyID = pData->myID;
+    // pMyID = pData->myID;
 
     unsigned long start_time = millis();
     pData->raw[pDATALEN] = 0;            // azzeramento dataLen
@@ -287,7 +275,7 @@ byte recvMsg (RXTX_DATA *pData,
                     --pData->raw[pDATALEN]; // decrease rawLen
                     if (unexpextedCounter == 0) {
                         Serial.println();
-                        Serial.print(pMyID);
+                        Serial.print(pData->myID);
                         printHexPDS("libRECV - unexpexted byte(s): ", inByte, "");
                     }
 
@@ -349,7 +337,7 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
     if (dataLen > 0) {
         int seqNo = data[SEQNO_LOW] + data[SEQNO_HIGH]*256;
         Serial.println();
-        Serial.print(pMyID);
+        Serial.print(pData->myID);
             printNchar('-', 10);
             Serial.print(" ");
             Serial.print(caller);

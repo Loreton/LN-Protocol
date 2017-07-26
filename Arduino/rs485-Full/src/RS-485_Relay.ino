@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-25_10.00.54
+version:    LnVer_2017-07-26_11.54.14
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -22,7 +22,8 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - torniamo indietro la risposta
 // ################################################################
 void loop_Relay() {
-    pData->displayData = false;                // data display dei byte hex inviati e ricevuti
+    pData->displayData    = false;                // display user/command data
+    pData->displayRawData = false;                // display raw data
     pData->timeout     = 5000;
     pData->rx[DATALEN] = 0;
 
@@ -33,6 +34,9 @@ void loop_Relay() {
         fwdToRs485(pData);
         waitRs485Response(pData);
         sendMsg232(pData);
+        // if (waitRs485Response(pData) == LN_OK)
+        //     sendMsg232(pData);
+        // }
     }
 }
 
@@ -42,21 +46,19 @@ void loop_Relay() {
 // #-  Se OK allora li torniamo al RaspBerry
 // #-  Se ERROR/TIMEOUT ritorniamo errore al RaspBerry
 // ################################################################
-void waitRs485Response(RXTX_DATA *pData) {
+byte waitRs485Response(RXTX_DATA *pData) {
     pData->timeout  = 10000;
-    byte rCode      = recvMsg485(pData);
+    byte rcvdRCode      = recvMsg485(pData);
 
     copyRxMessageToTx(pData);
 
-    if (rCode == LN_OK) {
-        return;
-    }
-
-    else if (pData->rx[DATALEN] == 0) {
+    if (pData->rx[DATALEN] == 0) {
         pData->tx[CMD_RCODE] = TIMEOUT_ERROR;
-        byte errorMsg[] = "Nessuna richiesta ricevuta in un tempo di 10 sec.";
+        byte errorMsg[] = "TIMEOUT occurred...";
         prepareMessage(pData, errorMsg, sizeof(errorMsg));
     }
+
+    return rcvdRCode;
 }
 
 

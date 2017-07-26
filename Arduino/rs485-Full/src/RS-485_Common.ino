@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-25_09.58.17
+version:    LnVer_2017-07-26_09.22.27
 
 Scope:      Funzioni comuni
 
@@ -19,14 +19,14 @@ void copyRxMessageToTx(RXTX_DATA *pData) {
 
 
 // const char INO_RX[] = "RX-ino";
-// const char INO_TX[] = "TX-ino";
+// const char INO_Prefix[] = "TX-ino";
 // #############################################################
 // # Inserisce nella risposta un messaggio (di errore o altro)
 // #############################################################
 void prepareMessage(RXTX_DATA *pData, byte cmdData[], byte dataLen) {
-    // displayMyData(INO_RX,  LN_OK, pData, false);
+    // displayMyData(INO_Prefix,  LN_OK, pData);
     copyRxMessageToTx(pData); // ci portiamo anche il numero messaggio...
-    // displayMyData(INO_TX,  LN_OK, pData, false);
+    // displayMyData(INO_Prefix,  LN_OK, pData);
 
 
     byte index = COMMAND_DATA-1;
@@ -35,7 +35,7 @@ void prepareMessage(RXTX_DATA *pData, byte cmdData[], byte dataLen) {
 
 
     pData->tx[DATALEN] = --index;  // update dataLen
-    // displayMyData(INO_TX,  LN_OK, pData, false);
+    // displayMyData(INO_Prefix,  LN_OK, pData);
 }
 
 

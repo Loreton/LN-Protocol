@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-25_11.40.12
+version:    LnVer_2017-07-26_09.25.19
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -17,8 +17,8 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - rispondiamo se siamo interessati
 // ################################################################
 void loop_Slave() {
-    pData->displayData      = true;                // data display dei byte
-    pData->displayRawData   = false;              // display dei raw data
+    pData->displayData      = true;                // display user/command data
+    pData->displayRawData   = false;                // display raw data
     pData->timeout          = 20000;
 
     Serial.println();
@@ -73,18 +73,20 @@ void processRequest(RXTX_DATA *pData) {
         return;
     }
 
-
-    byte myMsg1[] = "devo leggere il pin";
-    byte myMsg2[] = "devo scrivere il pin";
-    byte myMsg3[] = "Comando non riconosciuto";
-
     // sono io.... process request
     Serial.println("\n\n");
     Serial.print(TAB);Serial.print(F("   (Request is for me) ... answering\n\n\n"));
+
+    byte myMsg1[] = "risposta al polling";
+    byte myMsg2[] = "devo scrivere il pin";
+    byte myMsg3[] = "Comando non riconosciuto";
+
     switch (pData->rx[COMMAND]) {
 
         case POLLING_CMD:
+            // Serial.print("SUBCOMMAND... "); Serial.println(pData->rx[SUBCOMMAND]);
             if (pData->rx[SUBCOMMAND] == REPLY) {
+                Serial.print(TAB);Serial.println("preparing responce message... ");
                 pData->tx[CMD_RCODE] = OK;
                 prepareMessage(pData, myMsg1, sizeof(myMsg1));
             }
