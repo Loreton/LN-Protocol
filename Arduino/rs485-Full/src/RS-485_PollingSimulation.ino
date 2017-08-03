@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-26_17.31.24
+version:    LnVer_2017-08-03_07.46.20
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -16,13 +16,16 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // se vogliamo che Arduino invii un echo autonomamente
 // ##########################################################
 void loop_PollingSimulation() {
-    pData->fDisplayData    = true;                // display user/command data
-    pData->fDisplayRawData = false;                // display raw data
-    pData->fDisplayAllPckt = false;                // display all source/destination packets
+    if (firstRun) {
+        setMyID("Emula");
+        pData->fDisplayData    = true;                // display user/command data
+        pData->fDisplayRawData = false;                // display raw data
+        pData->fDisplayAllPckt = false;                // display all source/destination packets
+    }
 
-    Serial232.print(myID);Serial232.println(F("Sono in Polling simulation mode"));
+    Serial.print(myID);Serial.println(F("Sono in Polling simulation mode"));
     PollingSimulation(pData);
-    Serial232.println();
+    Serial.println();
     delay(10000);
 }
 
@@ -51,7 +54,7 @@ void PollingSimulation(RXTX_DATA *pData) {
         pData->rx[DATALEN]          = SUBCOMMAND;
         // Serial.print("SUBCOMMAND... "); Serial.println(pData->rx[SUBCOMMAND]);
 
-        byte data[]  = "polling simulation.";
+        byte data[]  = "polling request!";
         prepareMessage(pData, data, sizeof(data));
 
             // send to RS-485 bus

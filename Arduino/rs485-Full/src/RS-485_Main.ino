@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-26_12.53.20
+version:    LnVer_2017-07-27_07.58.43
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -23,6 +23,8 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #include    "RS-485_Full.h"                      //  pin definitions
 #include    <EEPROM.h>
 
+
+bool firstRun = true;
 
 //python3.4 -m serial.tools.list_ports
 void setup() {
@@ -51,14 +53,16 @@ void setup() {
     myEEpromAddress = EEPROM.read(0);
     // pData->myEEpromAddress = myEEpromAddress;
 
-    Serial232.print(myID);
+    Serial.print(myID);
 
     pinMode (LED_PIN, OUTPUT);          // built-in LED
 
 }
 
-bool firstRun = true;
-// char myID[] = "\r\n[Slave-xxx] - "; // i primi due byte saranno CR e LF
+// ################################################################
+// # - setMyID
+// # char myID[] = "\r\n[Slave-xxx] - "; // i primi due byte sono CR e LF
+// ################################################################
 void setMyID(const char *name) {
     byte i=3;
     byte i1;
@@ -76,21 +80,20 @@ void setMyID(const char *name) {
     pData->myID = myID;
 }
 
+
+
 // ################################################################
 // # - M A I N     Loop
 // ################################################################
 void loop() {
     if (myEEpromAddress <= 10) {
         #ifdef POLLING_SIMULATION
-            if (firstRun) setMyID("Emula");
             loop_PollingSimulation();
         #else
-            if (firstRun) setMyID("Relay");
             loop_Relay();
         #endif
     }
     else {
-        if (firstRun) setMyID("Slave");
         loop_Slave();
     }
     firstRun = false;

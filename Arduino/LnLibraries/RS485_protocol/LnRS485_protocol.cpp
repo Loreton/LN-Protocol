@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-07-26_17.44.46
+    Version:   LnVer_2017-08-03_08.12.59
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -316,6 +316,7 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
 
     byte isItForMe = (myEEpromAddress == data[DESTINATION_ADDR]) + (myEEpromAddress == data[SENDER_ADDR]);
 
+        // Se è per me e devo fare display
     if (( pData->fDisplayAllPckt) || (isItForMe) )
         fPrintData = true;
 
@@ -326,6 +327,7 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
     if (dataLen > 0) {
         int seqNo = data[SEQNO_LOW] + data[SEQNO_HIGH]*256;
         Serial.println();
+        /*
         Serial.print(pData->myID);
             printNchar('-', 10);
             Serial.print(" ");
@@ -346,6 +348,44 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
         else {
             printNchar(' ', 20);Serial.print(F("- WOW it's me..."));
         }
+        */
+
+        Serial.print(pData->myID);
+            Serial.print(caller);
+
+            Serial.print(F(" - [")); printHex(data[SENDER_ADDR]);
+            Serial.print(F("/"));    Serial.print(LnUtoa (data[SENDER_ADDR], 3, '0') );Serial.print(F("]"));
+
+            Serial.print(F(" --> [")); printHex(data[DESTINATION_ADDR]);
+            Serial.print(F("/"));    Serial.print(LnUtoa (data[DESTINATION_ADDR], 3, '0') ); Serial.print(F("]"));
+
+            Serial.print(F(" - SeqNO: "));Serial.print(LnUtoa (seqNo, 5, '0') );
+
+
+            // printNchar(' ', 5);
+            if (isItForMe) {
+                Serial.print(F(" - [WOW it's for me...]"));
+            }
+            else {
+                Serial.print(F(" - [it's NOT for me...]"));
+            }
+
+            if (caller[0] == 'R') {
+                Serial.print(F(" - [rcvdCode: "));
+                Serial.print(errMsg[rCode]);
+                Serial.print(']');
+            }
+
+
+
+
+
+
+
+
+
+
+
 
 
         if (!fPrintData) return;

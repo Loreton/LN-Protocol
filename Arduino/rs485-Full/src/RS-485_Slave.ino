@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-26_17.41.01
+version:    LnVer_2017-08-03_08.04.58
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -9,7 +9,7 @@ Scope:      Funzione di slave.
 Ref:        http://www.gammon.com.au/forum/?id=11428
 */
 
-
+// bool firstRun = true;
 // ################################################################
 // # - M A I N     Loopslave
 // #    - riceviamo i dati da rs485
@@ -17,11 +17,13 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - rispondiamo se siamo interessati
 // ################################################################
 void loop_Slave() {
-    pData->fDisplayData    = true;                // display user/command data
-    pData->fDisplayRawData = false;                // display raw data
-    pData->fDisplayAllPckt = false;                // display all source/destination packets
-
-    pData->timeout          = 20000;
+    if (firstRun) {
+        setMyID("Slave");
+        pData->fDisplayData    = true;                // display user/command data
+        pData->fDisplayRawData = false;                // display raw data
+        pData->fDisplayAllPckt = false;                // display all source/destination packets
+        pData->timeout         = 20000;
+    }
 
     Serial.println();
     // Serial.print(myID);printNchar('-', 60);
@@ -36,8 +38,7 @@ void loop_Slave() {
     else if (pData->rx[DATALEN] == 0) {
         Serial.print(myID);
         Serial.print(F("rCode: "));Serial.print(rCode);
-        Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));
-        Serial.print(pData->timeout);
+        Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));Serial.print(pData->timeout);
         Serial.println();
     }
 
@@ -53,60 +54,41 @@ void loop_Slave() {
 // #############################################################
 // #
 // #############################################################
-// const char INO_RX[] = "RX-slave";
 void processRequest(RXTX_DATA *pData) {
-        // - DEBUG - display comments to serial
     byte senderAddr = pData->rx[SENDER_ADDR];
     byte destAddr   = pData->rx[DESTINATION_ADDR];
-    // byte comando    = pData->rx[COMMAND];
-    // int seqNO       = pData->rx[SEQNO_HIGH]*256 + pData->rx[SEQNO_LOW];
-
-    // Serial.print(myID);Serial.print(INO_RX);Serial.println();
-    // Serial.print(TAB);Serial.print(F("from : ")); Serial.print(senderAddr);Serial.println();
-    // Serial.print(TAB);Serial.print(F("to   : ")); Serial.print(destAddr);Serial.println();
-    // Serial.print(TAB);Serial.print(F("CMD  : ")); Serial.print(comando);Serial.println();
-    // Serial.print(TAB);Serial.print(F("seqNo: ")); Serial.print(LnUtoa(seqNO,5,'0'));Serial.println();
-
 
     if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
-        // Serial.println("\n\n");
-        // Serial.print(TAB);Serial.print(F("Request is NOT for me\n\n\n"));
-        // displayMyData(INO_RX,  LN_OK, pData, false);
         return;
     }
 
-    // sono io.... process request
-    // Serial.println("\n\n");
-    // Serial.print(TAB);Serial.print(F("   (Request is for me) ... answering\n\n\n"));
-
-    byte myMsg1[] = "risposta al polling";
+    byte myMsg1[] = "Polling answer!";
     byte myMsg2[] = "devo scrivere il pin";
     byte myMsg3[] = "Comando non riconosciuto";
 
     switch (pData->rx[COMMAND]) {
 
         case POLLING_CMD:
-            // Serial.print("SUBCOMMAND... "); Serial.println(pData->rx[SUBCOMMAND]);
             if (pData->rx[SUBCOMMAND] == REPLY) {
-                Serial.print(TAB);Serial.println("preparing responce message... ");
-                pData->tx[CMD_RCODE] = OK;
+                Serial.print("\n\n");Serial.print(TAB);Serial.println(F("preparing response message... "));
                 prepareMessage(pData, myMsg1, sizeof(myMsg1));
+                pData->tx[CMD_RCODE] = OK;
             }
             break;
 
         case READPIN_CMD:
-            pData->tx[CMD_RCODE] = OK;
             prepareMessage(pData, myMsg1, sizeof(myMsg1));
+            pData->tx[CMD_RCODE] = OK;
             break;
 
         case WRITEPIN_CMD:
-            pData->tx[CMD_RCODE] = OK;
             prepareMessage(pData, myMsg2, sizeof(myMsg2));
+            pData->tx[CMD_RCODE] = OK;
             break;
 
         default:
-            pData->tx[CMD_RCODE] = UNKNOWN_CMD;
             prepareMessage(pData, myMsg3, sizeof(myMsg3));
+            pData->tx[CMD_RCODE] = UNKNOWN_CMD;
             break;
     }
 

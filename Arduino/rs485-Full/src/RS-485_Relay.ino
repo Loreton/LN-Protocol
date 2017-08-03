@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-26_12.57.33
+version:    LnVer_2017-07-27_08.27.01
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -22,11 +22,14 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - torniamo indietro la risposta
 // ################################################################
 void loop_Relay() {
-    pData->fDisplayData    = false;                // display user/command data
-    pData->fDisplayRawData = false;                // display raw data
-    pData->fDisplayAllPckt = false;                // display all source/destination packets
+    if (firstRun) {
+        setMyID("Relay");
+        pData->fDisplayData    = false;                // display user/command data
+        pData->fDisplayRawData = false;                // display raw data
+        pData->fDisplayAllPckt = false;                // display all source/destination packets
+    }
 
-    pData->timeout     = 5000;
+    pData->timeout     = 20000;
     pData->rx[DATALEN] = 0;
 
     // ricezione messaggio da RaspBerry
@@ -36,9 +39,6 @@ void loop_Relay() {
         fwdToRs485(pData);
         waitRs485Response(pData);
         sendMsg232(pData);
-        // if (waitRs485Response(pData) == LN_OK)
-        //     sendMsg232(pData);
-        // }
     }
 }
 
@@ -49,8 +49,8 @@ void loop_Relay() {
 // #-  Se ERROR/TIMEOUT ritorniamo errore al RaspBerry
 // ################################################################
 byte waitRs485Response(RXTX_DATA *pData) {
-    pData->timeout  = 10000;
-    byte rcvdRCode      = recvMsg485(pData);
+    pData->timeout = 10000;
+    byte rcvdRCode = recvMsg485(pData);
 
     copyRxMessageToTx(pData);
 
