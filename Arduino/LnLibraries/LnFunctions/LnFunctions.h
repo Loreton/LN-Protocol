@@ -17,8 +17,8 @@
 
     extern unsigned char LnFuncWorkingBuff[]; // 50 bytes
 
-    void D2X(char *Dest, unsigned int Valore, char size);      // deve essere D2X.cpp
-    unsigned char *D2XNew(unsigned int Valore, char size);      // deve essere D2X.cpp
+    // void D2X(char *Dest, unsigned int Valore, char size);      // deve essere D2X.cpp
+    unsigned char *D2X(unsigned int Valore, char size);      // deve essere D2X.cpp
 
     void printHex(const byte data);
     void printHex(const uchar data,         const char * endStr);
@@ -30,8 +30,8 @@
 
     void LnPrint(const char *data1, const char *data2="", const char *data3="");
     void LnPrintStrHex(const char *prefix, byte value, const char *suffix="");
-    char *LnUtoa(unsigned int i, byte padLen=2, byte fill=' ');
-    char *LnUtoa2(unsigned int i, byte padLen=2, byte fill=' ');
+    // char *LnUtoa(unsigned int i, byte padLen=2, byte fill=' ');
+    unsigned char *LnUtoa(unsigned int i, byte padLen=2, byte fill=' ');
     void printNchar(const char data, byte counter); // print un byte N volte
 
     void printStr(const byte *data, byte len=0, const char *delimiter=NULL);  // print di una stringa visibile

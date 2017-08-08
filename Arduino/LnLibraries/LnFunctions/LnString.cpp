@@ -3,7 +3,7 @@ per compilare c++ online:
     https://www.codechef.com/ide
     https://www.tutorialspoint.com/compile_cpp_online.php   -- anche python
 
-version : LnVer_2017-08-08_16.45.59
+version : LnVer_2017-08-08_17.18.46
 
 */
 
@@ -36,7 +36,7 @@ int joinString(unsigned char *returnBuffer, const char *s1, const char *s2, cons
 
 
 
-char *LnUtoa2(unsigned int i, byte padLen,  byte fill) {
+unsigned char *LnUtoa(unsigned int i, byte padLen,  byte fill) {
     unsigned char *p = &LnFuncWorkingBuff[9];
     *p = '\0';                  // chiude il buffer finale
 
@@ -50,7 +50,7 @@ char *LnUtoa2(unsigned int i, byte padLen,  byte fill) {
     while (padLen--) *p-- = fill;
 
     // printf("%s - %i\r\n", p, padLen);
-    return (char*) ++p;
+    return ++p;
 }
 
 

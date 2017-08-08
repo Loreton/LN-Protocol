@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-08_11.32.45
+version:    LnVer_2017-08-08_17.16.56
 
 Scope:      Funzioni comuni
 
@@ -19,7 +19,7 @@ void setMyID(const char *name) {
     }
     i++; // skip '-'
 
-    char *xx = LnUtoa(myEEpromAddress, 3, '0');
+    unsigned char *xx = LnUtoa(myEEpromAddress, 3, '0');
     myID[i++] = xx[0];
     myID[i++] = xx[1];
     myID[i++] = xx[2];
