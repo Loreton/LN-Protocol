@@ -20,9 +20,10 @@ Sintassi generica dei comandi string Master to Slave:
         DESTINATION_ADDR          - source Address    (00 = Master)
         SEQNO_HIGH                - numero del messaggio utile per associare la risposta
         SEQNO_LOW                 -
+        CMD_RCODE                 - rCode di ritorno per il comando eseguito (in TX è ignorato)
         COMMAND                   - comando da eseguire
-        RCODE                     - esito del comando
-        USER_DATA                 - dati necessari per l'esecuzione del comando oppure i dati di risposta
+        SUBCOMMAND                - eventuale dettaglio per il comando
+        COMMAND_DATA              - TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
         ....                      -
     CRC                           - CRC
     ETX                           - ETX

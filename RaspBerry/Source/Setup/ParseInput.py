@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 
 __author__  = 'Loreto Notarantonio'
-__version__ = 'LnVer_2017-07-19_10.23.56'
+__version__ = 'LnVer_2017-08-07_11.44.03'
 
 import sys
 import os
@@ -31,10 +31,10 @@ def ParseInput(gVars, args, programVersion=None):
                 'conf'    : "edit configuration file"
                 },
 
-            'send': {
-                'raw'        : "send RAW data from serial Port and display it",
-                'rs485'      : "send LnRs485 formatted data from USB data",
-                },
+            # 'send': {
+            #     'raw'        : "send RAW data from serial Port and display it",
+            #     'rs485'      : "send LnRs485 formatted data from USB data",
+            #     },
 
             'monitor': {
                 'raw'        : "read RAW data from serial Port and display it",
@@ -44,7 +44,7 @@ def ParseInput(gVars, args, programVersion=None):
             'master': {
                 'raw'        : "read RAW data from serial Port and display it",
                 'rs485'      : "diventa master per un bus rs485 appoggiandosi ad un arduino-relay rs485 ",
-                'echo'       : "invia dati su arduino-relay il quale fa echo del messaggio verso pi e lo inoltra nel bus RS485 ",
+                # 'echo'       : "invia dati su arduino-relay che lo inoltra nel bus RS485 e fa echo verso PI",
                 'polling'    : "fa il polling di tutti i device definiti...",
                 },
 
@@ -53,8 +53,6 @@ def ParseInput(gVars, args, programVersion=None):
     else:
         positionalActionsDict  =  {
             'conf'      : "edit configuration file",
-
-            'LnDisk'    : "copia della directory Lndisk..",
         }
 
 
@@ -422,7 +420,7 @@ def RS485(myParser, action):
 
     _debugOptions(myParser)
 
-
+'''
 # ---------------------------
 # - A C T I O N s
 # ---------------------------
@@ -455,6 +453,7 @@ def SERIAL(myParser, action):
 
     _debugOptions(myParser)
 
+'''
 
 
 
@@ -486,7 +485,7 @@ def MASTER(myParser, action):
 
     _debugOptions(myParser)
 
-
+'''
 # ---------------------------
 # - A C T I O N s
 # ---------------------------
@@ -514,6 +513,7 @@ def SEND(myParser, action):
 
     _debugOptions(myParser)
 
+'''
 
 
 # ---------------------------
@@ -527,7 +527,7 @@ def MONITOR(myParser, action):
 
     if action.lower() in ['raw']:
         rs485.SerialPort(myParser, required=True)
-        rs485.DisplayDataFormat(myParser, required=False)
+        rs485.DisplayDataFormat(myParser, required=True)
 
 
     elif action.lower() in ['rs485']:

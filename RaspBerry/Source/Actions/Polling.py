@@ -9,7 +9,7 @@
 #         ...sulle seriali degli Arduino si dovrebbe leggere qualcosa tipo:
 #         S[011] - inoRECV from: 10 to  : 0 [00059]   (Request is NOT for me)
 #
-# modified:     by Loreto notarantonio LnVer_2017-07-21_16.35.35
+# modified:     by Loreto notarantonio LnVer_2017-08-06_18.17.41
 #
 # ######################################################################################
 
@@ -36,7 +36,8 @@ def Polling(gv, serialRelayPort):
 
     CMD             = gv.Ln.LnDict()
     CMD.dataStr     = 'polling test'
-    CMD.commandNO   = int.from_bytes(gv.myCMD.polling,  'little')
+    CMD.command     = int.from_bytes(gv.myCMD.polling,  'little')
+    CMD.subCommand   = 0x01
     CMD.sourceAddr  = int.from_bytes(gv.myDEV.master, 'little')
     CMD.xmitRcode   = 0
 
@@ -62,6 +63,7 @@ def Polling(gv, serialRelayPort):
             cPrint.Cyan("waiting for response...")
 
             try:
+                '''
                 data = serialRelayPort.readRawData(EOD=[], hex=True, text=True, char=False, TIMEOUT=1000)
                 if data:
                     print('data has been received...')
@@ -70,7 +72,6 @@ def Polling(gv, serialRelayPort):
                 payLoad, rawData = serialRelayPort.readData(TIMEOUT=1000, fDEBUG=True)
                 if not payLoad:
                     cPrint.RedH ('payLoad ERROR....')
-                '''
                 print()
 
 

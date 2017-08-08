@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-08-03_08.12.59
+    Version:   LnVer_2017-08-08_16.47.31
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -135,7 +135,7 @@ void sendMsg (RXTX_DATA *pData, WriteCallback fSend) {
 
     fSend (ETX); pData->raw[++pData->raw[pDATALEN]] = ETX;
 
-    if (pData->fDisplayData) {
+    if (pData->fDisplayMyData) {
         // printHexPDS( "calculated CRC3: ", pData->Tx_CRCcalc, "\n");
         displayMyData(LN_SEND_CALLER_DATA,  LN_OK, pData);
         // printHexPDS( "calculated CRC4: ", pData->Tx_CRCcalc, "\n");
@@ -180,7 +180,7 @@ byte recvMsg (RXTX_DATA *pData,
             if (pData->raw[pDATALEN] < maxBuffSize)
                 pData->raw[++pData->raw[pDATALEN]] = inByte;    // save byte
             else {
-                if (pData->fDisplayData) displayMyData(LN_RECV_CALLER_DATA,  LN_OVERFLOW, pData);
+                if (pData->fDisplayMyData) displayMyData(LN_RECV_CALLER_DATA,  LN_OVERFLOW, pData);
                 return LN_OVERFLOW;  // overflow
             }
 
@@ -233,13 +233,13 @@ byte recvMsg (RXTX_DATA *pData,
 
 
                     if (CRC8calc != CRC8rcvd) {
-                        if (pData->fDisplayData) displayMyData(LN_RECV_CALLER_DATA,  LN_BADCRC, pData);
+                        if (pData->fDisplayMyData) displayMyData(LN_RECV_CALLER_DATA,  LN_BADCRC, pData);
                         return LN_BADCRC;  // bad crc
                     }
 
-                    if (pData->fDisplayData) {
+                    if (pData->fDisplayMyData) {
                         Serial.print("\r\n\r\n");
-                        if (pData->fDisplayData) displayMyData(LN_RECV_CALLER_DATA, LN_OK, pData);
+                        displayMyData(LN_RECV_CALLER_DATA, LN_OK, pData);
                     }
                     return LN_OK;
 
@@ -271,13 +271,16 @@ byte recvMsg (RXTX_DATA *pData,
 
                 default:
                     --pData->raw[pDATALEN]; // decrease rawLen
+
                     if (unexpextedCounter == 0) {
-                        Serial.println();
-                        Serial.print(pData->myID);
-                        printHexPDS("libRECV - unexpexted byte(s): ", inByte, "");
+                        if (pData->fDisplayMyData) {
+                            Serial.println();
+                            Serial.print(pData->myID);
+                            printHexPDS("libRECV - unexpexted byte(s): ", inByte, "");
+                        }
                     }
 
-                    printHexPDS(" ", inByte, "");
+                    if (pData->fDisplayMyData) printHexPDS(" ", inByte, "");
 
                     // printHex(inByte);
                     unexpextedCounter++;
@@ -288,7 +291,7 @@ byte recvMsg (RXTX_DATA *pData,
     } // end of while not timed out2
 
     // Serial.println();
-    if (pData->fDisplayData) displayMyData(LN_RECV_CALLER_DATA, LN_TIMEOUT, pData);
+    if (pData->fDisplayMyData) displayMyData(LN_RECV_CALLER_DATA, LN_TIMEOUT, pData);
 
 
     return LN_TIMEOUT;  // timeout
@@ -303,8 +306,11 @@ byte recvMsg (RXTX_DATA *pData,
 void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
     const byte *data;
     const byte *raw;
-    byte fPrintData = false;
+    // byte fPrintData = false;
     byte  rawIndex=0;
+
+    if (! pData->fDisplayMyData) return;
+
 
     raw = pData->raw;
     if (caller[0] == 'T')
@@ -316,9 +322,9 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
 
     byte isItForMe = (myEEpromAddress == data[DESTINATION_ADDR]) + (myEEpromAddress == data[SENDER_ADDR]);
 
-        // Se è per me e devo fare display
-    if (( pData->fDisplayAllPckt) || (isItForMe) )
-        fPrintData = true;
+    if (( ! pData->fDisplayOtherData) && (!isItForMe) )
+        return;
+
 
     byte dataLen = data[0];
     byte rawLen  = raw[0];
@@ -327,39 +333,17 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
     if (dataLen > 0) {
         int seqNo = data[SEQNO_LOW] + data[SEQNO_HIGH]*256;
         Serial.println();
-        /*
-        Serial.print(pData->myID);
-            printNchar('-', 10);
-            Serial.print(" ");
-            Serial.print(caller);
-            printNchar('-', 6);
-            Serial.print(F(" SeqNO: "));Serial.print(LnUtoa (seqNo, 5, '0') );Serial.print(' ');
-            printNchar('-', 6);
-            if (caller[0] == 'T')
-                Serial.print(F(" rcvdCode: "));Serial.print(errMsg[rCode]);Serial.print(' ');
-            printNchar('-', 20);
-
-        Serial.print(TAB);Serial.print(F( "Source/Dest 0x : "));printHex(data[SENDER_ADDR]);Serial.print(" ");printHex(data[DESTINATION_ADDR]);
-
-        if (! isItForMe) {
-            printNchar(' ', 20);Serial.print(F("- it's NOT for me..."));
-        }
-
-        else {
-            printNchar(' ', 20);Serial.print(F("- WOW it's me..."));
-        }
-        */
 
         Serial.print(pData->myID);
             Serial.print(caller);
 
             Serial.print(F(" - [")); printHex(data[SENDER_ADDR]);
-            Serial.print(F("/"));    Serial.print(LnUtoa (data[SENDER_ADDR], 3, '0') );Serial.print(F("]"));
+            Serial.print(F("/"));    Serial.print(LnUtoa2 (data[SENDER_ADDR], 3, '0') );Serial.print(F("]"));
 
             Serial.print(F(" --> [")); printHex(data[DESTINATION_ADDR]);
-            Serial.print(F("/"));    Serial.print(LnUtoa (data[DESTINATION_ADDR], 3, '0') ); Serial.print(F("]"));
+            Serial.print(F("/"));    Serial.print(LnUtoa2 (data[DESTINATION_ADDR], 3, '0') ); Serial.print(F("]"));
 
-            Serial.print(F(" - SeqNO: "));Serial.print(LnUtoa (seqNo, 5, '0') );
+            Serial.print(F(" - SeqNO: "));Serial.print(LnUtoa2 (seqNo, 5, '0') );
 
 
             // printNchar(' ', 5);
@@ -380,27 +364,19 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
 
 
 
-
-
-
-
-
-
-
-
-        if (!fPrintData) return;
+        // if (!fPrintData) return;
         Serial.println();
 
         // FULL COMMAND DATA (inclusi SA, DA, etc..
-        Serial.print(TAB);Serial.print(F("fullData    hex - len:["));Serial.print(LnUtoa(data[0], 3, '0'));Serial.print(F("] - "));
+        Serial.print(TAB);Serial.print(F("fullData    hex - len:["));Serial.print(LnUtoa2(data[0], 3, '0'));Serial.print(F("] - "));
             printHex(&data[1], data[0]);
 
         // COMMAND_DATA
         byte lun=dataLen-SUBCOMMAND;
-        Serial.print(TAB);Serial.print(F("commandData hex - len:["));Serial.print(LnUtoa(lun, 3, '0'));Serial.print(F("] - "));
+        Serial.print(TAB);Serial.print(F("commandData hex - len:["));Serial.print(LnUtoa2(lun, 3, '0'));Serial.print(F("] - "));
             printNchar(' ', SUBCOMMAND*3);printHex(&data[COMMAND_DATA], lun);
 
-        Serial.print(TAB);Serial.print(F("commandData asc - len:["));Serial.print(LnUtoa(lun, 3, '0'));Serial.print(F("] - "));
+        Serial.print(TAB);Serial.print(F("commandData asc - len:["));Serial.print(LnUtoa2(lun, 3, '0'));Serial.print(F("] - "));
             printNchar(' ', SUBCOMMAND*3); printStr(&data[COMMAND_DATA], lun, "[]");
 
         Serial.println();
@@ -412,8 +388,8 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
         }
 
         Serial.print(TAB);Serial.print(F( "SEQNO       0x : "));printHex(&data[SEQNO_HIGH], 2);
-        Serial.print(TAB);Serial.print(F( "CMD/subCMD  0x : "));printHex(data[COMMAND]);Serial.print(" ");printHex(data[SUBCOMMAND]);
         Serial.print(TAB);Serial.print(F( "CMD_RCode   0x : "));printHex(data[CMD_RCODE]);
+        Serial.print(TAB);Serial.print(F( "CMD/subCMD  0x : "));printHex(data[COMMAND]);Serial.print(" ");printHex(data[SUBCOMMAND]);
 
     }
 
@@ -422,11 +398,11 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
         if (pData->fDisplayRawData) {
             rawIndex = COMMAND_DATA*2;
             Serial.println();
-            Serial.print(TAB);Serial.print(F("full raw - len:["));Serial.print(LnUtoa(raw[0], 3, '0'));Serial.print(F("] - "));
+            Serial.print(TAB);Serial.print(F("full raw - len:["));Serial.print(LnUtoa2(raw[0], 3, '0'));Serial.print(F("] - "));
             Serial.print(TAB);printHex(&raw[1], raw[0]); //Serial.println();
 
             Serial.println();
-            Serial.print(TAB);Serial.print(F("CMD  raw -      "));;Serial.print(LnUtoa(raw[0], 3, '0'));
+            Serial.print(TAB);Serial.print(F("CMD  raw -      "));;Serial.print(LnUtoa2(raw[0], 3, '0'));
             Serial.print(TAB);printHex(&raw[rawIndex], rawLen-rawIndex-2);//Serial.println();
 
         }

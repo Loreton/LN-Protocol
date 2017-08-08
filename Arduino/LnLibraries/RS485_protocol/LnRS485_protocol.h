@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-07-26_12.53.58
+// Version: LnVer_2017-08-08_12.01.43
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -13,14 +13,14 @@
 // #if not defined I_AM_RS485_PROTOCOL_H
 #if defined I_AM_RS485_PROTOCOL_CPP
     // #define I_AM_RS485_PROTOCOL_H
-
-    const char *errMsg[]    = { "OK",
+                            //-- 01234567
+    const char *errMsg[]    = { "OK      ",
                                 "OVERFLOW",
-                                "BAD-CRC",
+                                "BAD-CRC ",
                                 "BAD-CHAR",
-                                "TIMEOUT",
-                                "PAYLOAD",
-                                "DEBUG",
+                                "TIMEOUT ",
+                                "PAYLOAD ",
+                                "DEBUG   ",
                             };
 
 
@@ -56,18 +56,18 @@
                         LN_DEBUG,
                     };
 
-        #define MAX_DATA_SIZE     30
+        #define MAX_DATA_SIZE     60
     // definizione messa qui per comodità con  il printMessage.
     enum RXTX_MAP  {
-                        DATALEN=0,
-                        SENDER_ADDR,
-                        DESTINATION_ADDR,
-                        SEQNO_HIGH,
-                        SEQNO_LOW,
-                        CMD_RCODE,
-                        COMMAND,
-                        SUBCOMMAND,
-                        COMMAND_DATA,
+                        DATALEN=0,          // - lunghezza dei dati escluso STX ed ETX
+                        SENDER_ADDR,        // - Dest Address      (FF = Broadcast)
+                        DESTINATION_ADDR,   // - source Address    (00 = Master)
+                        SEQNO_HIGH,         // - numero del messaggio utile per associare la risposta
+                        SEQNO_LOW,          // -
+                        CMD_RCODE,          // - rCode di ritorno per il comando eseguito (in TX è ignorato)
+                        COMMAND,            // - comando da eseguire
+                        SUBCOMMAND,         // - eventuale dettaglio per il comando
+                        COMMAND_DATA,       // - TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
                     };
 
 //  identifica il byte che contiene la lunghezza dati
@@ -83,9 +83,12 @@
         byte            Rx_CRCcalc;    // CRC value
         byte            Rx_CRCrcvd;    // CRC value
 
-        bool            fDisplayData     = false;     // per fare il print dei data
+        // bool            fDisplayData     = false;     // per fare il print dei data
+        // bool            fDisplayAllPckt  = false;     // per fare il print di tutti i pacchetti oppure solo quello che riguardano il myAddr
+        bool            fDisplayMyData    = false;                // display dati relativi al mio indirizzo
+        bool            fDisplayOtherData = false;                // display dati relativi ad  altri indirizzi
+
         bool            fDisplayRawData  = false;     // per fare il print del rawData
-        bool            fDisplayAllPckt  = false;     // per fare il print di tutti i pacchetti oppure solo quello che riguardano il myAddr
 
         char            *myID;    // pointer identificativo di Arduino
         // byte            myEEpromAddress = 0;     // porta dentro l'indirizzo del device. utile per il printMessage

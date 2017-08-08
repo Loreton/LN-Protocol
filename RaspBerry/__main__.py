@@ -60,6 +60,12 @@ if __name__ == "__main__":
     gv.inputParam   = gv.Ln.LnDict(Input)
     gv.fDEBUG       = gv.inputParam.fDEBUG
 
+        # sono in caso di monitor RAW
+    if 'displayDataformat' in gv.inputParam:
+        gv.inputParam.fHEX  = True if 'hex'  in gv.inputParam.displayDataformat else False
+        gv.inputParam.fLINE = True if 'line' in gv.inputParam.displayDataformat else False
+        gv.inputParam.fCHAR = True if 'char' in gv.inputParam.displayDataformat else False
+
     # gv.input.PrintTree(MaxLevel=3, fEXIT=True)
 
 

@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-27_07.58.43
+version:    LnVer_2017-08-08_11.29.28
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -34,7 +34,7 @@ void setup() {
         // - e relativa struttura dati
         // ===================================
     Serial485.begin(9600);
-    pData               = &RxTx;
+    pData = &RxTx;
 
     pinMode(RS485_ENABLE_PIN, OUTPUT);          // enable rx by default
     digitalWrite(RS485_ENABLE_PIN, ENA_485_RX);     // set in receive mode
@@ -51,34 +51,13 @@ void setup() {
         // -    2. copy string into myID array
         // ================================================
     myEEpromAddress = EEPROM.read(0);
-    // pData->myEEpromAddress = myEEpromAddress;
 
-    Serial.print(myID);
+    // Serial.print(myID); altrimenti scrive anche sul relay ee è meglio evitare rumore.
 
     pinMode (LED_PIN, OUTPUT);          // built-in LED
 
 }
 
-// ################################################################
-// # - setMyID
-// # char myID[] = "\r\n[Slave-xxx] - "; // i primi due byte sono CR e LF
-// ################################################################
-void setMyID(const char *name) {
-    byte i=3;
-    byte i1;
-
-    for (i1=0; i1<5; i1++) {
-        myID[i++] = name[i1];
-    }
-    i++; // skip '-'
-
-    char *xx = LnUtoa(myEEpromAddress, 3, '0');
-    myID[i++] = xx[0];
-    myID[i++] = xx[1];
-    myID[i++] = xx[2];
-
-    pData->myID = myID;
-}
 
 
 
@@ -89,6 +68,14 @@ void loop() {
     if (myEEpromAddress <= 10) {
         #ifdef POLLING_SIMULATION
             loop_PollingSimulation();
+            // unsigned char data[20];
+            // int dataLen = joinString(data, "Ciao",  " - polling request!", ".");
+            // Serial.println();
+            // Serial.print(dataLen);
+            // Serial.print(" - " );
+            // printStr(data);
+            // Serial.println();
+
         #else
             loop_Relay();
         #endif

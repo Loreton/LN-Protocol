@@ -108,6 +108,9 @@ class LnColor:
     def getGreen(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( tab, self.GREEN, msg, end, reset)
 
+    def getGreenH(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
+        return self._print ( tab, self.GREENH, msg, end, reset)
+
     def getBlue(self, msg, tab=0, end='\n', reset=True, string_encode='latin-1'):
         return self._print ( tab, self.BLUE, msg, end, reset)
 

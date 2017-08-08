@@ -7,11 +7,12 @@
 
 from . Main.Main            import Main
 
-from . Actions.MonitorRS485 import MonitorRS485
-from . Actions.MasterRS485  import MasterRS485
-from . Actions.MonitorRaw   import MonitorRaw
-from . Actions.SendRS485    import SendRS485
-from . Actions.EchoTest     import EchoTest
+from . Actions.Master       import MasterRS485
+# from . Actions.MonitorRS485 import MonitorRS485
+from . Actions.Monitor      import MonitorRaw
+from . Actions.Monitor      import MonitorRS485
+# from . Actions.SendRS485    import SendRS485
+# from . Actions.EchoTest     import EchoTest
 from . Actions.Polling      import Polling
 
 

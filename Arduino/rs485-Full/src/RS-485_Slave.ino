@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-03_08.04.58
+version:    LnVer_2017-08-08_10.14.35
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -15,36 +15,38 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - riceviamo i dati da rs485
 // #    - elaboriamo il comando ricevuto
 // #    - rispondiamo se siamo interessati
+// lo slave scrive sulla seriale come debug
 // ################################################################
 void loop_Slave() {
     if (firstRun) {
+        // pData->fDisplayData     = true;                // display user/command data
+        pData->fDisplayMyData    = true;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherData = false;                // display dati relativi ad  altri indirizzi
+
+        // pData->fDisplayAllPckt  = false;                // display all source/destination packets
+        pData->fDisplayRawData  = false;                // display raw data
+        pData->timeout          = 5000;
         setMyID("Slave");
-        pData->fDisplayData    = true;                // display user/command data
-        pData->fDisplayRawData = false;                // display raw data
-        pData->fDisplayAllPckt = false;                // display all source/destination packets
-        pData->timeout         = 20000;
     }
 
-    Serial.println();
-    // Serial.print(myID);printNchar('-', 60);
-    byte rCode = recvMsg485(pData);
+    // Serial.println();
+    byte rcvdRCode = recvMsg485(pData);
 
-    if (rCode == LN_OK) {
+    if (rcvdRCode == LN_OK) {
         processRequest(pData);
-        Serial.println();
+        // Serial.println();
     }
 
-        // lo slave scrive sulla seriale come debug
     else if (pData->rx[DATALEN] == 0) {
         Serial.print(myID);
-        Serial.print(F("rCode: "));Serial.print(rCode);
+        Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
         Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));Serial.print(pData->timeout);
         Serial.println();
     }
 
     else { // DEBUG
         // rxDisplayData(rCode, pData);
-        Serial.println();
+        // Serial.println();
     }
 
 }
@@ -61,33 +63,34 @@ void processRequest(RXTX_DATA *pData) {
     if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
         return;
     }
-
+//@todo: inserire l'indirizzo nel comando myMsg...
     byte myMsg1[] = "Polling answer!";
     byte myMsg2[] = "devo scrivere il pin";
     byte myMsg3[] = "Comando non riconosciuto";
 
+    copyRxMessageToTx(pData);
     switch (pData->rx[COMMAND]) {
 
         case POLLING_CMD:
             if (pData->rx[SUBCOMMAND] == REPLY) {
                 Serial.print("\n\n");Serial.print(TAB);Serial.println(F("preparing response message... "));
-                prepareMessage(pData, myMsg1, sizeof(myMsg1));
+                setTxCommandData(pData, myMsg1, sizeof(myMsg1));
                 pData->tx[CMD_RCODE] = OK;
             }
             break;
 
         case READPIN_CMD:
-            prepareMessage(pData, myMsg1, sizeof(myMsg1));
+            setTxCommandData(pData, myMsg1, sizeof(myMsg1));
             pData->tx[CMD_RCODE] = OK;
             break;
 
         case WRITEPIN_CMD:
-            prepareMessage(pData, myMsg2, sizeof(myMsg2));
+            setTxCommandData(pData, myMsg2, sizeof(myMsg2));
             pData->tx[CMD_RCODE] = OK;
             break;
 
         default:
-            prepareMessage(pData, myMsg3, sizeof(myMsg3));
+            setTxCommandData(pData, myMsg3, sizeof(myMsg3));
             pData->tx[CMD_RCODE] = UNKNOWN_CMD;
             break;
     }

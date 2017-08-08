@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-07-21_16.33.50'
+__version__  = 'LnVer_2017-08-07_16.33.57'
 __status__   = 'Beta'
 
 import os
@@ -59,13 +59,23 @@ MODE_ASCII = 'ascii'
 # Ln_COMMAND     = 4
 
 # DATALEN             = 0     # - lunghezza dei dati escluso STX ed ETX
-SENDER_ADDR         = 0     # - Dest Address      (FF = Broadcast)
-DESTINATION_ADDR    = 1     # - source Address    (00 = Master)
-SEQNO_HIGH          = 2     # - numero del messaggio utile per associare la risposta
-SEQNO_LOW           = 3     # -
-COMMAND             = 4     # - comando da eseguire
-USER_RCODE          = 5     # - esito del comando
-USER_DATA           = 6     # - dati necessari per l'esecuzione del comando oppure i dati di risposta
+# SENDER_ADDR         = 0     # - Dest Address      (FF = Broadcast)
+# DESTINATION_ADDR    = 1     # - source Address    (00 = Master)
+# SEQNO_HIGH          = 2     # - numero del messaggio utile per associare la risposta
+# SEQNO_LOW           = 3     # -
+# COMMAND             = 4     # - comando da eseguire
+# USER_RCODE          = 5     # - esito del comando
+# USER_DATA           = 6     # - dati necessari per l'esecuzione del comando oppure i dati di risposta
+
+# DATALEN           = 0    # - lunghezza dei dati escluso STX ed ETX
+SENDER_ADDR       = 0    # - Dest Address      (FF = Broadcast)
+DESTINATION_ADDR  = 1    # - source Address    (00 = Master)
+SEQNO_HIGH        = 2    # - numero del messaggio utile per associare la risposta
+SEQNO_LOW         = 3    # -
+CMD_RCODE         = 4    # rCode di ritorno per il comando eseguito (in TX è ignorato)
+COMMAND           = 5    # comando da eseguire
+SUBCOMMAND        = 6    # eventuale dettaglio per il comando
+COMMAND_DATA      = 7    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
 
 
 
@@ -94,16 +104,17 @@ LnRs485_validBytesHex = [
 
 
 
-LnRs485_payLoadMap = {  'DATALEN'           : 0,
-                        'SENDER_ADDR'       : 1,
-                        'DESTINATION_ADDR'  : 2,
-                        'SEQNO_HIGH'        : 3,
-                        'SEQNO_LOW'         : 4,
-                        'PAYLOAD'           : 5,   # inizio del payload
-                        'COMANDO'           : 5,   # READ | WRITE
-                        'PIN_NO'            : 6,   # numero del pin su cui operare
-                        'PIN_NO'            : 6,   # numero del pin su cui operare
+rs485Map = {            'DATALEN'           : 0,    # - lunghezza dei dati escluso STX ed ETX
+                        'SENDER_ADDR'       : 1,    # - Dest Address      (FF = Broadcast)
+                        'DESTINATION_ADDR'  : 2,    # - source Address    (00 = Master)
+                        'SEQNO_HIGH'        : 3,    # - numero del messaggio utile per associare la risposta
+                        'SEQNO_LOW'         : 4,    # -
+                        'CMD_RCODE'         : 5,    # rCode di ritorno per il comando eseguito (in TX è ignorato)
+                        'COMMAND'           : 6,    # comando da eseguire
+                        'SUBCOMMAND'        : 7,    # eventuale dettaglio per il comando
+                        'COMMAND_DATA'      : 8,    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
                     };
+
 
 
 LnRs485_writePin   = {  'COMANDO'           : 5,   # READ 1 | WRITE-2
@@ -112,6 +123,10 @@ LnRs485_writePin   = {  'COMANDO'           : 5,   # READ 1 | WRITE-2
                     };
 
 
+
+# ln485Map = LnClass()
+# ln485Map.DATALEN = 0
+# ln485Map.COMMAND_DATA = 8
 
 
 class LnRs485_Instrument():
@@ -532,7 +547,7 @@ class LnRs485_Instrument():
             # ---------------------------------------------
 
             # il trick che segue ci permette di prelevare due bytes alla volta
-        payLoad = bytearray()
+        rcvData = bytearray()
         payLoadNibbled  = bufferData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
         xy = iter(payLoadNibbled)
         for byte1, byte2 in zip(xy, xy):
@@ -549,19 +564,19 @@ class LnRs485_Instrument():
                 logger.error(msg)
                 return bytearray(), bufferData
 
-            payLoad.append(realByte)
+            rcvData.append(realByte)
 
 
             # -----------------------------------------------------------------------
             # - Una volta ricostruidi i bytes origilali,
             # - calcoliamo il CRC sui dati (ovviamento escluso il byte di CRC stesso)
             # -----------------------------------------------------------------------
-        CRC_calculated  = self._getCRC8(payLoad[:-1])
+        CRC_calculated  = self._getCRC8(rcvData[:-1])
             # ---------------------------------
             # - check CRC (drop STX and ETX)
             # ---------------------------------
-        CRC_received    = payLoad[-1]
-        payLoad         = payLoad[:-1]
+        CRC_received    = rcvData[-1]
+        rcvData         = rcvData[:-1]
 
         logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
         logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
@@ -576,24 +591,32 @@ class LnRs485_Instrument():
             print ()
             return bytearray(), bufferData
 
-        if fDEBUG:
-            print ('readDataLib:')
-            print ('    seqNo    : {0:05}'.format(payLoad[SEQNO_HIGH]*256+payLoad[SEQNO_LOW]))
-            print ('    xMitCode : {0:03}'.format(xMitCode))
+        if fDEBUG and len(rcvData) > 0:
+                # sommario
+            print ()
+            print ('[Pi-RX] - ', end="")
+            print (' [{0:02X}/{0:03}]'.format(rcvData[SENDER_ADDR]), end="")
+            print (' --> [{0:02X}/{0:03}]'.format(rcvData[DESTINATION_ADDR]), end="")
+            print (' - SeqNo: {0:05}'.format(rcvData[SEQNO_HIGH]*256+rcvData[SEQNO_LOW]), end="")
+            print (' - [rcvdCode: {0:03}]'.format(xMitCode))
             print ()
 
-            print ('    full data - len: [{0:03}] - '.format(len(payLoad)), end="")
-            for byte in payLoad: print ('{0:02X} '.format(byte), end="")
+
+                # hezadecimal
+            print ('    full data - len: [{0:03}] - '.format(len(rcvData)), end="")
+            for byte in rcvData: print ('{0:02X} '.format(byte), end="")
             print ()
 
-            userData = payLoad[USER_DATA:]
+                # hezadecimal solo la parte comando
+            userData = rcvData[COMMAND_DATA:]
             print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*USER_DATA, end="")
+            print ('   '*COMMAND_DATA, end="")
             for byte in userData: print ('{0:02X} '.format(byte), end="")
 
+                # ascii solo la parte comando
             print ('')
             print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*USER_DATA, end="")
+            print ('   '*COMMAND_DATA, end="")
             print ('[', end="")
             for byte in userData:
                 if byte in self._printableChars:   # Handle only printable ASCII
@@ -602,14 +625,13 @@ class LnRs485_Instrument():
                     print(' ', end="")
             print (']')
             print ('')
-            print ('    SourceAddr 0x : {0:02X}'.format(payLoad[SENDER_ADDR]))
-            print ('    DestAddr   0x : {0:02X}'.format(payLoad[DESTINATION_ADDR]))
-            print ('    SEQNO      0x : {0:02X} {1:02X}'.format(payLoad[SEQNO_HIGH], payLoad[SEQNO_LOW]))
-            print ('    Command    0x : {0:02X}'.format(payLoad[COMMAND]))
-            print ('    userRCode  0x : {0:02X}'.format(payLoad[USER_RCODE]))
+            print ('    CRC Rec/Cal 0x : {0:02X} {1:02X}'.format(CRC_received, CRC_calculated))
+            print ('    SEQNO       0x : {0:02X} {1:02X}'.format(rcvData[SEQNO_HIGH], rcvData[SEQNO_LOW]))
+            print ('    CMD_RCode   0x : {0:02X}'.format(rcvData[CMD_RCODE]))
+            print ('    CMD/subCMD  0x : {0:02X} {1:02X}'.format(rcvData[COMMAND], rcvData[SUBCOMMAND]))
 
 
-        return payLoad, bufferData
+        return rcvData, bufferData
 
 
 
@@ -642,6 +664,15 @@ class LnRs485_Instrument():
     #######################################################################
     # - sendDataCMD - con parametri di input diversi
     # -    richiama comunque sendData
+    # -    ordine:
+    # -      SENDER_ADDR       = 0    # - Dest Address      (FF = Broadcast)
+    # -      DESTINATION_ADDR  = 1    # - source Address    (00 = Master)
+    # -      SEQNO_HIGH        = 2    # - numero del messaggio utile per associare la risposta
+    # -      SEQNO_LOW         = 3    # -
+    # -      CMD_RCODE         = 4    # rCode di ritorno per il comando eseguito (in TX è ignorato)
+    # -      COMMAND           = 5    # comando da eseguire
+    # -      SUBCOMMAND        = 6    # eventuale dettaglio per il comando
+    # -      COMMAND_DATA      = 7    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
     #######################################################################
     def sendDataCMD(self, CMD, fDEBUG=False):
         ''' formato CLASS dei parametri '''
@@ -653,8 +684,9 @@ class LnRs485_Instrument():
         dataToSend.append(yy[0])  # high byte
         dataToSend.append(yy[1])  # Low byte
 
-        dataToSend.append(CMD.commandNO)
         dataToSend.append(CMD.xmitRcode)  # 0 per una TX
+        dataToSend.append(CMD.command)
+        dataToSend.append(CMD.subCommand)
 
         for x in CMD.dataStr:
             dataToSend.append(ord(x))
@@ -673,7 +705,7 @@ class LnRs485_Instrument():
     # -  only values sent would be (in hex):
     # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
     #######################################################################
-    def sendData(self, payLoad, fDEBUG=False):
+    def sendData(self, txData, fDEBUG=False):
         ''' formato in bytearray dei parametri '''
         logger = self._setLogger(package=__name__)
         if fDEBUG:
@@ -682,6 +714,8 @@ class LnRs485_Instrument():
             # print ('sendDataLib: dataLen=', len(data))
             # print ('    source:{sADDR:03}  dest:{dADDR:03} CMD:{CMD:03} seqNo:{SEQ:05}'.format(sADDR=data[SENDER_ADDR], dADDR=data[DESTINATION_ADDR], SEQ=seqNO, CMD=data[COMMAND]))
             # print ('    {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
+
+            '''
 
             print ('sendDataLib:')
             print ('    seqNo    : {0:05}'.format(payLoad[SEQNO_HIGH]*256+payLoad[SEQNO_LOW]))
@@ -714,6 +748,8 @@ class LnRs485_Instrument():
             print ('    Command    0x : {0:02X}'.format(payLoad[COMMAND]))
             print ('    userRCode  0x : {0:02X}'.format(payLoad[USER_RCODE]))
 
+            '''
+
 
             # - preparaiamo il bytearray con i dati da inviare
         dataToSend=bytearray()
@@ -722,14 +758,14 @@ class LnRs485_Instrument():
         dataToSend.append(self.STX)
 
             # - Data nell'array
-        for thisByte in payLoad:
+        for thisByte in txData:
             byte1, byte2 = self._splitComplementedByte(thisByte)
             dataToSend.append(byte1)
             dataToSend.append(byte2)
 
             # - CRC nell'array
         if self.CRC:
-            CRC_value    = self._getCRC8(payLoad)
+            CRC_value    = self._getCRC8(txData)
             byte1, byte2 = self._splitComplementedByte(CRC_value)
             dataToSend.append(byte1)
             dataToSend.append(byte2)
@@ -747,7 +783,43 @@ class LnRs485_Instrument():
         if self.close_port_after_each_call:
             self.serial.close()
 
+
+
         if fDEBUG:
+            print ('[Pi-TX] - ', end="")
+            print (' [{0:02X}/{0:03}]'.format(txData[SENDER_ADDR]), end="")
+            print (' --> [{0:02X}/{0:03}]'.format(txData[DESTINATION_ADDR]), end="")
+            print (' - SeqNo: {0:05}'.format(txData[SEQNO_HIGH]*256+txData[SEQNO_LOW]), end="")
+            print ()
+            print ()
+
+
+
+            print ('    full data - len: [{0:03}] - '.format(len(txData)), end="")
+            for byte in txData: print ('{0:02X} '.format(byte), end="")
+            print ()
+
+            userData = txData[COMMAND_DATA:]
+            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
+            print ('   '*COMMAND_DATA, end="")
+            for byte in userData: print ('{0:02X} '.format(byte), end="")
+
+            print ('')
+            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
+            print ('   '*COMMAND_DATA, end="")
+            print ('[', end="")
+            for byte in userData:
+                if byte in self._printableChars:   # Handle only printable ASCII
+                    print(chr(byte), end="")
+                else:
+                    print(' ', end="")
+            print (']')
+            print ('')
+            print ('    xMitted CRC 0x : {0:02X}'.format(CRC_value))
+            print ('    SEQNO       0x : {0:02X} {1:02X}'.format(txData[SEQNO_HIGH], txData[SEQNO_LOW]))
+            print ('    CMD_RCode   0x : {0:02X}'.format(txData[CMD_RCODE]))
+            print ('    CMD/subCMD  0x : {0:02X} {1:02X}'.format(txData[COMMAND], txData[SUBCOMMAND]))
+
             print ('    {DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in dataToSend)))
 
         return dataToSend

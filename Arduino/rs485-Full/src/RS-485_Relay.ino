@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-07-27_08.27.01
+version:    LnVer_2017-08-08_08.46.32
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -23,46 +23,47 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // ################################################################
 void loop_Relay() {
     if (firstRun) {
-        setMyID("Relay");
-        pData->fDisplayData    = false;                // display user/command data
+        // pData->fDisplayData    = true;                // display user/command data
+
+        pData->fDisplayMyData    = true;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherData = true;                // display dati relativi ad  altri indirizzi
         pData->fDisplayRawData = false;                // display raw data
-        pData->fDisplayAllPckt = false;                // display all source/destination packets
+        // pData->fDisplayAllPckt = true;                // display all source/destination packets
+
+        setMyID("Relay");
     }
 
-    pData->timeout     = 20000;
+    pData->timeout     = 5000;
     pData->rx[DATALEN] = 0;
 
-    // ricezione messaggio da RaspBerry
+        // --------------------------------------
+        // - ricezione messaggio da RaspBerry
+        // --------------------------------------
     byte rCode = recvMsg232(pData);
+    // delay(1000)
 
+
+        // --------------------------------------
+        // - se corretto:
+        // -    1. inoltra to rs485 bus
+        // -    2. attendi risposta
+        // -    3. copia comunque su Txdata
+        // -    4. Se ricezione OK:
+        // -        4a. copia messaggio su TX
+        // -        4a. ruota pacchetto verso PI
+        // -    5. Se ricezione NOT OK:
+        // -        5a. prepara messaggo di errore
+        // -        5b. ruota pacchetto verso PI
+        // - altrimenti:
+        // -    1. ignora
+        // --------------------------------------
     if (rCode == LN_OK) {
         fwdToRs485(pData);
-        waitRs485Response(pData);
+            // qualsiasi esito il msg è pronto da inviare sulla rs232
+        waitRs485Response(pData, 2000);
         sendMsg232(pData);
     }
 }
-
-
-// ################################################################
-// #- riceviamo i dati da rs485
-// #-  Se OK allora li torniamo al RaspBerry
-// #-  Se ERROR/TIMEOUT ritorniamo errore al RaspBerry
-// ################################################################
-byte waitRs485Response(RXTX_DATA *pData) {
-    pData->timeout = 10000;
-    byte rcvdRCode = recvMsg485(pData);
-
-    copyRxMessageToTx(pData);
-
-    if (pData->rx[DATALEN] == 0) {
-        pData->tx[CMD_RCODE] = TIMEOUT_ERROR;
-        byte errorMsg[] = "TIMEOUT occurred...";
-        prepareMessage(pData, errorMsg, sizeof(errorMsg));
-    }
-
-    return rcvdRCode;
-}
-
 
 
 // ################################################################
@@ -71,11 +72,9 @@ byte waitRs485Response(RXTX_DATA *pData) {
 void fwdToRs485(RXTX_DATA *pData) {
 
     copyRxMessageToTx(pData);
-
         // send to RS-485 bus
-    digitalWrite(RS485_ENABLE_PIN, ENA_485_TX);               // enable Rs485 sending
     sendMsg485(pData);
-    digitalWrite(RS485_ENABLE_PIN, ENA_485_RX);               // set in receive mode
+
 }
 
 

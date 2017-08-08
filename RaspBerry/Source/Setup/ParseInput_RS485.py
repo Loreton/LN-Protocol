@@ -122,16 +122,17 @@ def DisplayDataFormat(myParser, required=False):
     mandatory = LnColor.getMagentaH('is MANDATORY - ') if required else LnColor.getCyanH('is OPTIONAL - ')
 
     # rawGroup = myParser.add_mutually_exclusive_group(required=True)  # True indica obbligatorietà di uno del gruppo
-    rawGroup = myParser.add_argument_group(
-                            title=LnColor.getGreenH('raw data display'),
-                            description=LnColor.getGreenH("definisce il formato dei dati per il display")
-                            )
+    # rawGroup = myParser.add_argument_group(
+    #                         title=LnColor.getGreenH('raw data display'),
+    #                         description=LnColor.getGreenH("definisce il formato dei dati per il display"),
+    #                         )
 
 
-        # log debug su file
+
+    '''
     DEFAULT = True
-    rawGroup.add_argument( "-hex",
-                            action="store_false",
+    rawGroup.add_argument( "--hex",
+                            action="store_true",
                             dest="fHEX",
                             default=DEFAULT,
                             help=mandatory + LnColor.getYellow("""remove HEX format display
@@ -139,8 +140,7 @@ def DisplayDataFormat(myParser, required=False):
     """.format(DEF=DEFAULT)))
 
     DEFAULT = False
-
-    rawGroup.add_argument( "+char",
+    rawGroup.add_argument( "--char",
                             action="store_true",
                             dest="fCHAR",
                             default=DEFAULT,
@@ -149,14 +149,14 @@ def DisplayDataFormat(myParser, required=False):
     """.format(DEF=DEFAULT)))
 
 
-    rawGroup.add_argument( "+line",
+    rawGroup.add_argument( "--line",
                             action="store_true",
                             dest="fLINE",
                             default=DEFAULT,
                             help=mandatory + LnColor.getYellow("""ADD full line display
             DEFAULT = {DEF}
     """.format(DEF=DEFAULT)))
-
+    '''
 
     myDefault = int('0x0A', 16) # integer
     myDefault = None
@@ -165,15 +165,23 @@ def DisplayDataFormat(myParser, required=False):
                             required=required,
                             dest="eod_char",
                             default=myDefault,
-                            help=mandatory + LnColor.getYellow("""end Of Data char (espresso in decimale es: 10 per \n).
-    [DEFAULT: {0}]
+                            help=mandatory + LnColor.getYellow("""end Of Data char (espresso in decimale es: 10 per NL).
+        [DEFAULT: {0}]
     """.format(myDefault)))
 
+    myParser.add_argument( "--type",
+                            # type=int,
+                            required=required,
+                            nargs='*',
+                            dest="displayDataformat",
+                            choices=['hex', 'line', 'char'],
+                            default=None,
+                            help=mandatory + LnColor.getYellow("""displayed data format:
+            hex:    hexadecima format
+            line:   ascii lin data
+            char:   print ascii char and hex value
 
-
-
-
-
+    """.format(myDefault)))
 
 
 
