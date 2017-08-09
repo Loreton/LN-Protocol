@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-08_10.14.35
+version:    LnVer_2017-08-09_16.47.24
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -64,9 +64,9 @@ void processRequest(RXTX_DATA *pData) {
         return;
     }
 //@todo: inserire l'indirizzo nel comando myMsg...
-    byte myMsg1[] = "Polling answer!";
-    byte myMsg2[] = "devo scrivere il pin";
-    byte myMsg3[] = "Comando non riconosciuto";
+    char myMsg1[] = "Polling answer!";
+    char myMsg2[] = "devo scrivere il pin";
+    char myMsg3[] = "Comando non riconosciuto";
 
     copyRxMessageToTx(pData);
     switch (pData->rx[COMMAND]) {

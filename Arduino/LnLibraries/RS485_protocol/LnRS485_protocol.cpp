@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-08-08_17.16.46
+    Version:   LnVer_2017-08-09_17.18.18
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011

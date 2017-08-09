@@ -1,10 +1,11 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-08_17.16.56
+version:    LnVer_2017-08-09_17.13.36
 
 Scope:      Funzioni comuni
 
 */
+#if 0
 
 // ################################################################
 // # - setMyID
@@ -26,6 +27,15 @@ void setMyID(const char *name) {
 
     if (pData->fDisplayMyData) pData->myID = myID;
 }
+#endif
+
+void setMyID(const char *name) {
+    // char myID[] = "\r\n[YYYYY-xxx] - "; // i primi due byte saranno CR e LF
+                                        // YYYYY Emula, Relay, Slave
+    myID = LnJoinStr("\r\n[", name, "-", LnUtoa(myEEpromAddress, 3, '0'), "] - ", NULL);
+
+    pData->myID = myID;
+}
 
 
 
@@ -43,9 +53,9 @@ void copyRxMessageToTx(RXTX_DATA *pData) {
 // #############################################################
 // # Inserisce un messaggio (di errore o altro) nella parte CommandData
 // #############################################################
-void setTxCommandData(RXTX_DATA *pData, byte cmdData[], byte dataLen=0) {
+void setTxCommandData(RXTX_DATA *pData, char cmdData[], byte dataLen=0) {
     if (dataLen==0) {
-        const byte *ptr = cmdData;
+        const char *ptr = cmdData;
         while (*ptr++) {dataLen++; }
     }
 
@@ -98,16 +108,11 @@ byte waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
             pData->tx[i] = savedHeader[i];         // copiamo i dati nel buffer da inviare
         copyRxMessageToTx(pData);
                              //-- 01234567
-        byte errorMsg[] = "ERROR [........] occurred...!";
+        char errorMsg[] = "ERROR [........] occurred...!";
         const char *ptr = errMsg[rcvdRCode];
 
         for (byte i=7; *ptr != '\0'; i++, ptr++)
             errorMsg[i] = *ptr;
-
-        // byte i=7;
-        // while (*ptr) {
-        //     errorMsg[i++] = *ptr++;
-        // }
 
         setTxCommandData(pData, errorMsg, sizeof(errorMsg));
     }

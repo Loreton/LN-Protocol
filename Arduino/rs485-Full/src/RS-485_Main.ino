@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-08_11.29.28
+version:    LnVer_2017-08-09_17.11.28
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -24,7 +24,13 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #include    <EEPROM.h>
 
 
+char sharedWorkingBuff[50];
 bool firstRun = true;
+char *myID;
+    //.............0 1 234567890123
+// char myID[] = "\r\n[YYYYY-xxx] - "; // i primi due byte saranno CR e LF
+                                        // YYYYY Emula, Relay, Slave
+
 
 //python3.4 -m serial.tools.list_ports
 void setup() {
@@ -68,6 +74,15 @@ void loop() {
     if (myEEpromAddress <= 10) {
         #ifdef POLLING_SIMULATION
             loop_PollingSimulation();
+            // char *pippo = strCatv_OK(3, "Loreto ", "pippo ", "ciao ");
+            // Serial.print("eccomi:  --> "); Serial.println(pippo);
+            // char *pippo = LnJoinStr("Loreto ", "pippo ", "ciao ", NULL);
+            // Serial.print("eccomi2: --> "); Serial.println(pippo);
+            // free(pippo);
+            // byte *pippoUCHAR = LnJoinStrUCHAR("Loreto ", "pippo ", "ciao ", NULL);
+            // Serial.print("eccomi2: --> "); Serial.println((char *) pippoUCHAR);
+            // free(pippoUCHAR);
+            // pippo=pippo;
             // unsigned char data[20];
             // int dataLen = joinString(data, "Ciao",  " - polling request!", ".");
             // Serial.println();
@@ -75,6 +90,7 @@ void loop() {
             // Serial.print(" - " );
             // printStr(data);
             // Serial.println();
+            delay(1000);
 
         #else
             loop_Relay();

@@ -12,9 +12,10 @@
     RXTX_DATA   RxTx, *pData;             // struttura dati
 
     //.............0 1 234567890123
-    char myID[] = "\r\n[YYYYY-xxx] - "; // i primi due byte saranno CR e LF
+    // char myID[] = "\r\n[YYYYY-xxx] - "; // i primi due byte saranno CR e LF
                                         // YYYYY Emula, Relay, Slave
 
+    extern char *myID;
     const char TAB[] = "\n    ";
 
 
