@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-09_16.46.28
+version:    LnVer_2017-08-10_08.58.36
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -32,7 +32,9 @@ void loop_PollingSimulation() {
         pData->fDisplayMyData    = true;                // display dati relativi al mio indirizzo
         pData->fDisplayOtherData = false;               // display dati relativi ad  altri indirizzi
         pData->fDisplayRawData   = false;                // display raw data
-        Serial.print(myID);Serial.println(F("Sono in Polling simulation mode"));
+        // Serial.print(myID);Serial.println(F("Sono in Polling simulation mode"));
+        Serial.println(LnJoinStr(myID, "Sono in Polling simulation mode", NULL));
+
         PollingSimulation(pData);
         Serial.println();
     }
@@ -90,7 +92,7 @@ void PollingSimulation(RXTX_DATA *pData) {
         else { // il messaggio dovrebbe ancora essere nel TX
             // int dataLen = joinString(LnFuncWorkingBuff, "[", errMsg[rcvdRCode], "]",  "occurred on Polling request!");
             // setTxCommandData(pData, LnFuncWorkingBuff, dataLen);
-            char *pippo = LnJoinStr("[", errMsg[rcvdRCode], "]",  "occurred on Polling request!", NULL);
+            char *pippo = LnJoinStr("[", errMsg[rcvdRCode],"] occurred on Polling request!", NULL);
             setTxCommandData(pData, pippo);
             pData->tx[CMD_RCODE] = rcvdRCode;
         }

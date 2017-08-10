@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-08-09_17.18.24
+// Version: LnVer_2017-08-10_08.59.17
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -14,13 +14,13 @@
 #if defined I_AM_RS485_PROTOCOL_CPP
     // #define I_AM_RS485_PROTOCOL_H
                             //-- 01234567
-    const char *errMsg[]    = { "OK      ",
+    const char *errMsg[]    = { "OK",
                                 "OVERFLOW",
-                                "BAD-CRC ",
+                                "BAD-CRC",
                                 "BAD-CHAR",
-                                "TIMEOUT ",
-                                "PAYLOAD ",
-                                "DEBUG   ",
+                                "TIMEOUT",
+                                "PAYLOAD",
+                                "DEBUG",
                             };
 
 

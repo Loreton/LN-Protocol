@@ -3,7 +3,7 @@ per compilare c++ online:
     https://www.codechef.com/ide
     https://www.tutorialspoint.com/compile_cpp_online.php   -- anche python
 
-version : LnVer_2017-08-09_16.37.46
+version : LnVer_2017-08-10_07.49.51
 
 */
 
@@ -27,13 +27,14 @@ version : LnVer_2017-08-09_16.37.46
 // * Terminare i parametri passati con un NULL
 // * Terminare i parametri passati con un NULL
 // ******************************************************************
-int MAX_MEM2 = 0;
+unsigned long MAX_MEM = 0;
 
-byte  *LnJoinStrUCHAR(const char *firstStr,...) { // <------ Ultimo parametro MUST BE NULL
+char  *LnJoinStr(const char *firstStr,...) { // <------ Ultimo parametro MUST BE NULL
 va_list     vaList;
 const char  *next;
-byte        *ptr;
-byte        *pNewStr;
+char        *ptr;
+char        *pNewStr;
+
 
 
     // pNewStr = (char *) LnFuncWorkingBuff;
@@ -58,7 +59,7 @@ int maxLen = 0;
         // Serial.print("next: ");Serial.println(next);
         while (*next++) {
             maxLen++;
-            MAX_MEM2 += maxLen;
+            MAX_MEM += maxLen;
             // Serial.print("maxLen: ");Serial.println(maxLen);
         }
         next = va_arg(vaList, const char *);             // get next pointer
@@ -67,13 +68,13 @@ int maxLen = 0;
     va_end(vaList);
 
         // - allocazione memoria
-    pNewStr = (byte *) malloc(maxLen+1);         // Alloc new Area
+    pNewStr = (char *) malloc(maxLen+1);         // Alloc new Area
     if (pNewStr == NULL) return (NULL);
 
 
 #endif
 
-    Serial.print("MAX_MEM2: ");Serial.println(MAX_MEM2);
+    Serial.print("MAX_MEM: ");Serial.println(MAX_MEM);
     ptr = pNewStr;
 
 

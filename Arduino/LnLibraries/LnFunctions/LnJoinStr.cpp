@@ -3,15 +3,13 @@ per compilare c++ online:
     https://www.codechef.com/ide
     https://www.tutorialspoint.com/compile_cpp_online.php   -- anche python
 
-version : LnVer_2017-08-09_16.48.41
+version : LnVer_2017-08-10_10.49.13
 
 */
 
 
 #include <LnFunctions.h>                //  D2X(dest, val, 2)
 
-
-#define USE_MEMORY_ALLOC
 // ******************************************************************
 // * Provvede a concatenare piu' string tra di loro.
 // * Se deve allocare la memoria allora ...
@@ -27,79 +25,79 @@ version : LnVer_2017-08-09_16.48.41
 // * Terminare i parametri passati con un NULL
 // * Terminare i parametri passati con un NULL
 // ******************************************************************
-unsigned long MAX_MEM = 0;
+#define USE_MEMORY_ALLOCxxx
+#define MAX_LEN  100
+char joinStrBuffer[MAX_LEN]; // 50 bytes
+char *prevString;
 
+
+// - Ho notato che chiamarla occupa più memoria che non fare le print specifiche...
+// - ... quindi valutare...
 char  *LnJoinStr(const char *firstStr,...) { // <------ Ultimo parametro MUST BE NULL
 va_list     vaList;
 const char  *next;
 char        *ptr;
-char        *pNewStr;
+char        *pReturnData;
+byte         MAX_MEM = 0;
 
 
 
-    // pNewStr = (char *) LnFuncWorkingBuff;
-    pNewStr = sharedWorkingBuff;
-
-#ifdef USE_MEMORY_ALLOC
-int maxLen = 0;
+    ptr = joinStrBuffer;
 
         // -------------------------------------------------------
-        // -    G I R O    1
+        // - copia delle stringhe nel destination buffer
         // -------------------------------------------------------
-        // - apertura  va_list
     va_start(vaList, firstStr);             // create va_list
+        // ----------------------------------------------------
+        // Andiamo a copiarle tutte nella Destinazione.
+        // finche' abbiamo  stringhe ...
+        // ... e finche' non riempiamo il buffer ...
+        // ----------------------------------------------------
 
-        // -------------------------------------------------------
-        // - Calcoliamo la lunghezza della stringa
-        // - per allocare la memoria per la DEST
-        //  for (ptr=next, len=0; *ptr!='\0'; len++, ptr++);
-        // -------------------------------------------------------
     next = firstStr;                        // la imposto come next per entrare nel loop
-    while (next) {
-        // Serial.print("next: ");Serial.println(next);
-        while (*next++) {
-            maxLen++;
-            MAX_MEM += maxLen;
-            // Serial.print("maxLen: ");Serial.println(maxLen);
+    while ( (next) && (MAX_MEM < MAX_LEN)) {
+           // access all the arguments assigned to vaList
+        while ( (*next) && (MAX_MEM < MAX_LEN)) {
+            MAX_MEM++;   // contiamo i bytes letti
+            *ptr++ = *next++;                              // copy string
         }
         next = va_arg(vaList, const char *);             // get next pointer
     }
-    // Serial.print("maxLen: ");Serial.println(maxLen);
+
+    *ptr ='\0';                                         // close string
     va_end(vaList);
+    pReturnData = joinStrBuffer;      // pointer da tornare
 
-        // - allocazione memoria
-    pNewStr = (char *) malloc(maxLen+1);         // Alloc new Area
-    if (pNewStr == NULL) return (NULL);
 
+
+        // a questo punto possiamo decidere se allocare o meno la memoria...
+#ifdef USE_MEMORY_ALLOC
+
+        // Se la allochiamo allora cerchiamo di prendere
+        // blocchi a boundary di 10 bytes
+    Serial.print("\n\rMAX_MEM: ");Serial.println(MAX_MEM);
+    int nBytes = ((MAX_MEM/10)+1)*10;
+    Serial.print("nBytes : ");Serial.println(nBytes);
+
+    char *newStr = (char *) malloc(nBytes);         // Alloc new Area
+    if (newStr) {       // allocazione OK
+        char *ptrTo     = newStr;
+        char *ptrFrom   = joinStrBuffer;
+        while (*ptrFrom) {
+            *ptrTo++ = *ptrFrom++;                              // copy string
+        }
+        *ptrTo = '\0';                                         // close string
+        pReturnData = newStr;      // pointer da tornare
+    }
+    else {
+        return ((char *)"ERRORE di allocazione memoria");
+    }
+
+    // liberiamo la memoria precedente (okkio!!!! dobbiamo essere consapevoli del rischio)
+    if (prevString) free(prevString);
+    prevString = pReturnData;
 
 #endif
 
-    Serial.print("MAX_MEM: ");Serial.println(MAX_MEM);
-    ptr = pNewStr;
-
-
-        // -------------------------------------------------------
-        // -    G I R O    2
-        // - copia delle stringhe nel destination buffer
-        // -------------------------------------------------------
-
-    va_start(vaList, firstStr);             // create va_list
-        // ----------------------------------------------------
-        // finche' abbiamo  stringhe ...
-        // Andiamo a copiarle tutte nella Destinazione.
-        // ----------------------------------------------------
-    next = firstStr;                        // la imposto come next per entrare nel loop
-    while (next) {
-           /* access all the arguments assigned to vaList */
-        // Serial.print("next: ");Serial.println(next);
-        while (*next) {
-            *ptr++ = *next++;                              // copy string
-        }
-        *ptr ='\0';                                         // close string
-        next = va_arg(vaList, const char *);             // get next pointer
-    }
-
-    va_end(vaList);
-
-    return pNewStr;
+    return pReturnData;
 }

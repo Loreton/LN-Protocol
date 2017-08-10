@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-09_16.47.24
+version:    LnVer_2017-08-09_17.35.51
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -42,6 +42,10 @@ void loop_Slave() {
         Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
         Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));Serial.print(pData->timeout);
         Serial.println();
+        // Serial.println(LnJoinStr(myID, "rcvdRCode: ", LnUtoa(rcvdRCode, 3, 0), " - Nessuna richiesta ricevuta in un tempo di mS: ", LnUtoa(pData->timeout, 3, 0), NULL));
+        // Serial.println(pippo);
+        // free(pippo);
+
     }
 
     else { // DEBUG
@@ -74,6 +78,10 @@ void processRequest(RXTX_DATA *pData) {
         case POLLING_CMD:
             if (pData->rx[SUBCOMMAND] == REPLY) {
                 Serial.print("\n\n");Serial.print(TAB);Serial.println(F("preparing response message... "));
+                // char *pippo = LnJoinStr("\n\n", TAB, "preparing response message... ", NULL);
+                // Serial.println(pippo);
+                // free(pippo);
+
                 setTxCommandData(pData, myMsg1, sizeof(myMsg1));
                 pData->tx[CMD_RCODE] = OK;
             }
