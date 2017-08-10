@@ -72,13 +72,15 @@
 
 //  identifica il byte che contiene la lunghezza dati
     #define pDATALEN     0
+    // byte pDATALEN=0;
+
 
     // the data we broadcast to each other device
     typedef struct  {
 
-        byte            rx[MAX_DATA_SIZE];        // byte[0] is dataLen
-        byte            tx[MAX_DATA_SIZE];        // byte[0] is dataLen
-        byte            raw[MAX_DATA_SIZE*2+2];   // byte[0] is dataLen SIZE = dataLen + STX+ETX
+        unsigned char   rx[MAX_DATA_SIZE];        // byte[0] is dataLen
+        unsigned char   tx[MAX_DATA_SIZE];        // byte[0] is dataLen
+        unsigned char   raw[MAX_DATA_SIZE*2+2];   // byte[0] is dataLen SIZE = dataLen + STX+ETX
         byte            Tx_CRCcalc;    // CRC value
         byte            Rx_CRCcalc;    // CRC value
         byte            Rx_CRCrcvd;    // CRC value

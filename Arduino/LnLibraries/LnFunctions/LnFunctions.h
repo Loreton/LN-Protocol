@@ -18,27 +18,22 @@
     extern unsigned char LnFuncWorkingBuff[]; // 50 bytes
     extern char sharedWorkingBuff[]; // 50 bytes
 
-    // void D2X(char *Dest, unsigned int Valore, char size);      // deve essere D2X.cpp
+
     char *D2X(unsigned int Valore, char size);      // deve essere D2X.cpp
-
     void printHex(const byte data);
-    void printHex(const byte *data,     byte len=0,  const char *suffixData="", const char *sep=" ");
-
-
+    void printHex(const char *data,     byte len=0,  const char *suffixData="", const char *sep=" ");
     void printHexPDS(const char *prefixStr, const byte data,        const char *suffixStr="\n");
 
-    byte LnCRC8(const byte *data,     byte len);
 
-    // void LnPrint(const char *data1, const char *data2="", const char *data3="");
-    // void LnPrintStrHex(const char *prefix, byte value, const char *suffix="");
-    // char *LnUtoa(unsigned int i, byte padLen=2, byte fill=' ');
     void printNchar(const char data, byte counter); // print un byte N volte
 
-    void printDelimStr(const byte *data, byte len=0, const char *delimiter=NULL);  // print di una stringa visibile
+    void printDelimStr(const char *data, byte len=0, const char *delimiter=NULL);  // print di una stringa visibile
 
     char *LnUtoa(unsigned int i, byte padLen=2, byte fill=' ');
     char *LnJoinStr(const char *fmt, ...);
     byte stringLen(const char* data);
+
+
 
 
     // ARDUINO NANO

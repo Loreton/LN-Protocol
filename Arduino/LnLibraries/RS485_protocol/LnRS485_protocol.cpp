@@ -54,7 +54,7 @@
 
 
 // calculate 8-bit CRC
-static byte crc8(const byte *data, byte len) {
+static byte crc8(const char *data, byte len) {
     byte crc = 0, i;
     #if defined CRC_DEBUG
         Serial.print( "data len: ");Serial.print(len);Serial.println( );
@@ -112,6 +112,7 @@ byte c, sentByte;
     pData->raw[++pData->raw[pDATALEN]] = sentByte;
 
 
+
 }  // end of sendComplemented
 
 // ###########################################################
@@ -123,7 +124,7 @@ void sendMsg (RXTX_DATA *pData, WriteCallback fSend) {
     byte txLen = pData->tx[pDATALEN];
     // CRC8calc = 0;
 
-    byte CRC8calc = crc8(&pData->tx[1], txLen);   // calcoliamo il CRC
+    byte CRC8calc = crc8((char *) &pData->tx[1], txLen);   // calcoliamo il CRC
     pData->Tx_CRCcalc = CRC8calc;
     // printHexPDS( "calculated CRC2: ", CRC8calc, "\n");
     pData->raw[pDATALEN] = 0;
@@ -224,7 +225,7 @@ byte recvMsg (RXTX_DATA *pData,
                     pData->rx[pDATALEN] = dataLen-1;       // lunghezza dati ricevuti (esclude CRC byte)
 
                     // --- calcolo del CRC escludendo il byte di CRC precedentemente salvato
-                    CRC8calc = crc8(&pData->rx[1], pData->rx[pDATALEN]);
+                    CRC8calc = crc8((char *) &pData->rx[1], pData->rx[pDATALEN]);
                     pData->Rx_CRCcalc = CRC8calc;
 
 
@@ -388,15 +389,15 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
 
         // FULL COMMAND DATA (inclusi SA, DA, etc..
         Serial.print(TAB);Serial.print(F("fullData    hex - len:["));Serial.print(LnUtoa(data[0], 3, '0'));Serial.print(F("] - "));
-            printHex(&data[1], data[0]);
+            printHex((char *) &data[1], data[0]);
 
         // COMMAND_DATA
         byte lun=dataLen-SUBCOMMAND;
         Serial.print(TAB);Serial.print(F("commandData hex - len:["));Serial.print(LnUtoa(lun, 3, '0'));Serial.print(F("] - "));
-            printNchar(' ', SUBCOMMAND*3);printHex(&data[COMMAND_DATA], lun);
+            printNchar(' ', SUBCOMMAND*3);printHex((char *) &data[COMMAND_DATA], lun);
 
         Serial.print(TAB);Serial.print(F("commandData asc - len:["));Serial.print(LnUtoa(lun, 3, '0'));Serial.print(F("] - "));
-            printNchar(' ', SUBCOMMAND*3); printDelimStr(&data[COMMAND_DATA], lun, "[]");
+            printNchar(' ', SUBCOMMAND*3); printDelimStr((char *) &data[COMMAND_DATA], lun, "[]");
 
         Serial.println();
         if (caller[0] == 'R') {
@@ -406,7 +407,7 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
             Serial.print(TAB);printHexPDS(    "xMitted CRC 0x : ", pData->Tx_CRCcalc, "");
         }
 
-        Serial.print(TAB);Serial.print(F( "SEQNO       0x : "));printHex(&data[SEQNO_HIGH], 2);
+        Serial.print(TAB);Serial.print(F( "SEQNO       0x : "));printHex((char *) &data[SEQNO_HIGH], 2);
         Serial.print(TAB);Serial.print(F( "CMD_RCode   0x : "));printHex(data[CMD_RCODE]);
         Serial.print(TAB);Serial.print(F( "CMD/subCMD  0x : "));printHex(data[COMMAND]);Serial.print(" ");printHex(data[SUBCOMMAND]);
 
@@ -418,11 +419,11 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
             rawIndex = COMMAND_DATA*2;
             Serial.println();
             Serial.print(TAB);Serial.print(F("full raw - len:["));Serial.print(LnUtoa(raw[0], 3, '0'));Serial.print(F("] - "));
-            Serial.print(TAB);printHex(&raw[1], raw[0]); //Serial.println();
+            Serial.print(TAB);printHex((char *) &raw[1], raw[0]); //Serial.println();
 
             Serial.println();
             Serial.print(TAB);Serial.print(F("CMD  raw -      "));;Serial.print(LnUtoa(raw[0], 3, '0'));
-            Serial.print(TAB);printHex(&raw[rawIndex], rawLen-rawIndex-2);//Serial.println();
+            Serial.print(TAB);printHex((char *) &raw[rawIndex], rawLen-rawIndex-2);//Serial.println();
 
         }
     }

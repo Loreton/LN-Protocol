@@ -32,8 +32,8 @@ void loop_PollingSimulation() {
         pData->fDisplayMyData    = true;                // display dati relativi al mio indirizzo
         pData->fDisplayOtherData = false;               // display dati relativi ad  altri indirizzi
         pData->fDisplayRawData   = false;                // display raw data
-        // Serial.print(myID);Serial.println(F("Sono in Polling simulation mode"));
-        Serial.println(LnJoinStr(myID, "Sono in Polling simulation mode", NULL));
+        Serial.print(myID);Serial.println(F("Sono in Polling simulation mode"));
+        // Serial.println(LnJoinStr(myID, "Sono in Polling simulation mode", NULL));
 
         PollingSimulation(pData);
         Serial.println();
