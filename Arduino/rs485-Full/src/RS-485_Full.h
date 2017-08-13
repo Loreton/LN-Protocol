@@ -12,15 +12,15 @@
     RXTX_DATA   RxTx, *pData;             // struttura dati
 
 
-#if defined (I_AM_MAIN_)
-    byte  myEEpromAddress = 0;        // who we are
-    char sharedWorkingBuff[50];
-    bool firstRun = true;
-    const char TAB[] = "\n    ";
+    #if defined (I_AM_MAIN_)
+        byte  myEEpromAddress = 0;        // who we are
+        char sharedWorkingBuff[50];
+        bool firstRun = true;
+        const char TAB[] = "\n    ";
 
-#else
-    extern byte  myEEpromAddress;        // who we are
-#endif
+    #else
+        extern byte  myEEpromAddress;        // who we are
+    #endif
 
 
     enum rs485_COMMANDs {
@@ -46,8 +46,6 @@
     // ##########################################
     // # definizione delle seriali
     // ##########################################
-
-
     /*
         rename in Serial232 per comodità per la parte Relay
         ma posso continuare ad usare anche solo Serial
@@ -88,6 +86,5 @@
     inline byte recvMsg232(RXTX_DATA *rxData, ReadCallback fRead=Read232, AvailableCallback fAvailable=Available232) {
         return recvMsg (rxData, fRead, fAvailable);
     }
-
 
 #endif

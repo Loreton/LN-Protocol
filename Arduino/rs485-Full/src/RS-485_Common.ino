@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_17.25.24
+version:    LnVer_2017-08-13_18.22.24
 
 Scope:      Funzioni comuni
 
@@ -36,6 +36,7 @@ void setCommandData(byte *pData, char cmdData[], byte dataLen=0) {
     // displayMyData(INO_Prefix,  LN_OK, pData);
 }
 
+#endif
 
 // ################################################################
 // #- riceviamo i dati da rs485
@@ -93,4 +94,3 @@ byte waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
 
 
 
-#endif
