@@ -27,10 +27,10 @@
 
     void printNchar(const char data, byte counter); // print un byte N volte
 
-    void printDelimStr(const char *data, byte len=0, const char *delimiter=NULL);  // print di una stringa visibile
+    void printDelimitedStr(const char *data, byte len=0, const char *delimiter=NULL);  // print di una stringa visibile
 
-    char *LnUtoa(unsigned int i, byte padLen=2, byte fill=' ');
-    char *LnJoinStr(const char *fmt, ...);
+    char *Utoa(unsigned int i, byte padLen=2, byte fill=' ');
+    char *joinStr(const char *fmt, ...);
     byte stringLen(const char* data);
 
 

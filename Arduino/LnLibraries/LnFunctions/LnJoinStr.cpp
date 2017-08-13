@@ -33,7 +33,7 @@ char *prevString;
 
 // - Ho notato che chiamarla occupa più memoria che non fare le print specifiche...
 // - ... quindi valutare...
-char  *LnJoinStr(const char *firstStr,...) { // <------ Ultimo parametro MUST BE NULL
+char  *joinStr(const char *firstStr,...) { // <------ Ultimo parametro MUST BE NULL
 va_list     vaList;
 const char  *next;
 char        *ptr;

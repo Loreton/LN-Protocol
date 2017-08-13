@@ -22,7 +22,7 @@ void printNchar(const char data, byte counter) {
 // se la len==0 allora calcoliamo la
 // lunghezza cercando il '\0' nella stringa.
 // ---------------------------------------
-void printDelimStr(const char *data, byte len, const char *delimiter) {
+void printDelimitedStr(const char *data, byte len, const char *delimiter) {
     byte i;
     if (delimiter) Serial.print(delimiter[0]);
 

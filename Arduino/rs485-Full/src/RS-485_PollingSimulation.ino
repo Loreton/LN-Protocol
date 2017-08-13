@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-10_08.58.36
+version:    LnVer_2017-08-13_09.35.56
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -33,7 +33,7 @@ void loop_PollingSimulation() {
         pData->fDisplayOtherData = false;               // display dati relativi ad  altri indirizzi
         pData->fDisplayRawData   = false;                // display raw data
         Serial.print(myID);Serial.println(F("Sono in Polling simulation mode"));
-        // Serial.println(LnJoinStr(myID, "Sono in Polling simulation mode", NULL));
+        // Serial.println(joinStr(myID, "Sono in Polling simulation mode", NULL));
 
         PollingSimulation(pData);
         Serial.println();
@@ -79,7 +79,8 @@ void PollingSimulation(RXTX_DATA *pData) {
 
             // come comandData inviamo un testo di esempio
         char data[]  = "Polling request!";
-        setTxCommandData(pData, data);
+        setCommandData(pData->tx, data);
+        // setTxCommandData(pData, data);
 
             // send it to RS-485 bus
         sendMsg485(pData);
@@ -92,8 +93,8 @@ void PollingSimulation(RXTX_DATA *pData) {
         else { // il messaggio dovrebbe ancora essere nel TX
             // int dataLen = joinString(LnFuncWorkingBuff, "[", errMsg[rcvdRCode], "]",  "occurred on Polling request!");
             // setTxCommandData(pData, LnFuncWorkingBuff, dataLen);
-            char *pippo = LnJoinStr("[", errMsg[rcvdRCode],"] occurred on Polling request!", NULL);
-            setTxCommandData(pData, pippo);
+            char *pippo = joinStr("[", errMsg[rcvdRCode],"] occurred on Polling request!", NULL);
+            setCommandData(pData->tx, pippo);
             pData->tx[CMD_RCODE] = rcvdRCode;
         }
 

@@ -11,7 +11,7 @@ version : LnVer_2017-08-10_10.29.01
 #include <LnFunctions.h>                //  D2X(dest, val, 2)
 
 char UtoaBuffer[10];  // buffer dedicato
-char *LnUtoa(unsigned int i, byte padLen,  byte fill) {
+char *Utoa(unsigned int i, byte padLen,  byte fill) {
     char *ptr = &UtoaBuffer[9];
     *ptr = '\0';                  // chiude il buffer finale
 

@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-09_17.35.51
+version:    LnVer_2017-08-13_09.36.55
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -82,23 +82,23 @@ void processRequest(RXTX_DATA *pData) {
                 // Serial.println(pippo);
                 // free(pippo);
 
-                setTxCommandData(pData, myMsg1, sizeof(myMsg1));
+                setCommandData(pData->tx, myMsg1, sizeof(myMsg1));
                 pData->tx[CMD_RCODE] = OK;
             }
             break;
 
         case READPIN_CMD:
-            setTxCommandData(pData, myMsg1, sizeof(myMsg1));
+            setCommandData(pData->tx, myMsg1, sizeof(myMsg1));
             pData->tx[CMD_RCODE] = OK;
             break;
 
         case WRITEPIN_CMD:
-            setTxCommandData(pData, myMsg2, sizeof(myMsg2));
+            setCommandData(pData->tx, myMsg2, sizeof(myMsg2));
             pData->tx[CMD_RCODE] = OK;
             break;
 
         default:
-            setTxCommandData(pData, myMsg3, sizeof(myMsg3));
+            setCommandData(pData->tx, myMsg3, sizeof(myMsg3));
             pData->tx[CMD_RCODE] = UNKNOWN_CMD;
             break;
     }

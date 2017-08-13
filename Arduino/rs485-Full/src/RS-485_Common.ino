@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-09_17.13.36
+version:    LnVer_2017-08-13_09.37.22
 
 Scope:      Funzioni comuni
 
@@ -20,7 +20,7 @@ void setMyID(const char *name) {
     }
     i++; // skip '-'
 
-    unsigned char *xx = LnUtoa(myEEpromAddress, 3, '0');
+    unsigned char *xx = Utoa(myEEpromAddress, 3, '0');
     myID[i++] = xx[0];
     myID[i++] = xx[1];
     myID[i++] = xx[2];
@@ -32,7 +32,7 @@ void setMyID(const char *name) {
 void setMyID(const char *name) {
     // char myID[] = "\r\n[YYYYY-xxx] - "; // i primi due byte saranno CR e LF
                                         // YYYYY Emula, Relay, Slave
-    myID = LnJoinStr("\r\n[", name, "-", LnUtoa(myEEpromAddress, 3, '0'), "] - ", NULL);
+    myID = joinStr("\r\n[", name, "-", Utoa(myEEpromAddress, 3, '0'), "] - ", NULL);
 
     pData->myID = myID;
 }
@@ -53,17 +53,34 @@ void copyRxMessageToTx(RXTX_DATA *pData) {
 // #############################################################
 // # Inserisce un messaggio (di errore o altro) nella parte CommandData
 // #############################################################
-void setTxCommandData(RXTX_DATA *pData, char cmdData[], byte dataLen=0) {
+void _setTxCommandData(RXTX_DATA *pData, char cmdData[], byte dataLen=0) {
     if (dataLen==0) {
-        const char *ptr = cmdData;
-        while (*ptr++) {dataLen++; }
+        dataLen = stringLen(cmdData);
     }
+
 
     byte index = COMMAND_DATA-1;
     for (byte i=0; (i<dataLen) && (i<MAX_DATA_SIZE); i++)
         pData->tx[++index] = cmdData[i];         // copiamo i dati nel buffer da inviare
 
     pData->tx[DATALEN] = --index;  // update dataLen
+    // displayMyData(INO_Prefix,  LN_OK, pData);
+}
+
+// #############################################################
+// # Inserisce un messaggio (di errore o altro) nella parte CommandData
+// #############################################################
+void setCommandData(byte *pData, char cmdData[], byte dataLen=0) {
+    if (dataLen==0) {
+        dataLen = stringLen(cmdData);
+    }
+
+
+    byte index = COMMAND_DATA-1;
+    for (byte i=0; (i<dataLen) && (i<MAX_DATA_SIZE); i++)
+        pData[++index] = cmdData[i];         // copiamo i dati nel buffer da inviare
+
+    pData[DATALEN] = --index;  // update dataLen
     // displayMyData(INO_Prefix,  LN_OK, pData);
 }
 
@@ -114,7 +131,7 @@ byte waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
         for (byte i=7; *ptr != '\0'; i++, ptr++)
             errorMsg[i] = *ptr;
 
-        setTxCommandData(pData, errorMsg, sizeof(errorMsg));
+        setCommandData(pData->tx, errorMsg, sizeof(errorMsg));
     }
 
 
