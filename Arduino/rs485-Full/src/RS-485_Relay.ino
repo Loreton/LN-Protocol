@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_10.33.54
+version:    LnVer_2017-08-13_12.32.14
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -29,8 +29,6 @@ void rs485_Relay() {
         pData->fDisplayOtherData = true;                // display dati relativi ad  altri indirizzi
         pData->fDisplayRawData = false;                // display raw data
         // pData->fDisplayAllPckt = true;                // display all source/destination packets
-
-        setMyID("Relay");
     }
 
     pData->timeout     = 5000;

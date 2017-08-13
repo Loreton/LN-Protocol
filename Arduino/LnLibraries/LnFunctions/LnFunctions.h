@@ -9,7 +9,7 @@
   #include "WConstants.h"
 #endif
 
-
+// byte  myEEpromAddress;        // who we are
 #if not defined(_I_AM_LN_FUNCTIONS_)
     #define _I_AM_LN_FUNCTIONS_
 
@@ -17,6 +17,7 @@
 
     extern unsigned char LnFuncWorkingBuff[]; // 50 bytes
     extern char sharedWorkingBuff[]; // 50 bytes
+    extern char myID[];
 
 
     char *D2X(unsigned int Valore, char size);      // deve essere D2X.cpp
@@ -32,11 +33,12 @@
     char *Utoa(unsigned int i, byte padLen=2, byte fill=' ');
     char *joinStr(const char *fmt, ...);
     byte stringLen(const char* data);
+    void setMyID(const char *name);
+    // char *getMyID(void);
 
 
 
 
-    // ARDUINO NANO
     #if defined(_I_AM_ARDUINO_NANO_)
             #define D00       0         // pin  5
             #define D01       1         // pin  5

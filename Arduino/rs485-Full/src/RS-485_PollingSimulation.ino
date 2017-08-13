@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_10.05.37
+version:    LnVer_2017-08-13_12.31.47
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -18,9 +18,6 @@ byte returnRS485 = false; // simuliamo anche il ritorno in 485 sulla seriale per
 // se vogliamo che Arduino invii un echo autonomamente
 // ##########################################################
 void loop_PollingSimulation() {
-    if (firstRun) {
-        setMyID("Emula");
-    }
 
     if (returnRS485) {
         pData->fDisplayMyData    = false;                // display dati relativi al mio indirizzo

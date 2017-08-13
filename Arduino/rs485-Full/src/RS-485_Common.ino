@@ -1,41 +1,11 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_10.05.17
+version:    LnVer_2017-08-13_12.28.18
 
 Scope:      Funzioni comuni
 
 */
-#if 0
 
-// ################################################################
-// # - setMyID
-// # char myID[] = "\r\n[Slave-xxx] - "; // i primi due byte sono CR e LF
-// ################################################################
-void setMyID(const char *name) {
-    byte i=3;
-    byte i1;
-
-    for (i1=0; i1<5; i1++) {
-        myID[i++] = name[i1];
-    }
-    i++; // skip '-'
-
-    unsigned char *xx = Utoa(myEEpromAddress, 3, '0');
-    myID[i++] = xx[0];
-    myID[i++] = xx[1];
-    myID[i++] = xx[2];
-
-    if (pData->fDisplayMyData) pData->myID = myID;
-}
-#endif
-
-void setMyID(const char *name) {
-    // char myID[] = "\r\n[YYYYY-xxx] - "; // i primi due byte saranno CR e LF
-                                        // YYYYY Emula, Relay, Slave
-    myID = joinStr("\r\n[", name, "-", Utoa(myEEpromAddress, 3, '0'), "] - ", NULL);
-
-    pData->myID = myID;
-}
 
 
 
@@ -49,24 +19,7 @@ void copyRxMessageToTx(RXTX_DATA *pData) {
         pData->tx[i] = pData->rx[i];         // copiamo i dati nel buffer da inviare
 }
 
-#if 0
-// #############################################################
-// # Inserisce un messaggio (di errore o altro) nella parte CommandData
-// #############################################################
-void setTxCommandData(RXTX_DATA *pData, char cmdData[], byte dataLen=0) {
-    if (dataLen==0) {
-        dataLen = stringLen(cmdData);
-    }
 
-
-    byte index = COMMAND_DATA-1;
-    for (byte i=0; (i<dataLen) && (i<MAX_DATA_SIZE); i++)
-        pData->tx[++index] = cmdData[i];         // copiamo i dati nel buffer da inviare
-
-    pData->tx[DATALEN] = --index;  // update dataLen
-    // displayMyData(INO_Prefix,  LN_OK, pData);
-}
-#endif
 // #############################################################
 // # Inserisce un messaggio (di errore o altro) nella parte CommandData
 // #############################################################

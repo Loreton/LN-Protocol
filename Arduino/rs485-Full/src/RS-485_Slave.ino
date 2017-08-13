@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_10.04.50
+version:    LnVer_2017-08-13_12.28.54
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -26,7 +26,6 @@ void loop_Slave() {
         // pData->fDisplayAllPckt  = false;                // display all source/destination packets
         pData->fDisplayRawData  = false;                // display raw data
         pData->timeout          = 5000;
-        setMyID("Slave");
     }
 
     // Serial.println();

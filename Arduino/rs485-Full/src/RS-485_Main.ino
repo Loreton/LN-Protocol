@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_10.34.12
+version:    LnVer_2017-08-13_14.53.46
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -26,10 +26,8 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 
 char sharedWorkingBuff[50];
 bool firstRun = true;
-char *myID;
-    //.............0 1 234567890123
-// char myID[] = "\r\n[YYYYY-xxx] - "; // i primi due byte saranno CR e LF
-                                        // YYYYY Emula, Relay, Slave
+
+byte  myEEpromAddress;        // who we are
 
 
 //python3.4 -m serial.tools.list_ports
@@ -73,6 +71,10 @@ void setup() {
 void loop() {
     if (myEEpromAddress <= 10) {
         #ifdef POLLING_SIMULATION
+            if (firstRun) {
+                setMyID("Emula");
+                pData->myID = myID;
+            }
             loop_PollingSimulation();
             // char *pippo = strCatv_OK(3, "Loreto ", "pippo ", "ciao ");
             // Serial.print("eccomi:  --> "); Serial.println(pippo);
@@ -93,11 +95,20 @@ void loop() {
             delay(1000);
 
         #else
+            if (firstRun) {
+                setMyID("Relay");
+                pData->myID = myID;
+            }
             rs485_Relay();
         #endif
     }
     else {
+        if (firstRun) {
+            setMyID("Slave");
+            pData->myID = myID;
+        }
         loop_Slave();
+
     }
     firstRun = false;
 
