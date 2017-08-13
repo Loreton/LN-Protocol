@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_09.35.56
+version:    LnVer_2017-08-13_10.05.37
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -74,14 +74,14 @@ void PollingSimulation(RXTX_DATA *pData) {
         pData->rx[SUBCOMMAND]       = REPLY;
         pData->rx[DATALEN]          = SUBCOMMAND;
 
-            // lo copiammo nel TX
-        copyRxMessageToTx(pData);
 
             // come comandData inviamo un testo di esempio
         char data[]  = "Polling request!";
-        setCommandData(pData->tx, data);
+        setCommandData(pData->rx, data);
         // setTxCommandData(pData, data);
 
+            // lo copiammo nel TX
+        copyRxMessageToTx(pData);
             // send it to RS-485 bus
         sendMsg485(pData);
 
@@ -95,6 +95,7 @@ void PollingSimulation(RXTX_DATA *pData) {
             // setTxCommandData(pData, LnFuncWorkingBuff, dataLen);
             char *pippo = joinStr("[", errMsg[rcvdRCode],"] occurred on Polling request!", NULL);
             setCommandData(pData->tx, pippo);
+            // setTxCommandData(pData, pippo);
             pData->tx[CMD_RCODE] = rcvdRCode;
         }
 

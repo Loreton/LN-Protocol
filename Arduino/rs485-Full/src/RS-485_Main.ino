@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-09_17.11.28
+version:    LnVer_2017-08-13_10.34.12
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -93,7 +93,7 @@ void loop() {
             delay(1000);
 
         #else
-            loop_Relay();
+            rs485_Relay();
         #endif
     }
     else {

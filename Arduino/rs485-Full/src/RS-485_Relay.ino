@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-08_08.46.32
+version:    LnVer_2017-08-13_10.33.54
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -21,7 +21,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - facciamo il forward verso rs485
 // #    - torniamo indietro la risposta
 // ################################################################
-void loop_Relay() {
+void rs485_Relay() {
     if (firstRun) {
         // pData->fDisplayData    = true;                // display user/command data
 

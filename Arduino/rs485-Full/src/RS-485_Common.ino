@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_09.37.22
+version:    LnVer_2017-08-13_10.05.17
 
 Scope:      Funzioni comuni
 
@@ -49,11 +49,11 @@ void copyRxMessageToTx(RXTX_DATA *pData) {
         pData->tx[i] = pData->rx[i];         // copiamo i dati nel buffer da inviare
 }
 
-
+#if 0
 // #############################################################
 // # Inserisce un messaggio (di errore o altro) nella parte CommandData
 // #############################################################
-void _setTxCommandData(RXTX_DATA *pData, char cmdData[], byte dataLen=0) {
+void setTxCommandData(RXTX_DATA *pData, char cmdData[], byte dataLen=0) {
     if (dataLen==0) {
         dataLen = stringLen(cmdData);
     }
@@ -66,7 +66,7 @@ void _setTxCommandData(RXTX_DATA *pData, char cmdData[], byte dataLen=0) {
     pData->tx[DATALEN] = --index;  // update dataLen
     // displayMyData(INO_Prefix,  LN_OK, pData);
 }
-
+#endif
 // #############################################################
 // # Inserisce un messaggio (di errore o altro) nella parte CommandData
 // #############################################################
@@ -132,6 +132,7 @@ byte waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
             errorMsg[i] = *ptr;
 
         setCommandData(pData->tx, errorMsg, sizeof(errorMsg));
+        // setTxCommandData(pData, errorMsg, sizeof(errorMsg));
     }
 
 
