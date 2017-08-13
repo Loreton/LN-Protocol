@@ -1,41 +1,6 @@
-/*
-Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_17.25.24
 
-Scope:      Funzioni comuni
-
-*/
-
-
-
-#if 0
-// ################################################################
-// # - Copia l'intero messaggio
-// # -  RxBuffer --> TxBuffer
-// ################################################################
-void OOLLDD_copyRxMessageToTx(RXTX_DATA *pData) {
-        // - copy ALL rx to tx
-    for (byte i = 0; i<=pData->rx[DATALEN]; i++)
-        pData->tx[i] = pData->rx[i];         // copiamo i dati nel buffer da inviare
-}
-
-// #############################################################
-// # Inserisce un messaggio (di errore o altro) nella parte CommandData
-// #############################################################
-void setCommandData(byte *pData, char cmdData[], byte dataLen=0) {
-    if (dataLen==0) {
-        dataLen = stringLen(cmdData);
-    }
-
-
-    byte index = COMMAND_DATA-1;
-    for (byte i=0; (i<dataLen) && (i<MAX_DATA_SIZE); i++)
-        pData[++index] = cmdData[i];         // copiamo i dati nel buffer da inviare
-
-    pData[DATALEN] = --index;  // update dataLen
-    // displayMyData(INO_Prefix,  LN_OK, pData);
-}
-
+#include "LnRS485_protocol.h"
+// #include <LnFunctions.h>        // stringLen
 
 // ################################################################
 // #- riceviamo i dati da rs485
@@ -90,7 +55,3 @@ byte waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
 
     return rcvdRCode;
 }
-
-
-
-#endif

@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_12.31.47
+version:    LnVer_2017-08-13_17.23.06
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -12,6 +12,8 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 
 
 #ifdef POLLING_SIMULATION
+// #include <LnRS485_protocol.h>
+
 // byte returnRS485 = true; // simuliamo anche il ritorno in 485 sulla seriale per affinare il master python
 byte returnRS485 = false; // simuliamo anche il ritorno in 485 sulla seriale per affinare il master python
 // ##########################################################

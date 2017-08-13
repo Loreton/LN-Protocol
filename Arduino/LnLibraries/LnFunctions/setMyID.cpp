@@ -1,17 +1,10 @@
 
-#include    <EEPROM.h>
+#define I_AM_SET_MY_ID_
 #include <LnFunctions.h>
 
 
 
-// ################################################################
-// # - setMyID
-// # char myID[] = "\r\n[Slave-xxx] - "; // i primi due byte sono CR e LF
-// ################################################################
-char myID[] = "\r\n[YYYYY-xxx] - "; // i primi due byte saranno CR e LF
-    extern byte  myEEpromAddress;        // who we are
-
-void setMyID(const char *name) {
+void setMyID(const char *name, byte myEEpromAddress) {
     byte i=3;
     byte i1;
 
@@ -20,18 +13,9 @@ void setMyID(const char *name) {
     }
     i++; // skip '-'
 
-
-        // ================================================
-        // - Preparazione myID con indirizzo di Arduino
-        // -    1. convert integer myAddress to string
-        // -    2. copy string into myID array
-        // ================================================
-    myEEpromAddress = EEPROM.read(0);
-
     char *xx = Utoa(myEEpromAddress, 3, '0');
     myID[i++] = xx[0];
     myID[i++] = xx[1];
     myID[i++] = xx[2];
 
-    // if (pData->fDisplayMyData) pData->myID = myID;
 }

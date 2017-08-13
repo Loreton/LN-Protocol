@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-08-10_12.33.35
+    Version:   LnVer_2017-08-13_16.32.24
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -388,28 +388,28 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
         Serial.println();
 
         // FULL COMMAND DATA (inclusi SA, DA, etc..
-        Serial.print(TAB);Serial.print(F("fullData    hex - len:["));Serial.print(Utoa(data[0], 3, '0'));Serial.print(F("] - "));
+        Serial.print(TAB4);Serial.print(F("fullData    hex - len:["));Serial.print(Utoa(data[0], 3, '0'));Serial.print(F("] - "));
             printHex((char *) &data[1], data[0]);
 
         // COMMAND_DATA
         byte lun=dataLen-SUBCOMMAND;
-        Serial.print(TAB);Serial.print(F("commandData hex - len:["));Serial.print(Utoa(lun, 3, '0'));Serial.print(F("] - "));
+        Serial.print(TAB4);Serial.print(F("commandData hex - len:["));Serial.print(Utoa(lun, 3, '0'));Serial.print(F("] - "));
             printNchar(' ', SUBCOMMAND*3);printHex((char *) &data[COMMAND_DATA], lun);
 
-        Serial.print(TAB);Serial.print(F("commandData asc - len:["));Serial.print(Utoa(lun, 3, '0'));Serial.print(F("] - "));
+        Serial.print(TAB4);Serial.print(F("commandData asc - len:["));Serial.print(Utoa(lun, 3, '0'));Serial.print(F("] - "));
             printNchar(' ', SUBCOMMAND*3); printDelimitedStr((char *) &data[COMMAND_DATA], lun, "[]");
 
         Serial.println();
         if (caller[0] == 'R') {
-            Serial.print(TAB);Serial.print(F( "CRC Rec/Cal 0x : "));printHex(pData->Rx_CRCrcvd);Serial.print(" ");printHex(pData->Rx_CRCcalc);
+            Serial.print(TAB4);Serial.print(F( "CRC Rec/Cal 0x : "));printHex(pData->Rx_CRCrcvd);Serial.print(" ");printHex(pData->Rx_CRCcalc);
         }
         else {
-            Serial.print(TAB);printHexPDS(    "xMitted CRC 0x : ", pData->Tx_CRCcalc, "");
+            Serial.print(TAB4);printHexPDS(    "xMitted CRC 0x : ", pData->Tx_CRCcalc, "");
         }
 
-        Serial.print(TAB);Serial.print(F( "SEQNO       0x : "));printHex((char *) &data[SEQNO_HIGH], 2);
-        Serial.print(TAB);Serial.print(F( "CMD_RCode   0x : "));printHex(data[CMD_RCODE]);
-        Serial.print(TAB);Serial.print(F( "CMD/subCMD  0x : "));printHex(data[COMMAND]);Serial.print(" ");printHex(data[SUBCOMMAND]);
+        Serial.print(TAB4);Serial.print(F( "SEQNO       0x : "));printHex((char *) &data[SEQNO_HIGH], 2);
+        Serial.print(TAB4);Serial.print(F( "CMD_RCode   0x : "));printHex(data[CMD_RCODE]);
+        Serial.print(TAB4);Serial.print(F( "CMD/subCMD  0x : "));printHex(data[COMMAND]);Serial.print(" ");printHex(data[SUBCOMMAND]);
 
     }
 
@@ -418,12 +418,12 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
         if (pData->fDisplayRawData) {
             rawIndex = COMMAND_DATA*2;
             Serial.println();
-            Serial.print(TAB);Serial.print(F("full raw - len:["));Serial.print(Utoa(raw[0], 3, '0'));Serial.print(F("] - "));
-            Serial.print(TAB);printHex((char *) &raw[1], raw[0]); //Serial.println();
+            Serial.print(TAB4);Serial.print(F("full raw - len:["));Serial.print(Utoa(raw[0], 3, '0'));Serial.print(F("] - "));
+            Serial.print(TAB4);printHex((char *) &raw[1], raw[0]); //Serial.println();
 
             Serial.println();
-            Serial.print(TAB);Serial.print(F("CMD  raw -      "));;Serial.print(Utoa(raw[0], 3, '0'));
-            Serial.print(TAB);printHex((char *) &raw[rawIndex], rawLen-rawIndex-2);//Serial.println();
+            Serial.print(TAB4);Serial.print(F("CMD  raw -      "));;Serial.print(Utoa(raw[0], 3, '0'));
+            Serial.print(TAB4);printHex((char *) &raw[rawIndex], rawLen-rawIndex-2);//Serial.println();
 
         }
     }

@@ -11,22 +11,18 @@
 
     RXTX_DATA   RxTx, *pData;             // struttura dati
 
-    //.............0 1 234567890123
-    // char myID[] = "\r\n[YYYYY-xxx] - "; // i primi due byte saranno CR e LF
-                                        // YYYYY Emula, Relay, Slave
 
-    // extern char *myID;
+#if defined (I_AM_MAIN_)
+    byte  myEEpromAddress = 0;        // who we are
+    char sharedWorkingBuff[50];
+    bool firstRun = true;
     const char TAB[] = "\n    ";
 
+#else
+    extern byte  myEEpromAddress;        // who we are
+#endif
 
 
-/*
-    gv.myCMD            = gv.Ln.LnDict()
-    gv.myCMD.echo       = bytes([ 1])        # x01
-    gv.myCMD.polling    = bytes([ 2])
-    gv.myCMD.readPin    = bytes([21])
-    gv.myCMD.writePin   = bytes([22])
-*/
     enum rs485_COMMANDs {
                             ECHO_CMD        = 1,
                             POLLING_CMD     = 2,

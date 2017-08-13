@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-08-10_08.59.17
+// Version: LnVer_2017-08-13_17.26.03
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -26,12 +26,14 @@
 
 
     extern byte myEEpromAddress;
+    const char TAB4[] = "\n    ";
+
 #else
+    // extern const char TAB[];
     extern const char *errMsg[];
 
 #endif
 
-    extern const char TAB[];
 
 
     const byte STX    = 0x02;
@@ -110,6 +112,12 @@
 
         // dataLen is byte data[0]
     void displayDebugMessage(const char *caller, byte errMscType, const byte *data);
-    // void displayMyData(const char *caller, byte errMscType, RXTX_DATA *pData, bool fprintRAW=true);
     void displayMyData(const char *caller, byte errMscType, RXTX_DATA *pData);
     void prova(const char *caller);
+
+
+
+    void copyRxMessageToTx(RXTX_DATA *pData);
+    void setCommandData(byte *pData, char cmdData[], byte dataLen=0);
+    byte waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT);
+

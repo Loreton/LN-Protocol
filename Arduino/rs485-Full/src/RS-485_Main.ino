@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_14.53.46
+version:    LnVer_2017-08-13_16.33.21
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -14,20 +14,19 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 */
 
 #define     _I_AM_ARDUINO_NANO_
-#define     I_AM_MAIN__
+#define     I_AM_MAIN_
 
 #define     POLLING_SIMULATION
 #include    <LnFunctions.h>                //  D2X(dest, val, 2), printHex
-#include    <LnRS485_protocol.h>
-#include    <SoftwareSerial.h>
-#include    "RS-485_Full.h"                      //  pin definitions
 #include    <EEPROM.h>
 
 
-char sharedWorkingBuff[50];
-bool firstRun = true;
+#include    <LnRS485_protocol.h>
+#include    <SoftwareSerial.h>
+#include    "RS-485_Full.h"                      //  pin definitions
 
-byte  myEEpromAddress;        // who we are
+
+
 
 
 //python3.4 -m serial.tools.list_ports
@@ -72,31 +71,15 @@ void loop() {
     if (myEEpromAddress <= 10) {
         #ifdef POLLING_SIMULATION
             if (firstRun) {
-                setMyID("Emula");
+                setMyID("Emula", myEEpromAddress);
                 pData->myID = myID;
             }
             loop_PollingSimulation();
-            // char *pippo = strCatv_OK(3, "Loreto ", "pippo ", "ciao ");
-            // Serial.print("eccomi:  --> "); Serial.println(pippo);
-            // char *pippo = LnJoinStr("Loreto ", "pippo ", "ciao ", NULL);
-            // Serial.print("eccomi2: --> "); Serial.println(pippo);
-            // free(pippo);
-            // byte *pippoUCHAR = LnJoinStrUCHAR("Loreto ", "pippo ", "ciao ", NULL);
-            // Serial.print("eccomi2: --> "); Serial.println((char *) pippoUCHAR);
-            // free(pippoUCHAR);
-            // pippo=pippo;
-            // unsigned char data[20];
-            // int dataLen = joinString(data, "Ciao",  " - polling request!", ".");
-            // Serial.println();
-            // Serial.print(dataLen);
-            // Serial.print(" - " );
-            // printStr(data);
-            // Serial.println();
             delay(1000);
 
         #else
             if (firstRun) {
-                setMyID("Relay");
+                setMyID("Relay", myEEpromAddress);
                 pData->myID = myID;
             }
             rs485_Relay();
@@ -104,7 +87,7 @@ void loop() {
     }
     else {
         if (firstRun) {
-            setMyID("Slave");
+            setMyID("Slave",myEEpromAddress);
             pData->myID = myID;
         }
         loop_Slave();
