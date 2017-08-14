@@ -1,19 +1,15 @@
 
 #include "LnRS485_protocol.h"
-// #include <LnFunctions.h>        // stringLen
 
 // #############################################################
 // # Inserisce un messaggio (di errore o altro) nella parte CommandData
 // #############################################################
 void setCommandData(byte *pData, char cmdData[], byte dataLen) {
-    if (dataLen==0) {
-        // - calcolo len
-        // byte len=0;
-        char *ptr = cmdData;
 
+        // - calcolo len
+    if (dataLen==0) {
+        char *ptr = cmdData;
         while (*ptr++) {dataLen++; }
-        // return len;
-        // dataLen = stringLen(cmdData);
     }
 
 
@@ -22,5 +18,4 @@ void setCommandData(byte *pData, char cmdData[], byte dataLen) {
         pData[++index] = cmdData[i];         // copiamo i dati nel buffer da inviare
 
     pData[DATALEN] = --index;  // update dataLen
-    // displayMyData(INO_Prefix,  LN_OK, pData);
 }

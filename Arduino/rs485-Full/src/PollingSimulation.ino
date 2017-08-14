@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_17.23.06
+version:    LnVer_2017-08-14_09.29.37
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -12,10 +12,14 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 
 
 #ifdef POLLING_SIMULATION
-// #include <LnRS485_protocol.h>
 
-// byte returnRS485 = true; // simuliamo anche il ritorno in 485 sulla seriale per affinare il master python
-byte returnRS485 = false; // simuliamo anche il ritorno in 485 sulla seriale per affinare il master python
+// --------------------------------------------------------------------------------
+// simuliamo anche il ritorno in 485 sulla seriale per affinare il master python
+// false : scrive in modalità text
+// true  : scrive con protocollo LnRs485
+// --------------------------------------------------------------------------------
+byte returnRS485 = true;
+
 // ##########################################################
 // se vogliamo che Arduino invii un echo autonomamente
 // ##########################################################
@@ -64,7 +68,7 @@ void PollingSimulation(RXTX_DATA *pData) {
             // - dovendo simulare la ricezione da parte del raspberry
             // - preparo un messaggio come se fosse stato ricevuto
             // ---------------------------------------------------------
-        pData->rx[SENDER_ADDR]      = myEEpromAddress; // SA
+        pData->rx[SENDER_ADDR]      = 0;                                    // proviene dal master
         pData->rx[DESTINATION_ADDR] = destAddresses[i];                    // DA
         pData->rx[SEQNO_HIGH]       = seqNO >> 8;
         pData->rx[SEQNO_LOW]        = seqNO & 0x00FF;
@@ -77,36 +81,25 @@ void PollingSimulation(RXTX_DATA *pData) {
             // come comandData inviamo un testo di esempio
         char data[]  = "Polling request!";
         setCommandData(pData->rx, data);
-        // setTxCommandData(pData, data);
 
-            // lo copiammo nel TX
-        copyRxMessageToTx(pData);
-            // send it to RS-485 bus
-        sendMsg485(pData);
+        // - simuliamo la ricezione con rCode=LN_OK
+        byte rCode = LN_OK;
+        if (rCode == LN_OK) {
+            Relay_fwdToRs485(pData);
+                // qualsiasi esito il msg è pronto da inviare sulla rs232
+            byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
 
-            // wait for response
-        byte rcvdRCode = waitRs485Response(pData, 2000);
-        if (rcvdRCode == LN_OK) {
-            copyRxMessageToTx(pData);
-        }
-        else { // il messaggio dovrebbe ancora essere nel TX
-            // int dataLen = joinString(LnFuncWorkingBuff, "[", errMsg[rcvdRCode], "]",  "occurred on Polling request!");
-            // setTxCommandData(pData, LnFuncWorkingBuff, dataLen);
-            char *pippo = joinStr("[", errMsg[rcvdRCode],"] occurred on Polling request!", NULL);
-            setCommandData(pData->tx, pippo);
-            // setTxCommandData(pData, pippo);
-            pData->tx[CMD_RCODE] = rcvdRCode;
+                // inviamo sulla 232 in formato rs485
+            if (returnRS485) {
+                sendMsg232(pData);
+            }
+                // ... oppure lo inviamo sulla 232 in formato ascii
+            else {
+                Serial.print(F("\n\n"));
+                displayMyData("TX-poll", rcvdRCode, pData);
+            }
         }
 
-            // inviamo sulla 232 in formato rs485
-        if (returnRS485) {
-            sendMsg232(pData);
-        }
-            // ... oppure lo inviamo sulla 232 in formato ascii
-        else {
-            Serial.print(F("\n\n"));
-            displayMyData("TX-poll", rcvdRCode, pData);
-        }
 
         delay(10000); // aspettiamo 10 secondi tra un indirizzo ed il successivo
     }

@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-08-13_17.26.03
+// Version: LnVer_2017-08-14_08.57.29
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -87,15 +87,12 @@
         byte            Rx_CRCcalc;    // CRC value
         byte            Rx_CRCrcvd;    // CRC value
 
-        // bool            fDisplayData     = false;     // per fare il print dei data
-        // bool            fDisplayAllPckt  = false;     // per fare il print di tutti i pacchetti oppure solo quello che riguardano il myAddr
-        bool            fDisplayMyData    = false;                // display dati relativi al mio indirizzo
-        bool            fDisplayOtherData = false;                // display dati relativi ad  altri indirizzi
+        bool            fDisplayMyData    = false;       // display dati relativi al mio indirizzo
+        bool            fDisplayOtherData = false;       // display dati relativi ad  altri indirizzi
+        bool            fDisplayRawData   = false;       // per fare il print del rawData
 
-        bool            fDisplayRawData  = false;     // per fare il print del rawData
-
-        char            *myID;    // pointer identificativo di Arduino
-        // byte            myEEpromAddress = 0;     // porta dentro l'indirizzo del device. utile per il printMessage
+        byte            myEEpromAddress;                // indirizzo identificativo di Arduino
+        char            *myID;                          // stringa identificativo di Arduino
         unsigned long   timeout         = 10000;        // send/receive timeout
 
     }  RXTX_DATA, *pRXTX_DATA;

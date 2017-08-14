@@ -1,12 +1,10 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_17.23.42
+version:    LnVer_2017-08-14_08.33.02
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
                 se lo riguarda processa il comando ed invia la risposta.
-
-Ref:        http://www.gammon.com.au/forum/?id=11428
 */
 
 // bool firstRun = true;

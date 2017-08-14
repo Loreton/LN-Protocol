@@ -1,14 +1,11 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-13_17.23.34
+version:    LnVer_2017-08-14_09.39.19
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
                 ed inoltra il comando sul bus RS485.
                 Provvede ovviamente a catturare la risposta e reinoltrarla a RaspBerry.
-
-Ref:        http://www.gammon.com.au/forum/?id=11428
-
 
 
 */
@@ -21,7 +18,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // #    - facciamo il forward verso rs485
 // #    - torniamo indietro la risposta
 // ################################################################
-void rs485_Relay() {
+void Relay_Main() {
     if (firstRun) {
         // pData->fDisplayData    = true;                // display user/command data
 
@@ -56,9 +53,9 @@ void rs485_Relay() {
         // -    1. ignora
         // --------------------------------------
     if (rCode == LN_OK) {
-        fwdToRs485(pData);
+        Relay_fwdToRs485(pData);
             // qualsiasi esito il msg è pronto da inviare sulla rs232
-        waitRs485Response(pData, 2000);
+        Relay_waitRs485Response(pData, 2000);
         sendMsg232(pData);
     }
 }
@@ -67,7 +64,7 @@ void rs485_Relay() {
 // ################################################################
 // # - Forward del messaggio ricevuto da RaspBerry verso RS485
 // ################################################################
-void fwdToRs485(RXTX_DATA *pData) {
+void Relay_fwdToRs485(RXTX_DATA *pData) {
 
     copyRxMessageToTx(pData);
         // send to RS-485 bus
@@ -80,8 +77,62 @@ void fwdToRs485(RXTX_DATA *pData) {
 // ################################################################
 // # - Forward del messaggio ricevuto da RS485 verso RaspBerry
 // ################################################################
-void fwdToRaspBerry(RXTX_DATA *pData) {
-    copyRxMessageToTx(pData);
-    sendMsg232(pData);
+// void Relay_fwdToRaspBerry(RXTX_DATA *pData) {
+//     copyRxMessageToTx(pData);
+//     sendMsg232(pData);
 
+// }
+
+
+
+// ################################################################
+// #- riceviamo i dati da rs485
+// #-  Se OK allora li torniamo al RaspBerry
+// #-  Se ERROR/TIMEOUT ritorniamo errore al RaspBerry
+// --------------------------------------
+// - se corretto:
+// -    1. nothing
+// - altrimenti:
+// -    1. prepara messaggo di errore
+// -    2. set opportunamente gli indirizzi
+// - finally:
+// -    1. copia Rx to Tx
+// -    2. ritorna rCode
+// --------------------------------------
+// ################################################################
+byte Relay_waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
+
+    pData->timeout = TIMEOUT;
+
+    byte rcvdRCode = recvMsg485(pData);
+
+
+        // --------------------------------------------------------
+        // - vuol dire che lo slave non ha risposto
+        // - o comunque ci sono stati errori nella trasmissione
+        // --------------------------------------------------------
+    if (rcvdRCode != LN_OK) {
+        // -----------------------------------------
+        // - Prepariamo il messaggio di errore
+        // - lo scriviamo su ->rx
+        // - perché poi sarà copiato su ->tx
+        // -----------------------------------------
+        pData->rx[SENDER_ADDR]      = pData->rx[DESTINATION_ADDR];
+        pData->rx[DESTINATION_ADDR] = 0;
+
+                      //-- 01234567
+        char errorMsg[] = "ERROR: ........ occurred...!";
+        const char *ptr = errMsg[rcvdRCode];
+
+        // copiamo il codice errore nei [....]
+        for (byte i=6; *ptr != '\0'; i++, ptr++)
+            errorMsg[i] = *ptr;
+
+        setCommandData(pData->rx, errorMsg);
+
+    }
+
+
+    copyRxMessageToTx(pData);
+    return rcvdRCode;
 }
