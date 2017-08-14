@@ -50,4 +50,6 @@ if isUnix:
 
 
 
-from . LnRS485.LnRs485_Class      import  LnRs485_Instrument as LnRs485 # import di un membro
+# from . LnRS485.LnRs485_Class_OK      import  LnRs485_Instrument as LnRs485 # import di un membro
+from . LnRS485.LnRs485_Class_New      import  LnRs485_Instrument as LnRs485 # import di un membro
+# from . LnRS485.LnRs485_Class_New_Bad      import  LnRs485_Instrument as LnRs485 # import di un membro

@@ -62,7 +62,7 @@ def MonitorRS485(gv, monPort):
     try:
 
         while True:
-            payLoad, rawData = monPort.readData(fDEBUG=True)
+            payLoad, rawData = monPort.readData(timeoutValue=30000, fDEBUG=True)
             if not payLoad:
                 COMMAND_DATA      = 7    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
                 # print ('payLoad ERROR....')

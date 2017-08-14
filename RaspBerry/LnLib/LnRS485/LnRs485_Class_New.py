@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-08-14_13.49.11'
+__version__  = 'LnVer_2017-08-14_14.30.51'
 __status__   = 'Beta'
 
 import os
@@ -371,103 +371,6 @@ class LnRs485_Instrument():
             logger.debug('opening port...')
             self.serial.open()
 
-        if isinstance(SOD, int): SOD=[SOD]
-        if isinstance(EOD, int): EOD=[EOD]
-
-        RAW = True if (not SOD and not EOD) else False
-
-            # -------------------
-            # - solo per DEBUG
-            # -------------------
-        sodString=''
-        for val in SOD: sodString += " x{0:02x}".format(val)
-        logger.debug( "SOD:     {0}".format(sodString))
-
-        eodString=''
-        for val in EOD: eodString += " x{0:02x}".format(val)
-        logger.debug( "EOD:     {0}".format(eodString))
-
-        logger.debug( "RAW:     {}".format(RAW))
-        logger.debug( "TIMEOUT: {}".format(timeoutValue))
-        logger.debug( "reading buffer")
-
-
-        # facciamo partire il timer
-        startRun = time.time()
-        elapsed = 0
-
-        buffer = bytearray()
-        while elapsed < timeoutValue:
-            # time.sleep(.01)
-            elapsed = time.time()-startRun
-            logger.debug( "elapsed {}/{}".format(elapsed, timeoutValue))
-                # - in attesa di un byte
-            ch = self.serial.read(1)       # ch e' un type->bytes
-            chInt = int.from_bytes(ch, 'little')
-            if ch == b'':
-                if RAW:
-                    if len(buffer) > 0:
-                        logger.debug( "Received byte: {0:02x} - breaking".format(chInt) )
-                        break
-                    else:
-                        logger.debug( "Received byte: {0:02x} - skipping".format(chInt) )
-                        continue
-                else:
-                    if len(buffer) > 0:
-                        logger.debug( "Received byte: {0:02x} - breaking".format(chInt) )
-                        break
-                    else:
-                        logger.debug( "Received byte: {0:02x} - skipping".format(chInt) )
-                        continue
-
-            logger.debug( "Received byte: {0:02x}".format(chInt) )
-                # Start of Data
-            if SOD and chInt in SOD:
-                logger.debug( "found SOD")
-                buffer = bytearray()    # reinizializza il buffer
-                buffer.append(chInt)
-
-                # se siamo in cerca di EOD
-            elif EOD:
-                logger.debug( "inside EOD")
-                buffer.append(chInt)
-                if chInt in EOD:
-                    logger.debug( "found SOD")
-                    break
-
-                # - andiamo liberi senza delimiters
-            else:
-                logger.debug( "inside RAW")
-                buffer.append(chInt)
-
-
-
-
-
-        # print (elapsed, TIMEOUT)
-        if self.close_port_after_each_call:
-            logger.debug('closing port...')
-            self.serial.close()
-
-        return buffer
-
-
-
-    #######################################################################
-    # - Lettura dati fino a:
-    # -     SOD = StartOfData  carattere che identifica l'inizio dei dati.
-    # -             quelli arrivati prima saranno ignorati
-    # -     EOD = None ... avanti fino al primo null char
-    # -     EOD = xxx ... fino al char xxx
-    # - Ritorna una bytearray di integer
-    #######################################################################
-    def _readSerialBuffer_ERROR(self, SOD=[], EOD=[], timeoutValue=5000, fDEBUG=False):
-        logger = self._setLogger(package=__name__)
-
-        if self.close_port_after_each_call:
-            logger.debug('opening port...')
-            self.serial.open()
-
             # creiamo LIST nel caso sia un intero
         if isinstance(SOD, int): SOD=[SOD]
         if isinstance(EOD, int): EOD=[EOD]
@@ -494,65 +397,73 @@ class LnRs485_Instrument():
         startRun = time.time()*1000
         elapsed = 0
         TIMEOUT = True
+        print( "starting timer... for {} mSec".format(timeoutValue))
 
         buffer = bytearray()
         while elapsed < timeoutValue:
-            # time.sleep(.01)
             elapsed = int((time.time()*1000)-startRun)
             if elapsed%100 == 0:
                 logger.debug( "elapsed {0}/{1}".format(elapsed, timeoutValue))
 
-                # ---------------------------
                 # - in attesa di un byte
-                # ---------------------------
             ch = self.serial.read(1)       # ch e' un type->bytes
             chInt = int.from_bytes(ch, 'little')
-            if ch == b'':
-                if RAW:
-                    if len(buffer) > 0:
-                        logger.debug( "Received byte: {0:02x} - breaking".format(chInt) )
-                        break
-                    else:
-                        logger.debug( "Received byte: {0:02x} - skipping".format(chInt) )
-                        continue
-                else:
-                    if len(buffer) > 0:
-                        logger.debug( "Received byte: {0:02x} - breaking".format(chInt) )
-                        break
-                    else:
-                        logger.debug( "Received byte: {0:02x} - skipping".format(chInt) )
-                        continue
 
-            logger.debug( "Received byte: {0:02x}".format(chInt) )
+            if ch == b'':
+                if len(buffer) > 0:
+                    # logLine += "     breaking"
+                    # logger.debug(logLine)
+                    break
+                else:
+                    # logLine += "     skipping"
+                    # logger.debug(logLine)
+                    continue
+
+            buffer.append(chInt)
+            logLine = "Received byte: {0:02x}".format(chInt)
+            # logger.debug( "Received byte: {0:02x}".format(chInt) )
                 # Start of Data
+
             if SOD and chInt in SOD:
-                logger.debug( "found SOD")
                 buffer = bytearray()    # reinizializza il buffer
                 buffer.append(chInt)
+                logLine +=  "     found SOD"
+                # else:
+                #     logLine += "     waiting for SOD {}".format(SOD)
+                logger.debug(logLine)
 
                 # se siamo in cerca di EOD
             elif EOD:
-                logger.debug( "inside EOD")
-                buffer.append(chInt)
                 if chInt in EOD:
-                    logger.debug( "found SOD")
+                    logLine += "     found EOD {}".format(chInt)
+                    TIMEOUT = False
+                    logger.debug(logLine)
                     break
+                else:
+                    logLine += "     waiting for EOD {}".format(EOD)
+                    logger.debug(logLine)
 
                 # - andiamo liberi senza delimiters
             else:
-                logger.debug( "inside RAW")
-                buffer.append(chInt)
+                logLine += "     inside RAW"
+                logger.debug(logLine)
 
 
 
 
 
-        # print (elapsed, timeoutValue)
+
+
+
+        print( "stopped  timer... after {} mSec".format(elapsed))
+        logger.debug( "stopped  timer... after {} mSec".format(elapsed))
         if self.close_port_after_each_call:
             logger.debug('closing port...')
             self.serial.close()
 
         return buffer
+
+
 
 
     #######################################################################
@@ -628,11 +539,11 @@ class LnRs485_Instrument():
         # print(msg)
         logger.debug(msg)
 
-        # if not bufferData:
-        #     msg = 'ERROR: no valid data found'
-        #     print(msg)
-        #     logger.error(msg)
-        #     return bytearray(), bufferData
+        if not bufferData:
+            msg = 'ERROR: no valid data found'
+            print(msg)
+            logger.error(msg)
+            return bytearray(), bufferData
 
             # Prendiamo i dati fissi
         if not bufferData[0] == self.STX:
