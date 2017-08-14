@@ -24,8 +24,6 @@ if __name__ == "__main__":
     gv           = Ln.LnDict()              # default = _dynamic=False
     gv.Prj       = Prj
     gv.Ln        = Ln
-    # Prj.name     = 'LnProtocol'
-    # Prj.prefix   = Prj.name
 
 
 
@@ -66,7 +64,7 @@ if __name__ == "__main__":
         gv.inputParam.fLINE = True if 'line' in gv.inputParam.displayDataformat else False
         gv.inputParam.fCHAR = True if 'char' in gv.inputParam.displayDataformat else False
 
-    # gv.input.PrintTree(MaxLevel=3, fEXIT=True)
+    # gv.PrintTree(fEXIT=True)
 
 
 

@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-14_09.54.56
+version:    LnVer_2017-08-14_11.05.30
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -15,7 +15,7 @@ Scope:      Funzione di slave.
 // #    - rispondiamo se siamo interessati
 // lo slave scrive sulla seriale come debug
 // ################################################################
-void loop_Slave() {
+void Slave_Main() {
     if (firstRun) {
         // pData->fDisplayData     = true;                // display user/command data
         pData->fDisplayMyData    = true;                // display dati relativi al mio indirizzo

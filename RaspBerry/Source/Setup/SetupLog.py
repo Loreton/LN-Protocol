@@ -5,31 +5,32 @@ import getpass
 import os, sys
 
 __author__  = 'Loreto Notarantonio'
-__version__ = 'LnVer_2017-07-03_11.23.13'
+__version__ = 'LnVer_2017-08-14_11.39.41'
 
 # #########################################################
 # - SetUp del log
 # #########################################################
 def SetupLog(gv):
+    # gv.PrintTree()
     if gv.inputParam.LOGGER:
-        C       = gv.Ln.LnColor()
+        cPrint       = gv.Ln.LnColor()
 
-        logFileName         = '/tmp/{PREFIX}_{USER}.log'.format(PREFIX=gv.Prj.prefix, USER=getpass.getuser())
-        logConfigFileName   = os.path.normpath('{CONFDIR}/LoggerConfig.ini'.format(CONFDIR=gv.Prj.configDIR))
+        logFileName         = '/tmp/{PREFIX}_{USER}.log'.format(PREFIX=gv.env.prefix, USER=getpass.getuser())
+        logConfigFileName   = os.path.normpath('{CONFDIR}/LoggerConfig.ini'.format(CONFDIR=gv.env.mainConfigDIR))
 
         if gv.fDEBUG:
-            C.printYellow('.'*10 + __name__ + '.'*10, tab=4)
-            C.printCyan('logFileName       {0}'.format(os.path.abspath(logFileName)), tab=8)
-            C.printCyan('logConfigFileName {0}'.format(logConfigFileName), tab=8)
-            C.printYellow('.'*10 + __name__ + '.'*10, tab=4)
+            cPrint.Yellow('.'*10 + __name__ + '.'*10, tab=4)
+            cPrint.Cyan('logFileName       {0}'.format(os.path.abspath(logFileName)), tab=8)
+            cPrint.Cyan('logConfigFileName {0}'.format(logConfigFileName), tab=8)
+            cPrint.Yellow('.'*10 + __name__ + '.'*10, tab=4)
             print ()
-
+            # sys.exit()
 
 
         if os.path.isfile(logConfigFileName):
             gv.Ln.InitLogger(   iniLogFile=logConfigFileName,
                                 logFileName=logFileName,
-                                package=gv.Prj.name,
+                                package=gv.env.name,
                                 LOGGER=gv.inputParam.LOGGER,
                                 logCONSOLE=gv.inputParam.logCONSOLE,
                                 logMODULE=gv.inputParam.logMODULE,

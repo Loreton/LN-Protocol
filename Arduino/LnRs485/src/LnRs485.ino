@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-14_09.50.55
+version:    LnVer_2017-08-14_13.00.38
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -26,7 +26,12 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #include    <LnRS485_protocol.h>
 #include    "LnRs485.h"
 
-
+// --------------------------------------------------------------------------------
+// - simuliamo anche il ritorno in 485 sulla seriale per affinare il master python
+// -     false : scrive in modalità text
+// -     true  : scrive con protocollo LnRs485
+// --------------------------------------------------------------------------------
+byte returnRS485 = true;
 
 
 //python3.4 -m serial.tools.list_ports
@@ -84,7 +89,7 @@ void loop() {
                 pData->myEEpromAddress  = myEEpromAddress;
                 pData->myID             = myID;
             }
-            rs485_Relay();
+            Relay_Main();
         #endif
     }
     else {
@@ -93,7 +98,7 @@ void loop() {
             pData->myEEpromAddress  = myEEpromAddress;
             pData->myID             = myID;
         }
-        loop_Slave();
+        Slave_Main();
 
     }
     firstRun = false;

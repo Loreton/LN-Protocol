@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-14_09.39.19
+version:    LnVer_2017-08-14_12.59.50
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -55,9 +55,11 @@ void Relay_Main() {
     if (rCode == LN_OK) {
         Relay_fwdToRs485(pData);
             // qualsiasi esito il msg è pronto da inviare sulla rs232
-        Relay_waitRs485Response(pData, 2000);
-        sendMsg232(pData);
+        byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
+        Relay_fwdToRaspBerry(pData, rcvdRCode);
     }
+
+
 }
 
 
@@ -77,11 +79,20 @@ void Relay_fwdToRs485(RXTX_DATA *pData) {
 // ################################################################
 // # - Forward del messaggio ricevuto da RS485 verso RaspBerry
 // ################################################################
-// void Relay_fwdToRaspBerry(RXTX_DATA *pData) {
-//     copyRxMessageToTx(pData);
-//     sendMsg232(pData);
+void Relay_fwdToRaspBerry(RXTX_DATA *pData, byte rcvdRCode) {
+    copyRxMessageToTx(pData);
 
-// }
+        // inviamo sulla 232 in formato rs485
+    if (returnRS485) {
+        sendMsg232(pData);
+    }
+        // ... oppure lo inviamo sulla 232 in formato ascii
+    else {
+        Serial.print(F("\n\n"));
+        displayMyData("TX-poll", rcvdRCode, pData);
+    }
+
+}
 
 
 
@@ -96,7 +107,6 @@ void Relay_fwdToRs485(RXTX_DATA *pData) {
 // -    1. prepara messaggo di errore
 // -    2. set opportunamente gli indirizzi
 // - finally:
-// -    1. copia Rx to Tx
 // -    2. ritorna rCode
 // --------------------------------------
 // ################################################################
@@ -131,8 +141,5 @@ byte Relay_waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
         setCommandData(pData->rx, errorMsg);
 
     }
-
-
-    copyRxMessageToTx(pData);
     return rcvdRCode;
 }

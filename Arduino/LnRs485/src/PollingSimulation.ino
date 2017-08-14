@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-14_09.29.37
+version:    LnVer_2017-08-14_12.58.00
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -12,13 +12,6 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 
 
 #ifdef POLLING_SIMULATION
-
-// --------------------------------------------------------------------------------
-// simuliamo anche il ritorno in 485 sulla seriale per affinare il master python
-// false : scrive in modalità text
-// true  : scrive con protocollo LnRs485
-// --------------------------------------------------------------------------------
-byte returnRS485 = true;
 
 // ##########################################################
 // se vogliamo che Arduino invii un echo autonomamente
@@ -88,16 +81,7 @@ void PollingSimulation(RXTX_DATA *pData) {
             Relay_fwdToRs485(pData);
                 // qualsiasi esito il msg è pronto da inviare sulla rs232
             byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-
-                // inviamo sulla 232 in formato rs485
-            if (returnRS485) {
-                sendMsg232(pData);
-            }
-                // ... oppure lo inviamo sulla 232 in formato ascii
-            else {
-                Serial.print(F("\n\n"));
-                displayMyData("TX-poll", rcvdRCode, pData);
-            }
+            Relay_fwdToRaspBerry(pData, rcvdRCode);
         }
 
 

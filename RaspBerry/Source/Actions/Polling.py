@@ -9,7 +9,7 @@
 #         ...sulle seriali degli Arduino si dovrebbe leggere qualcosa tipo:
 #         S[011] - inoRECV from: 10 to  : 0 [00059]   (Request is NOT for me)
 #
-# modified:     by Loreto notarantonio LnVer_2017-08-06_18.17.41
+# modified:     by Loreto notarantonio LnVer_2017-08-14_12.46.58
 #
 # ######################################################################################
 
@@ -41,18 +41,17 @@ def Polling(gv, serialRelayPort):
     CMD.sourceAddr  = int.from_bytes(gv.myDEV.master, 'little')
     CMD.xmitRcode   = 0
 
-    for dev, address in gv.myDEV.items():
-        if dev in ('master', 'relay'): continue
-        print (dev, address)
-        CMD.destAddr    = int.from_bytes(address, 'little')
+    while True:
+        for dev, address in gv.myDEV.items():
+            if dev in ('master', 'relay'): continue
+            # print ('...................', dev, address)
+            CMD.destAddr    = int.from_bytes(address, 'little')
 
-        while True:
             print ()
-            cPrint.Yellow("sending polling test to {DEV} - Addr:{ADDR}".format(DEV=dev, ADDR=CMD.destAddr))
+            cPrint.Yellow("sending polling test to {DEV} - Addr: 0x{ADDR:02X}".format(DEV=dev, ADDR=CMD.destAddr))
 
             try:
                 dataSent = serialRelayPort.sendDataCMD(CMD, fDEBUG=True)
-                time.sleep(3)
 
             except (KeyboardInterrupt) as key:
                 print (__name__, "Keybord interrupt has been pressed")
@@ -61,23 +60,30 @@ def Polling(gv, serialRelayPort):
 
             print ()
             cPrint.Cyan("waiting for response...")
+            time.sleep(5)
+
 
             try:
                 '''
-                data = serialRelayPort.readRawData(EOD=[], hex=True, text=True, char=False, TIMEOUT=1000)
+                data = serialRelayPort.readRawData(EOD=[], hex=True, text=True, char=False, timeoutValue=5000)
                 if data:
                     print('data has been received...')
                 '''
 
-                payLoad, rawData = serialRelayPort.readData(TIMEOUT=1000, fDEBUG=True)
-                if not payLoad:
-                    cPrint.RedH ('payLoad ERROR....')
+                myData, rawData = serialRelayPort.readData(timeoutValue=1000, fDEBUG=True)
+                if not myData:
+                    hexData = ' '.join('{0:02X}'.format(x) for x in rawData)
+                    cPrint.RedH ('ERROR....')
+                    cPrint.RedH (hexData)
                 print()
 
 
             except (KeyboardInterrupt) as key:
                 cPrint.Yellow (__name__, "Keybord interrupt has been pressed")
                 sys.exit()
+        """
+        """
+        time.sleep(5)
 
 
 
