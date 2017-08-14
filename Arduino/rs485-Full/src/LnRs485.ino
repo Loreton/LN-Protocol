@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-14_08.58.29
+version:    LnVer_2017-08-14_09.50.55
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -25,9 +25,6 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #include    <LnFunctions.h>                //  D2X(dest, val, 2), printHex
 #include    <LnRS485_protocol.h>
 #include    "LnRs485.h"
-
-
-
 
 
 
@@ -75,8 +72,8 @@ void loop() {
         #ifdef POLLING_SIMULATION
             if (firstRun) {
                 setMyID("Emula", myEEpromAddress);
-                pData->myEEpromAddress = myEEpromAddress;
-                pData->myID = myID;
+                pData->myEEpromAddress  = myEEpromAddress;
+                pData->myID             = myID;
             }
             loop_PollingSimulation();
             delay(1000);
@@ -84,17 +81,17 @@ void loop() {
         #else
             if (firstRun) {
                 setMyID("Relay", myEEpromAddress);
-                pData->myEEpromAddress = myEEpromAddress;
-                pData->myID = myID;
+                pData->myEEpromAddress  = myEEpromAddress;
+                pData->myID             = myID;
             }
             rs485_Relay();
         #endif
     }
     else {
         if (firstRun) {
-            setMyID("Slave",myEEpromAddress);
-            pData->myEEpromAddress = myEEpromAddress;
-            pData->myID = myID;
+            setMyID("Slave", myEEpromAddress);
+            pData->myEEpromAddress  = myEEpromAddress;
+            pData->myID             = myID;
         }
         loop_Slave();
 
@@ -102,6 +99,4 @@ void loop() {
     firstRun = false;
 
 }
-
-
 

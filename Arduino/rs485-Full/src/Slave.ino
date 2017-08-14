@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-14_08.33.02
+version:    LnVer_2017-08-14_09.54.56
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -31,7 +31,6 @@ void loop_Slave() {
 
     if (rcvdRCode == LN_OK) {
         processRequest(pData);
-        // Serial.println();
     }
 
     else if (pData->rx[DATALEN] == 0) {
@@ -39,15 +38,13 @@ void loop_Slave() {
         Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
         Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));Serial.print(pData->timeout);
         Serial.println();
-        // Serial.println(LnJoinStr(myID, "rcvdRCode: ", LnUtoa(rcvdRCode, 3, 0), " - Nessuna richiesta ricevuta in un tempo di mS: ", LnUtoa(pData->timeout, 3, 0), NULL));
-        // Serial.println(pippo);
-        // free(pippo);
 
     }
 
     else { // DEBUG
-        // rxDisplayData(rCode, pData);
-        // Serial.println();
+        Serial.print(myID);
+        Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
+        Serial.println(F(" - errore non identificato: "));
     }
 
 }
@@ -64,6 +61,7 @@ void processRequest(RXTX_DATA *pData) {
     if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
         return;
     }
+
 //@todo: inserire l'indirizzo nel comando myMsg...
     char myMsg1[] = "Polling answer!";
     char myMsg2[] = "devo scrivere il pin";
@@ -75,31 +73,24 @@ void processRequest(RXTX_DATA *pData) {
         case POLLING_CMD:
             if (pData->rx[SUBCOMMAND] == REPLY) {
                 Serial.print("\n\n");Serial.print(TAB);Serial.println(F("preparing response message... "));
-                // char *pippo = LnJoinStr("\n\n", TAB, "preparing response message... ", NULL);
-                // Serial.println(pippo);
-                // free(pippo);
 
                 setCommandData(pData->tx, myMsg1, sizeof(myMsg1));
-                // setTxCommandData(pData, myMsg1, sizeof(myMsg1));
                 pData->tx[CMD_RCODE] = OK;
             }
             break;
 
         case READPIN_CMD:
             setCommandData(pData->tx, myMsg1, sizeof(myMsg1));
-            // setTxCommandData(pData, myMsg1, sizeof(myMsg1));
             pData->tx[CMD_RCODE] = OK;
             break;
 
         case WRITEPIN_CMD:
             setCommandData(pData->tx, myMsg2, sizeof(myMsg2));
-            // setTxCommandData(pData, myMsg2, sizeof(myMsg2));
             pData->tx[CMD_RCODE] = OK;
             break;
 
         default:
             setCommandData(pData->tx, myMsg3, sizeof(myMsg3));
-            // setTxCommandData(pData, myMsg3, sizeof(myMsg3));
             pData->tx[CMD_RCODE] = UNKNOWN_CMD;
             break;
     }

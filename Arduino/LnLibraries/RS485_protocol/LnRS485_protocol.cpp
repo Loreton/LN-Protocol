@@ -2,7 +2,7 @@
  RS485 protocol library.
 
     reviewed:  Loreto notarantonio
-    Version:   LnVer_2017-08-13_16.32.24
+    Version:   LnVer_2017-08-14_10.17.02
 
      Devised and written by Nick Gammon.
      Date: 14 November 2011
@@ -338,34 +338,27 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
         int seqNo = data[SEQNO_LOW] + data[SEQNO_HIGH]*256;
         Serial.println();
 
+        /* ------- sample output
+            [Slave-011] - RX-data - 0x00 --> 0x0B - SeqNO: 00001 - [WOW it's for me...] - [rcvdCode: OK]
 
+            fullData    hex - len:[022] - 00 0B 00 01 00 02 01 50 6F 6C 6C 69 6E 67 20 72 65 71 75 65 73 74
+            commandData hex - len:[015] -                      50 6F 6C 6C 69 6E 67 20 72 65 71 75 65 73 74
+            commandData asc - len:[015] -                      [Polling request]
 
-
-
-
-        // ------------------------------------------------------
-        // Program:    8450 bytes (25.8% Full)
-        // Data:       1032 bytes (50.4% Full)
-        // ------------------------------------------------------
+            CRC Rec/Cal 0x : 57 57
+            SEQNO       0x : 00 01
+            CMD_RCode   0x : 00
+            CMD/subCMD  0x : 02 01
+        ------- sample output --------- */
         Serial.print(pData->myID);
             Serial.print(caller);
-
-            Serial.print(F(" - [")); printHex(data[SENDER_ADDR]);
-            Serial.print(F("/"));    Serial.print(Utoa(data[SENDER_ADDR], 3, '0') );Serial.print(F("]"));
-
-            Serial.print(F(" --> [")); printHex(data[DESTINATION_ADDR]);
-            Serial.print(F("/"));    Serial.print(Utoa(data[DESTINATION_ADDR], 3, '0') ); Serial.print(F("]"));
-
+            Serial.print(F(" - 0x"));   printHex(data[SENDER_ADDR]);
+            Serial.print(F("-->0x")); printHex(data[DESTINATION_ADDR]);
             Serial.print(F(" - SeqNO: "));Serial.print(Utoa(seqNo, 5, '0') );
 
-
-        // ------------------------------------------------------
-        // - Occupa molta più memoria (almeno 150 byte in più)
-        // Program:    8584 bytes (26.2% Full)
-        // Data:       1058 bytes (51.7% Full)
-            // char *ptr = joinStr(pData->myID, caller, " - [", D2X(data[SENDER_ADDR], 2), "/", Utoa(data[SENDER_ADDR], 3, '0'),"] --> [",D2X(data[DESTINATION_ADDR], 2), "/",Utoa(data[DESTINATION_ADDR], 3, '0'),"] - SeqNO: ", Utoa(seqNo, 5, '0'), NULL);
-            // Serial.print(ptr);
-        // ------------------------------------------------------
+            // - Occupa molta più memoria (almeno 150 byte in più)
+                // char *ptr = joinStr(pData->myID, caller, " - 0x", D2X(data[SENDER_ADDR], 2), " --> 0x",D2X(data[DESTINATION_ADDR], 2), "/",Utoa(data[DESTINATION_ADDR], 3, '0'),"] - SeqNO: ", Utoa(seqNo, 5, '0'), NULL);
+                // Serial.print(ptr);
 
             if (isItForMe) {
                 Serial.print(F(" - [WOW it's for me...]"));
@@ -381,10 +374,6 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
             }
 
 
-
-
-
-        // if (!fPrintData) return;
         Serial.println();
 
         // FULL COMMAND DATA (inclusi SA, DA, etc..
