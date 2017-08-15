@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-15_10.52.31
+version:    LnVer_2017-08-15_11.16.57
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -120,6 +120,7 @@ byte Relay_waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
         // - o comunque ci sono stati errori nella trasmissione
         // --------------------------------------------------------
     if (rcvdRCode != LN_OK) {
+
         // -----------------------------------------
         // - Prepariamo il messaggio di errore
         // - lo scriviamo su ->rx
