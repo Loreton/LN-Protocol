@@ -9,7 +9,7 @@
 #         ...sulle seriali degli Arduino si dovrebbe leggere qualcosa tipo:
 #         S[011] - inoRECV from: 10 to  : 0 [00059]   (Request is NOT for me)
 #
-# modified:     by Loreto notarantonio LnVer_2017-08-14_12.46.58
+# modified:     by Loreto notarantonio LnVer_2017-08-15_08.40.30
 #
 # ######################################################################################
 
@@ -41,6 +41,37 @@ def Polling(gv, serialRelayPort):
     CMD.sourceAddr  = int.from_bytes(gv.myDEV.master, 'little')
     CMD.xmitRcode   = 0
 
+    JUST_MONITOR = True
+    if JUST_MONITOR:
+        while True:
+            payLoad, rawData = serialRelayPort.readData(timeoutValue=30000, fDEBUG=True)
+            if not payLoad:
+                displayData(rawData)
+                # COMMAND_DATA = 7    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
+                # print ('    full data - len: [{0:03}] - '.format(len(rawData)), end="")
+                # for byte in rawData: print ('{0:02X} '.format(byte), end="")
+                # print ()
+                # print ()
+                # commandData = rawData[COMMAND_DATA*2:]
+                # print ('    raw data - len: [{0:03}] - '.format(len(commandData)), end="")
+                # print ('   '*COMMAND_DATA, end="")
+                # print ('[', end="")
+                # printableChars = list(range(31,126))
+                # printableChars.append(13)
+                # printableChars.append(10)
+                # for byte in rawData:
+                #     if byte in printableChars:   # Handle only printable ASCII
+                #         print(chr(byte), end="")
+                #     else:
+                #         print(' ', end="")
+
+
+        print()
+
+
+    sys.exit()
+
+
     while True:
         for dev, address in gv.myDEV.items():
             if dev in ('master', 'relay'): continue
@@ -64,18 +95,7 @@ def Polling(gv, serialRelayPort):
 
 
             try:
-                '''
-                data = serialRelayPort.readRawData(EOD=[], hex=True, text=True, char=False, timeoutValue=5000)
-                if data:
-                    print('data has been received...')
-                '''
-
-                myData, rawData = serialRelayPort.readData(timeoutValue=1000, fDEBUG=True)
-                if not myData:
-                    hexData = ' '.join('{0:02X}'.format(x) for x in rawData)
-                    cPrint.RedH ('ERROR....')
-                    cPrint.RedH (hexData)
-                print()
+                pass
 
 
             except (KeyboardInterrupt) as key:
@@ -87,3 +107,23 @@ def Polling(gv, serialRelayPort):
 
 
 
+
+
+def displayData(rawData):
+    COMMAND_DATA = 7    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
+    print ('    full data - len: [{0:03}] - '.format(len(rawData)), end="")
+    for byte in rawData: print ('{0:02X} '.format(byte), end="")
+    print ()
+    print ()
+    commandData = rawData[COMMAND_DATA*2:]
+    print ('    raw data - len: [{0:03}] - '.format(len(commandData)), end="")
+    print ('   '*COMMAND_DATA, end="")
+    print ('[', end="")
+    printableChars = list(range(31,126))
+    printableChars.append(13)
+    printableChars.append(10)
+    for byte in rawData:
+        if byte in printableChars:   # Handle only printable ASCII
+            print(chr(byte), end="")
+        else:
+            print(' ', end="")

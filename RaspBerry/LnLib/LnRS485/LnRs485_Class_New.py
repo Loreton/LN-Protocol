@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-08-14_14.30.51'
+__version__  = 'LnVer_2017-08-15_08.36.56'
 __status__   = 'Beta'
 
 import os
@@ -396,7 +396,7 @@ class LnRs485_Instrument():
         # facciamo partire il timer
         startRun = time.time()*1000
         elapsed = 0
-        TIMEOUT = True
+        TIMEOUT = True      # flag per indicare se siamo andati in timeout o meno
         print( "starting timer... for {} mSec".format(timeoutValue))
 
         buffer = bytearray()
@@ -406,33 +406,26 @@ class LnRs485_Instrument():
                 logger.debug( "elapsed {0}/{1}".format(elapsed, timeoutValue))
 
                 # - in attesa di un byte
-            ch = self.serial.read(1)       # ch e' un type->bytes
+            ch    = self.serial.read(1)       # ch e' un type->bytes
             chInt = int.from_bytes(ch, 'little')
 
-            if ch == b'':
+            if ch == b'':   #ignoriamolo
                 if len(buffer) > 0:
-                    # logLine += "     breaking"
-                    # logger.debug(logLine)
                     break
                 else:
-                    # logLine += "     skipping"
-                    # logger.debug(logLine)
                     continue
 
             buffer.append(chInt)
             logLine = "Received byte: {0:02x}".format(chInt)
-            # logger.debug( "Received byte: {0:02x}".format(chInt) )
-                # Start of Data
 
+                # se richiesto Start of Data
             if SOD and chInt in SOD:
                 buffer = bytearray()    # reinizializza il buffer
                 buffer.append(chInt)
                 logLine +=  "     found SOD"
-                # else:
-                #     logLine += "     waiting for SOD {}".format(SOD)
                 logger.debug(logLine)
 
-                # se siamo in cerca di EOD
+                # se richiesto End Of Data
             elif EOD:
                 if chInt in EOD:
                     logLine += "     found EOD {}".format(chInt)
@@ -449,14 +442,9 @@ class LnRs485_Instrument():
                 logger.debug(logLine)
 
 
-
-
-
-
-
-
-        print( "stopped  timer... after {} mSec".format(elapsed))
-        logger.debug( "stopped  timer... after {} mSec".format(elapsed))
+        msg = "stopped  timer... after {} mSec".format(elapsed)
+        print(msg)
+        logger.debug(msg)
         if self.close_port_after_each_call:
             logger.debug('closing port...')
             self.serial.close()
