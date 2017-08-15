@@ -26,7 +26,7 @@ from . LnCommon.LnLogger                import SetNullLogger
 from . LnCommon.LnColor                 import LnColor
 from . LnCommon.Exit                    import Exit
 
-# from . System.GetKeyboardInput          import getKeyboardInput
+from . System.GetKeyboardInput          import getKeyboardInput
 # from . System.ExecRcode                 import ExecRcode
 # from . System.ExecGetOut                import ExecGetOut
 # from . System.GetFunctionPtr            import GetFunctionPtr

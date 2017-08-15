@@ -40,8 +40,9 @@ def Main(gv, action):
     gv.myDEV            = gv.Ln.LnDict()
     gv.myDEV.master     = bytes([ 0])        # Master Address
     gv.myDEV.relay      = bytes([10])       # Arduino Relay Address - di fanno non usato mai in quanto raggiunto tramite la seriale
-    gv.myDEV.arduino11  = bytes([11])
+    # gv.myDEV.arduino11  = bytes([11])
     gv.myDEV.arduino12  = bytes([12])
+    # gv.myDEV.arduino13  = bytes([13])
 
 
     print ('.{}.'.format(gv.inputParam.actionCommand))

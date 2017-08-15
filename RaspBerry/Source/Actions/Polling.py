@@ -9,7 +9,7 @@
 #         ...sulle seriali degli Arduino si dovrebbe leggere qualcosa tipo:
 #         S[011] - inoRECV from: 10 to  : 0 [00059]   (Request is NOT for me)
 #
-# modified:     by Loreto notarantonio LnVer_2017-08-15_08.40.30
+# modified:     by Loreto notarantonio LnVer_2017-08-15_09.56.13
 #
 # ######################################################################################
 
@@ -41,42 +41,38 @@ def Polling(gv, serialRelayPort):
     CMD.sourceAddr  = int.from_bytes(gv.myDEV.master, 'little')
     CMD.xmitRcode   = 0
 
-    JUST_MONITOR = True
-    if JUST_MONITOR:
-        while True:
-            payLoad, rawData = serialRelayPort.readData(timeoutValue=30000, fDEBUG=True)
-            if not payLoad:
-                displayData(rawData)
-                # COMMAND_DATA = 7    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
-                # print ('    full data - len: [{0:03}] - '.format(len(rawData)), end="")
-                # for byte in rawData: print ('{0:02X} '.format(byte), end="")
-                # print ()
-                # print ()
-                # commandData = rawData[COMMAND_DATA*2:]
-                # print ('    raw data - len: [{0:03}] - '.format(len(commandData)), end="")
-                # print ('   '*COMMAND_DATA, end="")
-                # print ('[', end="")
-                # printableChars = list(range(31,126))
-                # printableChars.append(13)
-                # printableChars.append(10)
-                # for byte in rawData:
-                #     if byte in printableChars:   # Handle only printable ASCII
-                #         print(chr(byte), end="")
-                #     else:
-                #         print(' ', end="")
+    # JUST_MONITOR = True
+    # if JUST_MONITOR:
+    #     while True:
+    #         rcvdData, rawData = serialRelayPort.readData(timeoutValue=30000, fDEBUG=True)
+    #         if not rcvdData:
+    #             gv.Prj.displayRawData(rawData)
+
+    #     print()
+    # sys.exit()
 
 
-        print()
 
-
-    sys.exit()
-
-
+    timeOutValue = 30000
+    LOOP_ON_DEV = True
     while True:
+            '''
         for dev, address in gv.myDEV.items():
             if dev in ('master', 'relay'): continue
-            # print ('...................', dev, address)
             CMD.destAddr    = int.from_bytes(address, 'little')
+            '''
+
+            validAddresses = [11,12,13,14,15]
+            # address = 0
+            dev = "Slave"
+            address = gv.Ln.getKeyboardInput("Please Enter address...", validKeys='11,12,13,14,15', exitKey='X', deepLevel=1, keySep=",", fDEBUG=False)
+            # while not address in validAddresses:
+            #     address = input("\n\n\n\nPlease Enter address...{}".format(validAddresses))
+            # address = int(address)
+            # print (address)
+
+            # print ('...................', dev, address)
+            CMD.destAddr    = int(address)
 
             print ()
             cPrint.Yellow("sending polling test to {DEV} - Addr: 0x{ADDR:02X}".format(DEV=dev, ADDR=CMD.destAddr))
@@ -90,40 +86,28 @@ def Polling(gv, serialRelayPort):
 
 
             print ()
+
+            # time.sleep(5)
+
+
             cPrint.Cyan("waiting for response...")
-            time.sleep(5)
-
-
             try:
-                pass
+                rcvdData, rawData = serialRelayPort.readData(timeoutValue=timeOutValue, fDEBUG=True)
+                if not rcvdData:
+                    gv.Prj.displayRawData(rawData)
 
 
             except (KeyboardInterrupt) as key:
                 cPrint.Yellow (__name__, "Keybord interrupt has been pressed")
                 sys.exit()
-        """
-        """
-        time.sleep(5)
+
+            # time.sleep(5)
+
+
+            # gv.Ln.getKeyboardInput("Press Enter to continue...", validKeys='ENTER', exitKey='X', deepLevel=1, keySep="|", fDEBUG=False)
+            # choice = input("\n\n\n\nPress Enter to continue...")
 
 
 
 
 
-def displayData(rawData):
-    COMMAND_DATA = 7    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
-    print ('    full data - len: [{0:03}] - '.format(len(rawData)), end="")
-    for byte in rawData: print ('{0:02X} '.format(byte), end="")
-    print ()
-    print ()
-    commandData = rawData[COMMAND_DATA*2:]
-    print ('    raw data - len: [{0:03}] - '.format(len(commandData)), end="")
-    print ('   '*COMMAND_DATA, end="")
-    print ('[', end="")
-    printableChars = list(range(31,126))
-    printableChars.append(13)
-    printableChars.append(10)
-    for byte in rawData:
-        if byte in printableChars:   # Handle only printable ASCII
-            print(chr(byte), end="")
-        else:
-            print(' ', end="")

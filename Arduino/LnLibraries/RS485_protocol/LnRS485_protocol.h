@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-08-14_08.57.29
+// Version: LnVer_2017-08-15_10.55.05
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -87,9 +87,10 @@
         byte            Rx_CRCcalc;    // CRC value
         byte            Rx_CRCrcvd;    // CRC value
 
-        bool            fDisplayMyData    = false;       // display dati relativi al mio indirizzo
-        bool            fDisplayOtherData = false;       // display dati relativi ad  altri indirizzi
-        bool            fDisplayRawData   = false;       // per fare il print del rawData
+        bool            fDisplayMyData      = false;       // display dati relativi al mio indirizzo
+        bool            fDisplayOtherHeader = false;       // display solo header di altri indirizzi
+        bool            fDisplayOtherFull   = false;       // display dati di altri indirizzi (include l'header)
+        bool            fDisplayRawData     = false;       // per fare il print del rawData
 
         byte            myEEpromAddress;                // indirizzo identificativo di Arduino
         char            *myID;                          // stringa identificativo di Arduino

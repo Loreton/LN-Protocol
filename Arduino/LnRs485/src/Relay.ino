@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-14_12.59.50
+version:    LnVer_2017-08-15_10.52.31
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -11,7 +11,7 @@ Scope:      Funzione di relay.
 */
 
 
-//@TODO: bisogna verificarlo
+
 // ################################################################
 // # - M A I N     Loop_Relay
 // #    - riceviamo i dati da RaspBerry
@@ -19,13 +19,11 @@ Scope:      Funzione di relay.
 // #    - torniamo indietro la risposta
 // ################################################################
 void Relay_Main() {
-    if (firstRun) {
-        // pData->fDisplayData    = true;                // display user/command data
-
-        pData->fDisplayMyData    = true;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherData = true;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData = false;                // display raw data
-        // pData->fDisplayAllPckt = true;                // display all source/destination packets
+    if (firstRun) {     // Il relay on deve scrivere sulla seriale in chiaro
+        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayRawData      = false;                // display raw data
     }
 
     pData->timeout     = 5000;
@@ -131,11 +129,11 @@ byte Relay_waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
         pData->rx[DESTINATION_ADDR] = 0;
 
                       //-- 01234567
-        char errorMsg[] = "ERROR: ........ occurred...!";
+        char errorMsg[] = "ERROR: ........ occurred!";
         const char *ptr = errMsg[rcvdRCode];
 
         // copiamo il codice errore nei [....]
-        for (byte i=6; *ptr != '\0'; i++, ptr++)
+        for (byte i=7; *ptr != '\0'; i++, ptr++)
             errorMsg[i] = *ptr;
 
         setCommandData(pData->rx, errorMsg);

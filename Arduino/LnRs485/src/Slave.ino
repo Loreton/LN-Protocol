@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-14_11.05.30
+version:    LnVer_2017-08-15_10.50.47
 
 Scope:      Funzione di slave.
                 Prende i dati dalla rs485, verifica l'indirizzo di destinazione e
@@ -17,12 +17,11 @@ Scope:      Funzione di slave.
 // ################################################################
 void Slave_Main() {
     if (firstRun) {
-        // pData->fDisplayData     = true;                // display user/command data
-        pData->fDisplayMyData    = true;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherData = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayRawData      = false;                // display raw data
 
-        // pData->fDisplayAllPckt  = false;                // display all source/destination packets
-        pData->fDisplayRawData  = false;                // display raw data
         pData->timeout          = 5000;
     }
 
@@ -59,6 +58,8 @@ void processRequest(RXTX_DATA *pData) {
     byte destAddr   = pData->rx[DESTINATION_ADDR];
 
     if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
+        // [Slave-012] - RX-data [rcvdCode: OK] - [00/000] --> [0B/011] - SeqNO: 00007 - [it's NOT for me...]
+
         return;
     }
 

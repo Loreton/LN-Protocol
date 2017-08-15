@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-14_12.58.00
+version:    LnVer_2017-08-15_10.53.12
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -19,15 +19,18 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 void loop_PollingSimulation() {
 
     if (returnRS485) {
-        pData->fDisplayMyData    = false;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherData = false;               // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData   = false;                // display raw data
+        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayRawData      = false;                // display raw data
+
         PollingSimulation(pData);
     }
     else {
-        pData->fDisplayMyData    = true;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherData = false;               // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData   = false;                // display raw data
+        pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayRawData      = false;                // display raw data
         Serial.print(myID);Serial.println(F("Sono in Polling simulation mode"));
         // Serial.println(joinStr(myID, "Sono in Polling simulation mode", NULL));
 

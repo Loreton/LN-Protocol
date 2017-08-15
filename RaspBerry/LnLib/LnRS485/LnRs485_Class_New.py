@@ -6,7 +6,7 @@
 __author__   = 'Loreto Notarantonio'
 __email__    = 'nloreto@gmail.com'
 
-__version__  = 'LnVer_2017-08-15_08.36.56'
+__version__  = 'LnVer_2017-08-15_09.36.07'
 __status__   = 'Beta'
 
 import os
@@ -528,8 +528,8 @@ class LnRs485_Instrument():
         logger.debug(msg)
 
         if not bufferData:
-            msg = 'ERROR: no valid data found'
-            print(msg)
+            msg = 'ERROR: no data received!'
+            # print(msg)
             logger.error(msg)
             return bytearray(), bufferData
 
@@ -605,11 +605,20 @@ class LnRs485_Instrument():
                 # sommario
             print ()
             print ('[Pi-RX] - ', end="")
+            print (' 0x{0:02X}'.format(rcvData[SENDER_ADDR]), end="")
+            print (' --> 0x{0:02X}'.format(rcvData[DESTINATION_ADDR]), end="")
+            print (' - SeqNo: {0:05}'.format(rcvData[SEQNO_HIGH]*256+rcvData[SEQNO_LOW]), end="")
+            print (' - [rcvdCode: {0:03}]'.format(xMitCode))
+            print ()
+            '''
+            print ()
+            print ('[Pi-RX] - ', end="")
             print (' [{0:02X}/{0:03}]'.format(rcvData[SENDER_ADDR]), end="")
             print (' --> [{0:02X}/{0:03}]'.format(rcvData[DESTINATION_ADDR]), end="")
             print (' - SeqNo: {0:05}'.format(rcvData[SEQNO_HIGH]*256+rcvData[SEQNO_LOW]), end="")
             print (' - [rcvdCode: {0:03}]'.format(xMitCode))
             print ()
+            '''
 
 
                 # hezadecimal
@@ -797,8 +806,12 @@ class LnRs485_Instrument():
 
         if fDEBUG:
             print ('[Pi-TX] - ', end="")
+            '''
             print (' [{0:02X}/{0:03}]'.format(txData[SENDER_ADDR]), end="")
             print (' --> [{0:02X}/{0:03}]'.format(txData[DESTINATION_ADDR]), end="")
+            '''
+            print (' 0x{0:02X}'.format(txData[SENDER_ADDR]), end="")
+            print (' --> 0x{0:02X}'.format(txData[DESTINATION_ADDR]), end="")
             print (' - SeqNo: {0:05}'.format(txData[SEQNO_HIGH]*256+txData[SEQNO_LOW]), end="")
             print ()
             print ()
