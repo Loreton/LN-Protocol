@@ -21,7 +21,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #define     _I_AM_ARDUINO_NANO_
 #define     I_AM_MAIN_
 
-#define     POLLING_SIMULATIONxxxxx
+#define     POLLING_SIMULATIONxxxx
 #include    <LnFunctions.h>                //  D2X(dest, val, 2), printHex
 #include    <LnRS485_protocol.h>
 #include    "LnRs485.h"

@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: iso-8859-1 -*-
 # -*- coding: latin-1 -*-
-#                                               &  Loreto Notarantonio 2015, October
+#
+# 
+# - by Loreto Notarantonio
+# - last update: 2017-08-18 17.15.02
+# 
+#
 # ######################################################################################
 
 import pyudev           # sudo pip3.4 --proxy=localhost:60080 install pyudev
