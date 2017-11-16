@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-15_09.06.02
+version:    LnVer_2017-11-12_19.05.48
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -36,6 +36,15 @@ byte returnRS485 = true;
 
 //python3.4 -m serial.tools.list_ports
 void setup() {
+
+    // INIZIALIZZAZIONE dei pin
+    #ifdef _I_AM_ARDUINO_NANOXXXX_
+        pinMode(13, OUTPUT);
+        pinMode(2, INPUT_PULLUP);
+        digitalWrite(A0, LOW);
+        digitalWrite(A0, LOW);
+    #endif
+
 
         // ===================================
         // - inizializzazione bus RS485

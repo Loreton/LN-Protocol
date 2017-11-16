@@ -50,7 +50,17 @@ void Relay_Main() {
         // - altrimenti:
         // -    1. ignora
         // --------------------------------------
+    // if ( (rCode == LN_OK) && (pData[COMMAND] == RELAY_ECHO) ) {
     if (rCode == LN_OK) {
+        // if (pData[COMMAND] == byte(RELAY_ECHO))  {
+        //     char respMSG[] = "Echo Relay response!";
+        //     copyRxMessageToTx(pData);
+        //     setCommandData(pData->tx, respMSG, sizeof(respMSG));
+        //     pData->tx[CMD_RCODE] = OK;
+        //     sendMsg232(pData);
+        // }
+    }
+    else if (rCode == LN_OK) {
         Relay_fwdToRs485(pData);
             // qualsiasi esito il msg è pronto da inviare sulla rs232
         byte rcvdRCode = Relay_waitRs485Response(pData, 2000);

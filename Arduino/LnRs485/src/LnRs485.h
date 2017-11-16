@@ -22,17 +22,29 @@
         extern byte  myEEpromAddress;        // who we are
     #endif
 
+    // #define RELAY_ECHO    = 1;
+    // #define SLAVE_ECHO    = 2;
+    // #define SLAVE_POLLING = 3;
+    // #define READ_PIN      = 4;
+    // #define WRITE_PIN     = 5;
+    // #define SET_PINMODE   = 6;
+
 
     enum rs485_COMMANDs {
-                            ECHO_CMD        = 1,
-                            POLLING_CMD     = 2,
-                            READPIN_CMD     = 21,
-                            WRITEPIN_CMD    = 22,
+                            RELAY_ECHO    = 1,
+                            SLAVE_ECHO    = 2,
+                            SLAVE_POLLING = 3,
+                            READ_PIN      = 4,
+                            WRITE_PIN     = 5,
+                            SET_PINMODE   = 6,
                         };
 
     enum rs485_SubCOMMANDs {
-                            NO_REPLY       = 0,
-                            REPLY          = 1,
+                            NO_REPLY      = 1,
+                            REPLY         = 2,
+                            DIGITAL       = 3,
+                            ANALOG        = 4,
+                            PWM           = 5,
                         };
 
 
