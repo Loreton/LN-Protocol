@@ -111,10 +111,6 @@ def ParseInput(gVars, args, programVersion=None):
         cPrint.Yellow('.'*10 + __name__ + '.'*10, tab=4)
         print ()
 
-    # if InputPARAM.fEDIT_CONFIG or InputPARAM.serverName.startswith('conf'):
-    #     EditPrjConfig(gv)
-
-    # sys.exit()
     return myDict
 
 

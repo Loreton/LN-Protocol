@@ -28,38 +28,79 @@ def Main(gv):
     mySubCMD    = gv.iniFile.SUB_COMMANDS
 
 
-    for key, val in myCMD.items():      logger.debug('command     {0:<15}: {1}'.format(key, val))
-    for key, val in mySubCMD.items():   logger.debug('sub_command {0:<15}: {1}'.format(key, val))
-    for key, val in rs485.items():      logger.debug('rs485       {0:<15}: {1}'.format(key, val))
-    for key, val in relay.items():      logger.debug('relay       {0:<15}: {1}'.format(key, val))
+    '''
+    # assegnazione COMANDI presi dal sorgente di ARDUINO LnRs485.h
+    LnRs485_COMMANDs = {
+                        'RELAY_ECHO'    : bytes([ 1]),
+                        'SLAVE_ECHO'    : bytes([ 2]),
+                        'SLAVE_POLLING' : bytes([ 3]),
+                        'SET_PINMODE'   : bytes([ 4]),
+                        'DIGITAL'       : bytes([ 5]),
+                        'ANALOG'        : bytes([ 6]),
+                        'PWM'           : bytes([ 7]),
+                    }
+
+    LnRs485_SubCOMMANDs = {
+                            'NO_REPLY'      : bytes([ 1]),
+                            'REPLY'         : bytes([ 2]),
+                            'READ_PIN'      : bytes([ 4]),
+                            'WRITE_PIN'     : bytes([ 5]),
+                        };
 
 
+    fEXECUTE = gv.args.execute
+    fDEBUG   = gv.args.debug
 
+
+    myCMD            = Ln.Dict(LnRs485_COMMANDs)
+    mySubCMD         = Ln.Dict(LnRs485_SubCOMMANDs)
+
+    myDEV            = Ln.Dict()
+    myDEV.masterAddr = bytes([int(iniMain.Rs485_MasterAddress)])        # Master Address
+    myDEV.relayAddr  = bytes([int(iniMain.ArduinoRelayAddress)])       # Arduino Relay Address - di fanno non usato mai in quanto raggiunto tramite la seriale
+
+    '''
+    if gv.fDEBUG:
+        myCMD.printTree()
+        mySubCMD.printTree()
+        # myDEV.printTree()
+
+    # logger.info('Master Address: {}'.format(myDEV.masterAddr))
+    # logger.info('Relay  Address: {}'.format(myDEV.relayAddr))
+
+
+    sys.exit()
         # ===================================================
         # = RS-485
         # ===================================================
-    if gv.args.mainCommand in ['rs485_relay']:
-        # logger.info('{0:<15}: {1}'.format('Relay Port',      relay.Port))
-        # logger.info('{0:<15}: {1}'.format('Relay Address',   relay.Address))
-        # logger.info('{0:<15}: {1}'.format('Relay BaudRate',  relay.BaudRate))
+
+    if gv.args.mainCommand in ['rs485', 'raw', 'rs485_monitor']:
+        LnRs485                             = gv.Ln.LnRs485    # short pointer alla classe
+        rs485                               = gv.LnDict()
+        rs485.MASTER_ADDRESS                = 0
+        rs485.STX                           = int('0x02', 16)
+        rs485.ETX                           = int('0x03', 16)
+        # rs485.usbDevPath                    = gv.args.usbPort
+        # rs485.baudRate                      = 9600
+        rs485.mode                          = 'ascii'
+        rs485.CRC                           = True
+
+        if fDEBUG:rs485.printTree()
+
 
             # ----------------------------------------------------
             # = RS-485 open/initialize port
             # ----------------------------------------------------
-        port = Prj.Rs485(port=relay.Port, baudrate=relay.BaudRate, mode=rs485.mode, logger=Ln.SetLogger)
-        port.STX = int(rs485.STX, 16)
-        port.ETX = int(rs485.ETX, 16)
-        port.CRC = eval(rs485.CRC)
+        port = LnRs485(port=relay.Port, baudrate=relay.BaudRate, mode=rs485.mode, logger=Ln.SetLogger)
+        port.STX = rs485.STX
+        port.ETX = rs485.ETX
+        port.CRC = rs485.CRC
 
-        # logger.info('{0:<15}: {1}'.format('STX',  port.STX))
-        # logger.info('{0:<15}: {1}'.format('STX',  port.ETX))
-        # logger.info('{0:<15}: {1}'.format('CRC',  port.CRC))
 
         port.ClosePortAfterEachCall(False)
-        logger.info(port.__repr__())
-        port.Close()
+        print(port.__repr__())
 
-    sys.exit()
+
 
         # ===================================================
         # = serial port monitor

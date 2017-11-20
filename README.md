@@ -28,7 +28,7 @@ Sintassi generica dei comandi string Master to Slave:
     CRC                           - CRC
     ETX                           - ETX
 
-    Commands Sample                                                         - Commnad
+    COMMAND:
         - RELAY_ECHO                                                        -
             NO_REPLY
             REPLY
@@ -39,15 +39,23 @@ Sintassi generica dei comandi string Master to Slave:
 
         - SLAVE_POLLING                                                     -
         ;
-        - READ_PIN                                                          -
-            DIGITAL pinNO
-            ANALOG  pinNO
-            PWM     pinNO
+        - DIGITAL
+            - SUBCOMMAND:   READ_PIN
+                DATA:       pinNO
+                RET:        analogReadValue
+
+            - SUBCOMMAND:   WRITE_PIN
+                DATA:       pinNO, valueToWrite
+                RET:        analogReadValue
         ;
-        - WRITE_PIN                                                         -
-            DIGITAL pinNO
-            ANALOG  pinNO
-            PWM     pinNO
+        - ANALOG                                                          -
+            - READ_PIN
+                DATA: pinNO
+                RET:  digitalReadValue
+            - WRITE_PIN
+                pinNO value
+                RET:  digitalReadValue
+        ;
         ;
         - SET_PINMODE                                                       -
             will be soon available...

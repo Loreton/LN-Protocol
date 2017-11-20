@@ -1,89 +1,68 @@
 #!/usr/bin/python3.4
 #
-# Scope:  Programma per ...........
-# modified:  v2017-03-02_14.30.17
+# updated by ...: Loreto Notarantonio
+# Version ......: 20-11-2017 17.08.43
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
 import os
 
-#import Project as Prj
-import Source as Prj
-try:
-    import LnLib as Ln
-except:
-    print ('.....trying via ImportLib....')
-    Ln = Prj.ImportLib('LnLib', fDEBUG=False)
 
+from pathlib import Path
+
+######### SET LIB PATH #######################
+def LibPath(libName, libType='zip'):
+    thisFile      = Path(sys.argv[0]).resolve()
+    projectDir    = thisFile.parent
+    extensionFile = thisFile.suffix.lower()
+
+    if libType == 'zip' or extensionFile.lower() == '.zip':
+        zipFile   = '{}.zip'.format(libName)
+        LnLibPath = Path(sys.argv[0]).resolve().parent / 'bin' / zipFile
+    else:
+        LnLibPath = Path(sys.argv[0]).resolve().parent
+        # LnLibPath = Path('y:\GIT-REPO\Python3\LnPythonLib\@LNLIB_BASE')
+        print(' loading LnLibrary from Source directory.....')
+
+    sys.path.append(str(LnLibPath))  # deve essere una stringa e non WindowsPath
+
+
+LibPath('LnLib_20171120', libType='zip')
+
+import  LnLib  as Ln
+import  Source as Prj
 
 ################################################################################
 # - M A I N
 ################################################################################
 if __name__ == "__main__":
-    Prj.Version  = 'V01'
-    gv           = Ln.LnDict()              # default = _dynamic=False
-    gv.Prj       = Prj
-    gv.Ln        = Ln
+    gv        = Ln.Dict()
 
+    args      = Prj.ParseInput() # ; print (args)
+    gv.args   = Ln.Dict(args)
+    gv.fDEBUG = gv.args.debug
+    if gv.fDEBUG: gv.args.printTree(fPAUSE=True)
 
+    logger    = Ln.InitLogger(toFILE=gv.args.log, logfilename=gv.args.log_filename, toCONSOLE=gv.args.log_console, ARGS=args)
 
-        # ===================================================
-        # - per iniziare disabilitiamo il LOG
-        # ===================================================
-    logger = gv.Ln.SetNullLogger()
+    # Lettura del file.ini
 
+    # iniFile = Ln.ReadIniFile(gv.args.config_file, strict=True, logger=logger)
+    iniFile = Ln.ReadIniFile(gv.args.config_file, strict=True)
+    iniFile.read(resolveEnvVars=False)
+    iniFile.setDebug(gv.fDEBUG)
+    gv.iniFile = Ln.Dict(iniFile.dict)
+    if gv.fDEBUG: gv.iniFile.printTree(header="INI File", fPAUSE=True)
 
-        # ===================================================
-        # - SetUp dell'ambiente
-        # ===================================================
-    Prj.SetupEnv(gv, 'LnProtocol', fDEBUG=False)
-    gv.LnDict = gv.Ln.LnDict      # DotMap()
-
-
-        # ===================================================
-        # - Lettura del file ini
-        # ===================================================
-    iniFile = gv.Ln.ReadIniFile(gv.env.iniFileName)
-    iniFile.read()
-    gv.ini = gv.Ln.LnDict(iniFile.dict)
-
-
-
-        # ===================================================
-        # - lettura dei parametri di input
-        # - Nel caso specifico abbiamo un argomento multiValue
-        # -   e quindi passiamo i valori validi per detto argomento.
-        # ===================================================
-    Input           = Prj.ParseInput(gv, args = sys.argv[1:])
-    gv.inputParam   = gv.Ln.LnDict(Input)
-    gv.fDEBUG       = gv.inputParam.fDEBUG
-
-        # sono in caso di monitor RAW
-    if 'displayDataformat' in gv.inputParam:
-        gv.inputParam.fHEX  = True if 'hex'  in gv.inputParam.displayDataformat else False
-        gv.inputParam.fLINE = True if 'line' in gv.inputParam.displayDataformat else False
-        gv.inputParam.fCHAR = True if 'char' in gv.inputParam.displayDataformat else False
-
-    # gv.PrintTree(fEXIT=True)
-
-
-
-
-
-        # ===================================================
-        # - SetUp del log
-        # ===================================================
-    logger = Prj.SetupLog(gv)
-
-
-
+    # gv.cfgFile = Ln.Dict(iniFile.dict)
+    # if gv.fDEBUG: gv.cfgFile.printTree(header="INI File", fPAUSE=True)
 
 
         # ===================================================
         # - Inizio applicazione
         # ===================================================
 
-    Prj.Main(gv, gv.inputParam.actionCommand )
+    Prj.Main(gv)
     gv.Ln.Exit(0, "completed", printStack=False, stackLevel=9, console=True)
     sys.exit()
 
