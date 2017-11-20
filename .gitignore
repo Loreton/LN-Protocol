@@ -54,5 +54,6 @@ coverage.xml
 # Arduino/
 *.o
 
-# platfomio
+# platfomio NON funziona....
+*/.pioenvs/*
 

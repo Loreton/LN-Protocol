@@ -60,7 +60,17 @@ void Slave_Main() {
 void processRequest(RXTX_DATA *pData) {
     byte senderAddr = pData->rx[SENDER_ADDR];
     byte destAddr   = pData->rx[DESTINATION_ADDR];
-    byte readValue = 0;
+    // byte subCommand = pData->rx[SUBCOMMAND];
+    byte analogValue = 0;
+    byte pinNO        = pData->tx[COMMAND_DATA+1];
+    byte valueToWrite = pData->tx[COMMAND_DATA+2];
+
+
+
+    byte readValue  = 0;
+    // byte writeValue = 0;
+    // byte rCode      = 0;
+    char returnDATA[20];
 
     if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
         // [Slave-012] - RX-data [rcvdCode: OK] - [00/000] --> [0B/011] - SeqNO: 00007 - [it's NOT for me...]
@@ -68,52 +78,93 @@ void processRequest(RXTX_DATA *pData) {
         return;
     }
 
-//@todo: inserire l'indirizzo nel comando myMsg...
     char myMsg1[] = "Polling answer!";
-    char myMsg2[] = "devo scrivere il pin";
     char myMsg3[] = "Comando non riconosciuto";
+    char AnalogCMD[] = "Working on ANALOG command: ";
+    char DigitalCMD[] = "Working on DIGITAL command: ";
+    char readingPin[] = "reading pin: ";
+    char writingPin[] = "writing pin: ";
 
+    // copiamo RX to TX per poi andare a modificare solo il necessario
     copyRxMessageToTx(pData);
+
     switch (pData->rx[COMMAND]) {
 
+            // ------------------------------------------------------
+            //                  ANALOG
+            // pin:     the pin to write to. Allowed data types: int.
+            // value:   the duty cycle: between 0 (always off) and 255 (always on). Allowed data types: int
+            // Es.:
+            //      val = analogRead(analogPin);   // read the input pin
+            //      analogWrite(ledPin, val / 4);  // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
+            // ------------------------------------------------------
+        case ANALOG:
+            Serial.print("\n\n");Serial.print(TAB);Serial.print(AnalogCMD);
+            switch (pData->rx[SUBCOMMAND]) {
+
+                case READ_PIN:
+                    Serial.print(readingPin);Serial.println(pinNO);
+                    analogValue = LnReadAnalogPin(pinNO);
+                    break;
+
+                case WRITE_PIN:
+                    Serial.print(writingPin);Serial.println(pinNO);
+                    analogWrite(pinNO, valueToWrite);
+                    delay(500);
+                    analogValue = LnReadAnalogPin(pinNO); // re-read to check the value and return it
+                    break;
+            }
+            returnDATA[0] = (char) analogValue;
+            setCommandData(pData->tx, returnDATA, 1);
+            pData->tx[CMD_RCODE] = OK;
+
+            // ------------------------------------------------------
+            //                  DIGITA
+            // pin:     the pin to write to. Allowed data types: int.
+            // value:   the duty cycle: between 0 (always off) and 255 (always on). Allowed data types: int
+            // Es.:
+            //      val = analogRead(analogPin);   // read the input pin
+            //      analogWrite(ledPin, val / 4);  // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
+            // ------------------------------------------------------
+        case DIGITAL:
+            Serial.print("\n\n");Serial.print(TAB);Serial.print(DigitalCMD);
+            switch (pData->rx[SUBCOMMAND]) {
+
+                case READ_PIN:
+                    Serial.print(readingPin);Serial.println(pinNO);
+                    readValue = digitalRead(pinNO);
+                    setCommandData(pData->tx, myMsg1, sizeof(myMsg1));
+                    break;
+
+                case WRITE_PIN:
+                    Serial.print(writingPin);Serial.println(pinNO);
+                    digitalWrite(pinNO, valueToWrite);
+                    delay(500);
+                    readValue = digitalRead(pinNO);
+                    break;
+            }
+            returnDATA[0] = (char) readValue;
+            setCommandData(pData->tx, returnDATA, 1);
+            pData->tx[CMD_RCODE] = OK;
+
+        case PWM:
+            switch (pData->rx[SUBCOMMAND]) {
+                case READ_PIN:
+                break;
+
+                case WRITE_PIN:
+                break;
+            }
+
         case SLAVE_POLLING:
-            if (pData->rx[SUBCOMMAND] == REPLY) {
-                Serial.print("\n\n");Serial.print(TAB);Serial.println(F("preparing response message... "));
+            switch (pData->rx[SUBCOMMAND]) {
+                case REPLY:
+                    Serial.print("\n\n");Serial.print(TAB);Serial.println(F("preparing response message... "));
 
-                setCommandData(pData->tx, myMsg1, sizeof(myMsg1));
-                pData->tx[CMD_RCODE] = OK;
-            }
-            break;
-
-        case READ_PIN:
-            pinNO = pData->tx[COMMAND_DATA+1];
-            Serial.print("\n\n");Serial.print(TAB);Serial.print(F("lettura del pin: "));Serial.println(pinNO);
-
-            if (pData->rx[SUBCOMMAND] == ANALOG) {
-                readValue = LnReadAnalogPin(pinNO);
-            }
-
-            else if (pData->rx[SUBCOMMAND] == DIGITAL) {
-                readValue = digitalRead(pinNO);
-            }
-
-            else if (pData->rx[SUBCOMMAND] == PWM) {
-                readValue = readPWM(pinNO);
-            }
-
-            else {
-                readValue = 0;
-            }
-
-            respData[0] = readValue;
-            // setCommandData(pData->tx, respData, 1);
-            pData->tx[CMD_RCODE] = OK;
-            break;
-
-        case WRITE_PIN:
-            setCommandData(pData->tx, myMsg2, sizeof(myMsg2));
-            pData->tx[CMD_RCODE] = OK;
-            break;
+                    setCommandData(pData->tx, myMsg1, sizeof(myMsg1));
+                    pData->tx[CMD_RCODE] = OK;
+                }
+                break;
 
         case SET_PINMODE:
             // writeEEprom(pData->rx[SUBCOMMAND], pData->rx[COMMAND_DATA]);
@@ -143,6 +194,12 @@ int writePWM(int pin) {
 
 
 
+// ##################################################
+// # LnReadAnalogPin(int pin)
+// ##################################################
+byte LnWriteAnalogPin(int pin) {
+    return 0;
+}
 // ##################################################
 // # LnReadAnalogPin(int pin)
 // ##################################################

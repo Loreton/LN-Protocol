@@ -15,30 +15,45 @@ Nel caso di Wireless RaspBerry si deve appoggiare ad un Arduino locale che provv
 Sintassi generica dei comandi string Master to Slave:
 
     STX                           - STX
-        DATALEN                   - lunghezza dei dati escluso STX ed ETX
-        SENDER_ADDR               - Dest Address      (FF = Broadcast)
-        DESTINATION_ADDR          - source Address    (00 = Master)
-        SEQNO_HIGH                - numero del messaggio utile per associare la risposta
+        DATALEN                   - datalen out of STX ed ETX
+        SENDER_ADDR               - Dest   Address
+        DESTINATION_ADDR          - Source Address    (00 = Master)
+        SEQNO_HIGH                - Sequence message number (To associate Req/Resp)
         SEQNO_LOW                 -
-        CMD_RCODE                 - rCode di ritorno per il comando eseguito (in TX è ignorato)
-        COMMAND                   - comando da eseguire
-        SUBCOMMAND                - eventuale dettaglio per il comando
-        COMMAND_DATA              - TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
+        CMD_RCODE                 - Execution of Command returnCode (ignored during TX)
+        COMMAND                   - Command to be executed
+        SUBCOMMAND                - SubCommand... related to Command
+        COMMAND_DATA              - TX-data to be used during command execution RX-response data
         ....                      -
     CRC                           - CRC
     ETX                           - ETX
 
     Commands Sample                                                         - Commnad
-        ; 01 xx                                                             - readPin       - pinNumber
-        ; 02 xx                                                             - readRelè      - releNumber
-        ; 03 xx                                                             - readLED       - ledNumber
-        ; 04 I2C_address cmd byte0, byte1, ...., bytex                      - readI2C
-        ; -- --                                                             -
-        ; 81 xx ON|OFF                                                      - writePin      - pinNumber
-        ; 82 xx ON|OFF                                                      - writeRelè     - releNumber
-        ; 83 xx ON|OFF                                                      - writeLED      - ledNumber
-        ; 84 I2C_address cmd byte0, byte1, ...., bytex                      - writeI2C
+        - RELAY_ECHO                                                        -
+            NO_REPLY
+            REPLY
+        ;
+        - SLAVE_ECHO                                                        -
+            NO_REPLY
+            REPLY
 
+        - SLAVE_POLLING                                                     -
+        ;
+        - READ_PIN                                                          -
+            DIGITAL pinNO
+            ANALOG  pinNO
+            PWM     pinNO
+        ;
+        - WRITE_PIN                                                         -
+            DIGITAL pinNO
+            ANALOG  pinNO
+            PWM     pinNO
+        ;
+        - SET_PINMODE                                                       -
+            will be soon available...
+        ;
+        - I2C                                                       -
+            I2C_address cmd byte0, byte1, ...., bytex
 
 
 ------------------------!-----------------! -------------!----------------------------------------------------------------

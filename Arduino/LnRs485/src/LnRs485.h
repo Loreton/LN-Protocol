@@ -34,17 +34,17 @@
                             RELAY_ECHO    = 1,
                             SLAVE_ECHO    = 2,
                             SLAVE_POLLING = 3,
-                            READ_PIN      = 4,
-                            WRITE_PIN     = 5,
-                            SET_PINMODE   = 6,
+                            SET_PINMODE   = 4,
+                            DIGITAL       = 5,
+                            ANALOG        = 6,
+                            PWM           = 7,
                         };
 
     enum rs485_SubCOMMANDs {
                             NO_REPLY      = 1,
                             REPLY         = 2,
-                            DIGITAL       = 3,
-                            ANALOG        = 4,
-                            PWM           = 5,
+                            READ_PIN      = 4,
+                            WRITE_PIN     = 5,
                         };
 
 
