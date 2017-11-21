@@ -1,7 +1,7 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 20-11-2017 17.16.08
+# Version ......: 21-11-2017 14.06.25
 # -----------------------------------------------
 import  sys
 from    pathlib import Path
@@ -62,21 +62,33 @@ def ParseInput(programVersion=0.1):
         conflict_handler='resolve',
     )
 
-
+# mainArgs         = myParser.parse_args(sys.argv[1:posizARGS+1])
         # configurazione Args ..
-    myParser.add_argument('--version',
-                            action='version',
-                            version='{PROG}  Version: {VER}'.format (PROG=prjName, VER=programVersion ),
-                            help=myHELP("show program's version number and exit") )
 
 
+
+    posizARGS=2
     # - Se abbiamo dei parametri posizionali allora inseriamo il modulo...
-    posParameters=1
-    if posParameters:
-        from . PositionalParameters     import positionalParameters
+    if posizARGS == 1:
+        from . OneTwoPositionalParameters  import positionalParameters
         posParamName='mainCommand'
         if len(sys.argv) == 1: sys.argv.append('-h')
-        positionalParameters(myParser, paramName=posParamName)
+        myPosParam = positionalParameters(myParser, paramName=posParamName)
+
+    # - Se abbiamo dei parametri posizionali allora inseriamo il modulo...
+    elif posizARGS == 2:
+        from . TwoPositionalParameters     import positionalParameters
+        posParamName='mainCommand'
+        if len(sys.argv) == 1: sys.argv.append('-h')
+        myPosParam = positionalParameters(myParser, paramName=posParamName)
+
+    else:
+        myParser.add_argument('--version',
+                action='version',
+                version='{PROG}  Version: {VER}'.format (PROG=prjName, VER=programVersion ),
+                help=myHELP("show program's version number and exit") )
+
+
 
     programParameters(myParser, gVar)
     logParameters(myParser, gVar)
@@ -86,17 +98,21 @@ def ParseInput(programVersion=0.1):
 
 
         # lancio del parser...
-    args = vars(myParser.parse_args())
+    # args = vars(myParser.parse_args())
+    print (sys.argv[posizARGS+1:])
+    args = vars(myParser.parse_args(sys.argv[posizARGS+1:]))
+
+
+    # se ho un solo parametro posizionale... eliminialo la LIST
+    if posizARGS > 0: args['firstPosParameter']  = myPosParam[0]
+    if posizARGS > 1: args['secondPosParameter'] = myPosParam[1]
+
 
 
         # --------------------------------------------
         # - verifica della congruenza di alcuni parametri:
         # - --log=False azzera anche il --log-filename]
         # --------------------------------------------
-    # se ho un solo parametro posizionale... eliminialo la LIST
-    if posParameters == 1:
-        args[posParamName] = args[posParamName][0]
-
     if args['log'] == False: args['log_filename'] = None
 
 
