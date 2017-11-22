@@ -1,7 +1,7 @@
 #!/usr/bin/python3.4
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 20-11-2017 17.08.43
+# Version ......: 22-11-2017 12.10.44
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -27,7 +27,7 @@ def LibPath(libName, libType='zip'):
     sys.path.append(str(LnLibPath))  # deve essere una stringa e non WindowsPath
 
 
-LibPath('LnLib_20171120', libType='zip')
+LibPath('LnLib_20171122', libType='zip')
 
 import  LnLib  as Ln
 import  Source as Prj
@@ -45,18 +45,14 @@ if __name__ == "__main__":
 
     logger    = Ln.InitLogger(toFILE=gv.args.log, logfilename=gv.args.log_filename, toCONSOLE=gv.args.log_console, ARGS=args)
 
-    # Lettura del file.ini
-
-    # iniFile = Ln.ReadIniFile(gv.args.config_file, strict=True, logger=logger)
+        # ------------------------
+        # - Lettura del file.ini
+        # ------------------------
     iniFile = Ln.ReadIniFile(gv.args.config_file, strict=True)
     iniFile.read(resolveEnvVars=False)
     iniFile.setDebug(gv.fDEBUG)
     gv.iniFile = Ln.Dict(iniFile.dict)
     if gv.fDEBUG: gv.iniFile.printTree(header="INI File", fPAUSE=True)
-
-    # gv.cfgFile = Ln.Dict(iniFile.dict)
-    # if gv.fDEBUG: gv.cfgFile.printTree(header="INI File", fPAUSE=True)
-
 
         # ===================================================
         # - Inizio applicazione
