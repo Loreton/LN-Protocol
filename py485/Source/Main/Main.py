@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 #
-# Scope:  Programma per ...........
-# modified:  by Loreto notarantonio v2017-03-03_11.33.37
+# updated by ...: Loreto Notarantonio
+# Version ......: 23-11-2017 14.27.30
 #
 # ######################################################################################
 
@@ -19,10 +19,11 @@ import Source as Prj
 # -  5 - Chiamata al programma principale del progetto
 ################################################################################
 def Main(gv):
-    logger      = Ln.SetLogger(package = __name__)
+    logger      = Ln.SetLogger(package = __package__)
 
     iniMain     = gv.iniFile.MAIN
-    relay       = gv.iniFile.ARDUINO_RELAY
+    relay       = gv.iniFile.ARDUINO_RELAY_PORT
+    monitor     = gv.iniFile.RS485_MONITOR_PORT
     rs485       = gv.iniFile.RS485
     myCMD       = gv.iniFile.COMMANDS
     mySubCMD    = gv.iniFile.SUB_COMMANDS
@@ -30,15 +31,36 @@ def Main(gv):
 
     for key, val in myCMD.items():      logger.debug('command     {0:<15}: {1}'.format(key, val))
     for key, val in mySubCMD.items():   logger.debug('sub_command {0:<15}: {1}'.format(key, val))
-    for key, val in rs485.items():      logger.debug('rs485       {0:<15}: {1}'.format(key, val))
-    for key, val in relay.items():      logger.debug('relay       {0:<15}: {1}'.format(key, val))
 
 
+    # gv.args.printTree(header='Args values', fPAUSE=False)
+    # relay.printTree(header='RELAY values', fPAUSE=False)
+
+
+        # ==========================================
+        # = Apertura porta seriale
+        # ==========================================
+    if gv.args.firstPosParameter in ['digital', 'analog']:
+        myPort = Prj.openRs485Port(relay, rs485)
+        myPort.Close()
+
+    elif gv.args.firstPosParameter in ['monitor']:
+        myPort = Prj.openRs485Port(monitor, rs485)
+        myPort.Close()
+
+    else:
+        errMsg = 'comando primario non previsto'
+        Ln.Exit(101, errMsg)
+
+
+
+    Ln.Exit(0)
 
         # ===================================================
         # = RS-485
         # ===================================================
-    if gv.args.mainCommand in ['rs485_relay']:
+    if gv.args.firstPosParameter in ['digital']:
+        gv.Prj.MasterRS485(gv, port)
         # logger.info('{0:<15}: {1}'.format('Relay Port',      relay.Port))
         # logger.info('{0:<15}: {1}'.format('Relay Address',   relay.Address))
         # logger.info('{0:<15}: {1}'.format('Relay BaudRate',  relay.BaudRate))

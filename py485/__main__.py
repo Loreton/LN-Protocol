@@ -1,7 +1,9 @@
 #!/usr/bin/python3.4
+# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 22-11-2017 12.10.44
+# Version ......: 23-11-2017 16.35.28
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -24,10 +26,10 @@ def LibPath(libName, libType='zip'):
         # LnLibPath = Path('y:\GIT-REPO\Python3\LnPythonLib\@LNLIB_BASE')
         print(' loading LnLibrary from Source directory.....')
 
-    sys.path.append(str(LnLibPath))  # deve essere una stringa e non WindowsPath
+    sys.path.insert(0, str(LnLibPath))  # deve essere una stringa e non WindowsPath
 
 
-LibPath('LnLib_20171122', libType='zip')
+LibPath('LnLib_20171123', libType='zipx')
 
 import  LnLib  as Ln
 import  Source as Prj
@@ -48,7 +50,7 @@ if __name__ == "__main__":
         # ------------------------
         # - Lettura del file.ini
         # ------------------------
-    iniFile = Ln.ReadIniFile(gv.args.config_file, strict=True)
+    iniFile = Ln.ReadIniFile(gv.args.ini_file, strict=True)
     iniFile.read(resolveEnvVars=False)
     iniFile.setDebug(gv.fDEBUG)
     gv.iniFile = Ln.Dict(iniFile.dict)
