@@ -1,118 +1,75 @@
 #!/usr/bin/python
 # -*- coding: iso-8859-1 -*-
 #
-# Scope:  Polling per protocollo Ln-Rs485
-#         Invia il comando di echo sul Relay collegato sulla porta seriale
-#         Il Relay ritrasmette il comando sia sulla Rs485 sia sulla seriale
-#         e quindi catturato da questo programma.
-#         Siccome destAddr=0 nessuno dovrebbe risponere ma...
-#         ...sulle seriali degli Arduino si dovrebbe leggere qualcosa tipo:
-#         S[011] - inoRECV from: 10 to  : 0 [00059]   (Request is NOT for me)
+# Scope:  Master per protocollo Ln-Rs485
+#         Invia il comando sul Relay collegato sulla porta seriale
+#         Il Relay ritrasmette il comando sul bus Rs485
 #
-# modified:     by Loreto notarantonio LnVer_2017-08-15_09.56.13
+# updated by ...: Loreto Notarantonio
+# Version ......: 26-11-2017 16.42.37
 #
 # ######################################################################################
 
 
 import sys
 import time
-import LnLib as Ln
+import  LnLib as Ln; C = Ln.Color()
 import Source as Prj
-
 
 ########################################################
 # keepAlive()
 #   invia un messaggio per verificare che sia presente
 ########################################################
-
-def digitalWrite(gv, serialRelayPort):
-    pass
-
-def digitalRead(gv, serialRelayPort):
+def digitalRead(rs485Port, iniData, srcAddress, destAddr, pinNO):
     logger  = Ln.SetLogger(package=__name__)
-    cPrint  = Ln.LnColor()
 
 
         # ===================================================
         # = RS-485 sendMessage
         # ===================================================
-    cPrint.YellowH ('... press ctrl-c to stop the process.')
+    C.printColored (color=C.yellowH, text='... press ctrl-c to stop the process.', tab=8)
+    iniData.printTree()
 
+    # sourceAddr  = int.from_bytes(iniData.COMMANDS.master, 'little')
+    # destAddr    = int.from_bytes(iniData.slave_address, 'little')
 
-    CMD             = gv.Ln.LnDict()
-    CMD.dataStr     = 'polling test'
-    CMD.command     = int.from_bytes(gv.myCMD.polling,  'little')
-    CMD.subCommand   = 0x01
-    CMD.sourceAddr  = int.from_bytes(gv.myDEV.master, 'little')
-    CMD.xmitRcode   = 0
+    commandData  = bytearray()
+    commandData.append( int(iniData.COMMAND.DIGITAL, 16) )    # COMMAND
+    commandData.append( int(iniData.SUB_COMMAND.READ_PIN, 16) )    # SubCOMMAND
+    commandData.append( pinNO )    # PinNumber
 
-    # JUST_MONITOR = True
-    # if JUST_MONITOR:
-    #     while True:
-    #         rcvdData, rawData = serialRelayPort.readData(timeoutValue=30000, fDEBUG=True)
-    #         if not rcvdData:
-    #             gv.Prj.displayRawData(rawData)
+    print (srcAddress, destAddr, commandData  )
 
-    #     print()
-    # sys.exit()
-
-
-
-    timeOutValue = 30000
-    LOOP_ON_DEV = True
     while True:
-            '''
-        for dev, address in gv.myDEV.items():
-            if dev in ('master', 'relay'): continue
-            CMD.destAddr    = int.from_bytes(address, 'little')
-            '''
+        print ()
+        print ("sending read digital pin...")
+        try:
+            dataSent = rs485Port.sendDataSDD(sourceAddress=srcAddress, destAddress=destAddr, dataStr=commandData, fDEBUG=True)
+            time.sleep(3)
 
-            validAddresses = [11,12,13,14,15]
-            # address = 0
-            dev = "Slave"
-            address = gv.Ln.getKeyboardInput("Please Enter address...", validKeys='11,12,13,14,15', exitKey='X', deepLevel=1, keySep=",", fDEBUG=False)
-            # while not address in validAddresses:
-            #     address = input("\n\n\n\nPlease Enter address...{}".format(validAddresses))
-            # address = int(address)
-            # print (address)
+        except (KeyboardInterrupt) as key:
+            print (__name__, "Keybord interrupt has been pressed")
+            sys.exit()
 
-            # print ('...................', dev, address)
-            CMD.destAddr    = int(address)
+        sys.exit()
 
-            print ()
-            cPrint.Yellow("sending polling test to {DEV} - Addr: 0x{ADDR:02X}".format(DEV=dev, ADDR=CMD.destAddr))
-
-            try:
-                dataSent = serialRelayPort.sendDataCMD(CMD, fDEBUG=True)
-
-            except (KeyboardInterrupt) as key:
-                print (__name__, "Keybord interrupt has been pressed")
-                sys.exit()
+        print ()
+        print ("waiting for response...")
+        try:
+            data = port.readRawData(EOD=[], hex=True, text=True, char=False, TIMEOUT=1000)
+            if data:
+                print('data has been received...')
 
 
-            print ()
-
-            # time.sleep(5)
-
-
-            cPrint.Cyan("waiting for response...")
-            try:
-                rcvdData, rawData = serialRelayPort.readData(timeoutValue=timeOutValue, fDEBUG=True)
-                if not rcvdData:
-                    gv.Prj.displayRawData(rawData)
+            payLoad, rawData = serialRelayPort.readData(TIMEOUT=1000, fDEBUG=True)
+            if not payLoad:
+                print ('payLoad ERROR....')
+            print()
 
 
-            except (KeyboardInterrupt) as key:
-                cPrint.Yellow (__name__, "Keybord interrupt has been pressed")
-                sys.exit()
+        except (KeyboardInterrupt) as key:
+            print (__name__, "Keybord interrupt has been pressed")
+            sys.exit()
 
-            # time.sleep(5)
-
-
-            # gv.Ln.getKeyboardInput("Press Enter to continue...", validKeys='ENTER', exitKey='X', deepLevel=1, keySep="|", fDEBUG=False)
-            # choice = input("\n\n\n\nPress Enter to continue...")
-
-
-
-
+    return 0
 

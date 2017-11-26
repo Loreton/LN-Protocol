@@ -3,20 +3,6 @@
 
 from  sys import version_info as sysVersion, path as sysPath, exit as sysExit
 import platform
-# from pathlib import Path
-
-# migliore implementazione di pathlib.Path
-#    https://pathpy.readthedocs.io/en/latest/
-# from LnLib.File.LnPath import Path as Path
-
-'''
-scriptMain  = Path(sys.argv[0]).resolve()
-projectDir  = scriptMain.parent
-currDir  = Path.cwd()
-currDir  = Path('.').resolve()
-print (scriptMain)
-print (projectDir)
-'''
 
 # --------------------------------------------
 # - inserire i path per fare l'import delle funzioni LnLib
@@ -30,52 +16,54 @@ print (projectDir)
 
 if False:
     print ()
-    # print (ProjectDir)
-    # print (LnLibDir)
-    # print (LnLibDir.joinpath('Common'))
     for path in sysPath: print (path)
     print ()
-# sysExit()
 
 
 
-# ############### OpSy type & version
-# - sys.version_info(major=3, minor=3, micro=2, releaselevel='final', serial=0)
-v = sysVersion
-pyVer = '{0}{1}{2}'.format(v.major, v.minor, v.micro)
-opSys = platform.system()
-if opSys.lower() == 'windows':
-    isWindows = True
-else:
-    isWindows = False
-isUnix    = not isWindows
-# ############### OpSy type & version
+'''
+    # - sys.version_info(major=3, minor=3, micro=2, releaselevel='final', serial=0)
+    v = sysVersion
+    pyVer = '{0}{1}{2}'.format(v.major, v.minor, v.micro)
+    opSys = platform.system()
+    if opSys.lower() == 'windows':
+        isWindows = True
+    else:
+        isWindows = False
+    isUnix    = not isWindows
+
+'''
 
 
+# ---------- LnLIB COMMON Functions ------
 from . Common.LnLogger                 import init             as InitLogger
 from . Common.LnLogger                 import SetLogger        as SetLogger
 from . Common.Exit                     import Exit             as Exit
 from . Common.LnColor                  import LnColor          as Color
-# from   .                             import ParseInput
 
-from . ParseInput.PositionalParameters import positionalParameters
-from . ParseInput.check_file           import check_file
-from . ParseInput.CreateParser         import createParser
-from . ParseInput.ColoredHelp          import coloredHelp
-from . ParseInput.Debug_Options        import debugOptions
-from . ParseInput.Log_Options          import logOptions
-from . ParseInput.IniFile_Options      import iniFileOptions
 
+# ---------- LnLIB PARSE INPUT ------
+from . ParseInput.PositionalParameters import positionalParameters # check for positional parameters (0,1,2) if required
+from . ParseInput.check_file           import check_file           # verify if inputFile esists
+from . ParseInput.CreateParser         import createParser         # create myParser
+from . ParseInput.ColoredHelp          import coloredHelp          # set coloredHelp for parameters
+from . ParseInput.Debug_Options        import debugOptions         # set debug and other options
+from . ParseInput.Log_Options          import logOptions           # set --log, --log-console, --log-file
+from . ParseInput.IniFile_Options      import iniFileOptions       # get projectName.ini for base parameters
+from . ParseInput.MainParseInput       import processInput         # start ParseInput process
+
+# ---------- LnLIB DotMap dictionary ------
 from . Dict.LnDict_DotMap              import DotMap           as Dict
 
+# ---------- LnLIB FILE functions ------
 from . File.ReadIniFile_Class          import ReadIniFile      as ReadIniFile
-
-
 from . File.VerifyPath                 import VerifyPath       as VerifyPath
 
+# ---------- LnLIB System functions ------
 from . System                          import SetOsEnv         as OsEnv
 from . System.GetKeyboardInput         import getKeyboardInput as KeyboardInput
 
+# ---------- LnLIB Process functions ------
 from . Process.RunProgram              import ExecGetOut       as runGetOut
 from . Process.RunProgram              import StartProgram     as runProgram
 from . Process.RunProgram              import OutOnFile        as runGetOnfile

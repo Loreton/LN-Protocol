@@ -21,15 +21,11 @@ def openRs485Port(portData, rs485):
         # = RS-485 open/initialize port
         # ----------------------------------------------------
     port = Prj.Rs485(port=portData.Port, baudrate=portData.BaudRate, mode=rs485.mode, logger=Ln.SetLogger)
-    port.STX = int(rs485.STX, 16)
-    port.ETX = int(rs485.ETX, 16)
-    port.CRC = eval(rs485.CRC)
-
-    logger.info('{0:<15}: {1}'.format('STX',  port.STX))
-    logger.info('{0:<15}: {1}'.format('STX',  port.ETX))
-    logger.info('{0:<15}: {1}'.format('CRC',  port.CRC))
-
+    port.SetSTX(rs485.STX)
+    port.SetETX(rs485.ETX)
+    port.SetCRC(rs485.CRC)
     port.ClosePortAfterEachCall(False)
+
     logger.info(port.__repr__())
     # port.Close()
     return port

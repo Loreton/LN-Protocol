@@ -1,77 +1,29 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-11-2017 17.07.37
+# Version ......: 26-11-2017 12.40.14
 # -----------------------------------------------
-import  sys
-from    pathlib import Path
-from    time    import strftime
-
-import Source as Prj
-
-
-import  LnLib as Ln; C = Ln.Color()
-
-
-class LnClass(): pass
+import      sys
+from        pathlib import Path
+from        time    import strftime
+import      LnLib as Ln; C=Ln.Color()
 
 #######################################################
 # ParseInput
 #######################################################
-def ParseInput(programVersion=0.1):
+def processInput(gVar, prjRoot):
 
         # ---------------------------------------------------------
         # -   Identifichiamo il nome progetto dal nome directory
         # ---------------------------------------------------------
-    programDir     = Path(sys.argv[0]).resolve().parent
-    if programDir.name.lower() in ['bin',  'source']:
-        programDir = programDir.parent
-    prjName        = programDir.name   # nome della dir del programma
+    if not gVar.projectDir:
+        prjDir = Path(sys.argv[0]).resolve().parent
+        if prjDir.name.lower() in ['bin',  'source']:
+            prjDir = prjDir.parent
+        gVar.projectDir = prjDir
 
-
-
-    nPosizARGS = 0
-    if nPosizARGS == 1:
-        positionalParametersDict  =  {
-            'rs485_usb'     : "send/receive  Ln-RS485 protocol via USB_RS485_pen",
-            'rs485_relay'   : "send/receive  Ln-RS485 protocol via Arduino Relay",
-            'rs485_monitor' : "monitoring    Ln-RS485 protocol via USB_RS485_pen",
-            'raw'           : "send/receive  Ln-RS485 protocol on USB port",
-        }
-
-
-    elif nPosizARGS == 2:
-        positionalParametersDict  =  {
-        'analog'     : {
-                'read':   "read  analog bit",
-                'write':  "write analog bit",
-                },
-        'digital'   : {
-                'read':   "read  digital bit",
-                'write':  "write digital bit",
-                },
-        'monitor'   : {
-                'read':   "read RS485-bus traffic",
-                },
-    }
-
-    else:
-        nPosizARGS = 0
-        positionalParametersDict  =  {}
-
-
-
-        # ----------------------------------
-        # - dict da passare alle funzioni
-        # ----------------------------------
-    gVar = LnClass()
-
-    # gVar.projectDir               = programDir
-    # nPosizARGS                = nPosizARGS
-    gVar.prjName                  = prjName
-    gVar.programVersion           = 'V1.0.0'
-    gVar.description              = 'Ln-RS485 protocol'
-    # gVar.positionalParametersDict = positionalParametersDict
+    if not gVar.prjName:
+        gVar.prjName = gVar.projectDir.name   # nome della dir del programma
 
 
         # -------------------------------------
@@ -80,9 +32,10 @@ def ParseInput(programVersion=0.1):
         # -   upperCase(pri_sec)
         # -------------------------------------
     posParser      = Ln.createParser(gVar)        # creazione di un parser ad hoc per passarglielo..
-    positionalParm = Ln.positionalParameters(posParser, nPosizARGS, positionalParametersDict)
+    positionalParm = Ln.positionalParameters(posParser, gVar.nPosizARGS, gVar.positionalParametersDict)
     posFuncToCall  = '_'.join(positionalParm).upper()                       # function: PRI_SEC
-    if   not posFuncToCall: posFuncToCall = 'programOptions' # option del programma
+    if not posFuncToCall:
+            posFuncToCall = 'programOptions' # option del programma
 
 
 
@@ -102,9 +55,10 @@ def ParseInput(programVersion=0.1):
         # - in current module
         # - and in Prj package
         # ----------------------------------------------------------
-    this_mod = sys.modules[__name__]
-    if   hasattr(this_mod,  posFuncToCall):     getattr(this_mod, posFuncToCall)(myParser)
-    elif hasattr(Prj,       posFuncToCall):     getattr(Prj,      posFuncToCall)(myParser)
+    # this_mod = sys.modules[__name__]
+    # if   hasattr(this_mod,  posFuncToCall):     getattr(this_mod, posFuncToCall)(myParser)
+    if hasattr(prjRoot, posFuncToCall):
+        getattr(prjRoot,  posFuncToCall)(myParser)
     else:
         errMsg = '[{0}] - Command not yet implemented!'.format(posFuncToCall)
         Ln.Exit(1, errMsg)
@@ -114,8 +68,8 @@ def ParseInput(programVersion=0.1):
         # - DEFAULT optional parameters
         # - valid for all projects
         # ----------------------------------
-    defaultIniFile = str(Path(programDir , 'conf', prjName + '.ini'))
-    defaultLogFile = Path(programDir , 'log', prjName + strftime('_%Y-%m-%d') + '.log')
+    defaultIniFile = str(Path(gVar.projectDir , 'conf', gVar.prjName + '.ini'))
+    defaultLogFile = Path(gVar.projectDir , 'log', gVar.prjName + strftime('_%Y-%m-%d') + '.log')
 
     Ln.iniFileOptions(myParser, defaultIniFile)
     Ln.logOptions(myParser, defaultLogFile)
@@ -125,14 +79,14 @@ def ParseInput(programVersion=0.1):
         # ===========================================================
         # = lancio del parser... per i restanti parametri opzionali
         # ===========================================================
-    args = vars(myParser.parse_args(sys.argv[nPosizARGS+1:]))
+    args = vars(myParser.parse_args(sys.argv[gVar.nPosizARGS+1:]))
 
 
         # ----------------------------------------------
         # - creazione entry per i parametri posizionali
         # ----------------------------------------------
-    if nPosizARGS > 0: args['firstPosParameter']  = positionalParm[0]
-    if nPosizARGS > 1: args['secondPosParameter'] = positionalParm[1]
+    if gVar.nPosizARGS > 0: args['firstPosParameter']  = positionalParm[0]
+    if gVar.nPosizARGS > 1: args['secondPosParameter'] = positionalParm[1]
 
 
 
@@ -168,7 +122,4 @@ def ParseInput(programVersion=0.1):
         choice = input('press Enter to continue... (q|x to exit): ')
         if choice.lower() in ('x', 'q'): sys.exit()
 
-    return  args
-    Ln.Exit(9999)
-
-
+    return args

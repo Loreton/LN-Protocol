@@ -12,6 +12,28 @@ import  LnLib as Ln; C=Ln.Color()
 #######################################################
 # PROGRAM options
 #######################################################
+def read(myParser):
+    digitalPin(myParser)
+
+def write(myParser):
+    digitalPin(myParser)
+
+    onOffGroup = myParser.add_mutually_exclusive_group(required=True)  # True indica obbligatorietà di uno del gruppo
+
+    onOffGroup.add_argument( "--on",
+                                # required=False,
+                                action='store_true',
+                                help=Ln.coloredHelp("Set pin ON.", required=True))
+
+    onOffGroup.add_argument( "--off",
+                                # required=False,
+                                action='store_true',
+                                help=Ln.coloredHelp("Set pin OFF.", required=True))
+
+
+#######################################################
+# PROGRAM options
+#######################################################
 def digitalPin(myParser):
 
         # ---------------------------------------
@@ -26,7 +48,7 @@ def digitalPin(myParser):
                                 help=Ln.coloredHelp('', None))
 
 
-    myParser.add_argument('-a', '--slave-address',
+    myParser.add_argument('-s', '--slave-address',
                                 metavar='',
                                 type=int,
                                 required=True,

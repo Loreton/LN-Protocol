@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-11-2017 14.27.30
+# Version ......: 26-11-2017 18.04.00
 #
 # ######################################################################################
 
@@ -24,9 +24,9 @@ def Main(gv):
     iniMain     = gv.iniFile.MAIN
     relay       = gv.iniFile.ARDUINO_RELAY_PORT
     monitor     = gv.iniFile.RS485_MONITOR_PORT
-    rs485       = gv.iniFile.RS485
-    myCMD       = gv.iniFile.COMMANDS
-    mySubCMD    = gv.iniFile.SUB_COMMANDS
+    rs485       = gv.iniFile.RS485_PROTOCOL
+    myCMD       = gv.iniFile.COMMAND
+    mySubCMD    = gv.iniFile.SUB_COMMAND
 
 
     for key, val in myCMD.items():      logger.debug('command     {0:<15}: {1}'.format(key, val))
@@ -36,22 +36,30 @@ def Main(gv):
     # gv.args.printTree(header='Args values', fPAUSE=False)
     # relay.printTree(header='RELAY values', fPAUSE=False)
 
-
+    myReqCommand = '{}.{}'.format(gv.args.firstPosParameter, gv.args.secondPosParameter)
         # ==========================================
         # = Apertura porta seriale
         # ==========================================
-    if gv.args.firstPosParameter in ['digital', 'analog']:
-        myPort = Prj.openRs485Port(relay, rs485)
-        myPort.Close()
+    myPort = Prj.openRs485Port(relay, rs485)
 
-    elif gv.args.firstPosParameter in ['monitor']:
-        myPort = Prj.openRs485Port(monitor, rs485)
-        myPort.Close()
+    if myReqCommand == 'digital.read':
+        Prj.digitalRead(myPort, gv.iniFile, srcAddress=rs485.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
+
+    elif myReqCommand == 'digital.write':
+        Prj.digitalWrite(myPort, gv.args.slave_address, gv.iniFile)
+
+    elif myReqCommand == 'monitor.rs485':
+        Prj.monitorRS485(myPort)
+
+    elif myReqCommand == 'monitor.raw':
+        Prj.monitorRaw(myPort)
 
     else:
         errMsg = 'comando primario non previsto'
+        myPort.Close()
         Ln.Exit(101, errMsg)
 
+    myPort.Close()
 
 
     Ln.Exit(0)
@@ -68,10 +76,10 @@ def Main(gv):
             # ----------------------------------------------------
             # = RS-485 open/initialize port
             # ----------------------------------------------------
-        port = Prj.Rs485(port=relay.Port, baudrate=relay.BaudRate, mode=rs485.mode, logger=Ln.SetLogger)
-        port.STX = int(rs485.STX, 16)
-        port.ETX = int(rs485.ETX, 16)
-        port.CRC = eval(rs485.CRC)
+        port = Prj.Rs485(port=relay.Port, baudrate=relay.BaudRate, mode=rs485.mode, STX=4, ETX=5, CRC=False, logger=Ln.SetLogger)
+        # port.STX = int(rs485.STX, 16)
+        # port.ETX = int(rs485.ETX, 16)
+        # port.CRC = eval(rs485.CRC)
 
         # logger.info('{0:<15}: {1}'.format('STX',  port.STX))
         # logger.info('{0:<15}: {1}'.format('STX',  port.ETX))

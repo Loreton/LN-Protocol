@@ -1,10 +1,14 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 26-11-2017 18.02.30
+# Version ......: 26-11-2017 12.41.29
 # -----------------------------------------------
+# from    time    import strftime
+
+
 
 import  sys
+# from    pathlib import Path
 import  Source as Prj
 import  LnLib as Ln; C = Ln.Color()
 
@@ -24,20 +28,34 @@ class LnClass(): pass
 def ParseInput(description='Ln-RS485 protocol', programVersion='V0.1'):
 
     nPosizARGS = 2
-    positionalParametersDict  =  {
-    'analog'     : {
-            'read':   "read  analog bit",
-            'write':  "write analog bit",
-            },
-    'digital'   : {
-            'read':   "read  digital bit",
-            'write':  "write digital bit",
-            },
-    'monitor'   : {
-            'rs485':   "read RS485-bus traffic",
-            'raw':     "read RS485-bus raw traffic",
-            },
+    if nPosizARGS == 1:
+        positionalParametersDict  =  {
+            'rs485_usb'     : "send/receive  Ln-RS485 protocol via USB_RS485_pen",
+            'rs485_relay'   : "send/receive  Ln-RS485 protocol via Arduino Relay",
+            'rs485_monitor' : "monitoring    Ln-RS485 protocol via USB_RS485_pen",
+            'raw'           : "send/receive  Ln-RS485 protocol on USB port",
+        }
+
+
+    elif nPosizARGS == 2:
+        positionalParametersDict  =  {
+        'analog'     : {
+                'read':   "read  analog bit",
+                'write':  "write analog bit",
+                },
+        'digital'   : {
+                'read':   "read  digital bit",
+                'write':  "write digital bit",
+                },
+        'monitor'   : {
+                'rs485':   "read RS485-bus traffic",
+                },
     }
+
+    else:
+        nPosizARGS = 0
+        positionalParametersDict  =  {}
+
 
 
         # ----------------------------------

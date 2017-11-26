@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 20-11-2017 18.25.06
+# Version ......: 26-11-2017 18.07.07
 
 
 import os
@@ -22,10 +22,8 @@ def LnClass(): pass
 # Several instrument instances can share the same serialport
 _SERIALPORTS = {}
 
-
 BYTESIZE = 8
 """Default value for the bytesize (int)."""
-
 PARITY   = serial.PARITY_NONE
 """Default value for the parity. See the pySerial module for documentation. Defaults to serial.PARITY_NONE"""
 
@@ -34,10 +32,6 @@ STOPBITS = 1
 
 read_TIMEOUT  = 0.05
 """Default value for the timeout value in seconds (float)."""
-
-# CLOSE_PORT_AFTER_EACH_CALL = False
-# CLOSE_PORT_AFTER_EACH_CALL = True
-"""Default value for port closure setting."""
 
 #####################
 ## Named constants ##
@@ -100,25 +94,6 @@ LnRs485_validBytesHex = [
                 '0xF0'
               ]
 
-
-
-rs485Map = {            'DATALEN'           : 0,    # - lunghezza dei dati escluso STX ed ETX
-                        'SENDER_ADDR'       : 1,    # - Dest Address      (FF = Broadcast)
-                        'DESTINATION_ADDR'  : 2,    # - source Address    (00 = Master)
-                        'SEQNO_HIGH'        : 3,    # - numero del messaggio utile per associare la risposta
-                        'SEQNO_LOW'         : 4,    # -
-                        'CMD_RCODE'         : 5,    # rCode di ritorno per il comando eseguito (in TX è ignorato)
-                        'COMMAND'           : 6,    # comando da eseguire
-                        'SUBCOMMAND'        : 7,    # eventuale dettaglio per il comando
-                        'COMMAND_DATA'      : 8,    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
-                    };
-
-
-
-LnRs485_writePin   = {  'COMANDO'           : 5,   # READ 1 | WRITE-2
-                        'PIN_NO'            : 6,   # numero del pin su cui operare
-                        'PIN_VALUE'         : 6,   # 0, 1
-                    };
 
 
 
@@ -184,21 +159,23 @@ class LnRs485_Instrument():
         # self._payLoadMap.PAYLOAD           = 4
         self._printableChars                = list(range(31,126))
 
-        self.debug = True
+        # self.debug = True
         """Set this to :const:'True' to print the communication details. Defaults to :const:'False'."""
 
-        self.sendCounter = 0
+        self._sendCounter = 0
         """Set this to :const:'True' to print the communication details. Defaults to :const:'False'."""
 
-        self.STX = int('0x02', 16) # integer
-        self.ETX = int('0x03', 16) # integer
-        # self.CRC = True
+        # self._STX = int('0x02', 16) # integer
+        # self._ETX = int('0x03', 16) # integer
+        self._STX = 0xF0
+        self._ETX = 0xF1
+        self._CRC = True
 
-        self.close_port_after_each_call = False
+        self._close_port_after_each_call = False
         """If this is :const:'True', the serial port will be closed after each call. """
-        if  self.close_port_after_each_call: self.serial.close()
+        if  self._close_port_after_each_call: self.serial.close()
 
-        self.precalculate_read_size = True
+        self._precalculate_read_size = True
         """If this is :const:'False', the serial port reads until timeout
         instead of just reading a specific number of bytes. Defaults to :const:'True'.
 
@@ -206,24 +183,6 @@ class LnRs485_Instrument():
         """
 
 
-    def ClosePortAfterEachCall(self, openPortAEC):
-        logger = self._setLogger(package=__name__)
-        self.close_port_after_each_call = openPortAEC
-
-        if openPortAEC:
-            if self.serial.isOpen():
-                logger.info('closing port...')
-                self.serial.close()
-        else:
-            if not self.serial.isOpen():
-                logger.info('opening port...')
-                self.serial.open()
-
-    def Close(self):
-        logger = self._setLogger(package=__name__)
-        if self.serial.isOpen():
-            logger.info('closing port...')
-            self.serial.close()
 
 
     def _internaLogger(self, package=None):
@@ -260,7 +219,7 @@ class LnRs485_Instrument():
             mode                       = {MODE},
             close_port_after_each_call = {CPAEC},
             precalculate_read_size     = {PRS},
-            debug                      = {DEBUG},
+            CRC                        = {CRC},
             STX                        = 0x{STX:02x},
             ETX                        = 0x{ETX:02x},
             serial-id                  = {SERIAL},>
@@ -269,12 +228,12 @@ class LnRs485_Instrument():
                         CLASS=self.__class__.__name__,
                         ID=id(self),
                         MODE=self.mode,
-                        CPAEC=self.close_port_after_each_call,
-                        PRS=self.precalculate_read_size,
-                        DEBUG=self.debug,
+                        CPAEC=self._close_port_after_each_call,
+                        PRS=self._precalculate_read_size,
                         SERIAL=self.serial,
-                        STX=self.STX,
-                        ETX=self.ETX
+                        CRC=self._CRC,
+                        STX=self._STX,
+                        ETX=self._ETX
             )
                         # ADDRESS=self.address,
 
@@ -374,7 +333,7 @@ class LnRs485_Instrument():
     def _readSerialBuffer(self, SOD=[], EOD=[], timeoutValue=5000, fDEBUG=False):
         logger = self._setLogger(package=__name__)
 
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             logger.debug('opening port...')
             self.serial.open()
 
@@ -404,7 +363,7 @@ class LnRs485_Instrument():
         startRun = time.time()*1000
         elapsed = 0
         TIMEOUT = True      # flag per indicare se siamo andati in timeout o meno
-        print( "starting timer... for {} mSec".format(timeoutValue))
+        logger.debug( "starting timer... for {} mSec".format(timeoutValue))
 
         buffer = bytearray()
         while elapsed < timeoutValue:
@@ -450,15 +409,61 @@ class LnRs485_Instrument():
 
 
         msg = "stopped  timer... after {} mSec".format(elapsed)
-        print(msg)
+        # print(msg)
         logger.debug(msg)
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             logger.debug('closing port...')
             self.serial.close()
 
         return buffer
 
 
+
+
+
+
+
+    #######################################################################
+    # # PUBLIC methods
+    #######################################################################
+
+    def SetSTX(self, value):
+        logger = self._setLogger(package=__package__)
+        if isinstance(value, str):
+            value = int(value, 16)
+        self._STX = value
+        logger.info('setting STX to {}'.format(self._STX))
+
+    def SetETX(self, value):
+        logger = self._setLogger(package=__name__)
+        if isinstance(value, str):
+            value = int(value, 16)
+        self._ETX = value
+        logger.info('setting ETX to {}'.format(self._ETX))
+
+    def SetCRC(self, bFlag):
+        logger = self._setLogger(package=__name__)
+        self._CRC = eval(bFlag)
+        logger.info('setting CRC to {}'.format(self._CRC))
+
+    def ClosePortAfterEachCall(self, bFlag):
+        logger = self._setLogger(package=__name__)
+        self._close_port_after_each_call = bFlag
+
+        if bFlag:
+            if self.serial.isOpen():
+                logger.info('closing port...')
+                self.serial.close()
+        else:
+            if not self.serial.isOpen():
+                logger.info('opening port...')
+                self.serial.open()
+
+    def Close(self):
+        logger = self._setLogger(package=__name__)
+        if self.serial.isOpen():
+            logger.info('closing port...')
+            self.serial.close()
 
 
     #######################################################################
@@ -491,12 +496,15 @@ class LnRs485_Instrument():
 
             if hex:
                 hexData         = ' '.join('{0:02x}'.format(x) for x in bufferData)
+                logger.debug('readRawDataLib: {DESCR:^10}:  {DATA}'.format(DESCR="raw", DATA=hexData))
                 print ('readRawDataLib: {DESCR:^10}:  {DATA}'.format(DESCR="raw", DATA=hexData))
 
             if char:
+                logger.debug('readRawDataLib: {DESCR:^10}:  {DATA}'.format(DESCR="chr", DATA='  '.join(lineToPrint)))
                 print ('readRawDataLib: {DESCR:^10}:  {DATA}'.format(DESCR="chr", DATA='  '.join(lineToPrint)))
 
             if text:
+                logger.debug('readRawDataLib: {DESCR:^10}:  {DATA}'.format(DESCR="text", DATA=''.join(lineToPrint)))
                 print ('readRawDataLib: {DESCR:^10}:  {DATA}'.format(DESCR="text", DATA=''.join(lineToPrint)))
 
 
@@ -511,43 +519,38 @@ class LnRs485_Instrument():
 
     #######################################################################
     # - by Loreto
-    # - Lettura dati bsato sul protocollo:
-    # -     RS485 protocol library by Nick Gammon
-    # - STX - data - CRC - ETX
-    # - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
-    # -  byte complemented (incluso il CRC)
-    # -  only values sent would be (in hex):
+    # - Lettura dati basato sul protocollo:
+    # -    LnRS485
+    # -         STX - data - CRC - ETX
+    # - A parte STX e ETX tutti gli altri byte sono inviati come
+    # -  due nibble byte complemented (incluso il CRC)
+    # -  i dati trasmessi posso assumere solo i seguenti valori (in hex):
     # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
     # -  Con il fatto che solo i byte di sopra possono essere inviati,
     # -  il controllo su di essi forse fa venire meno il CRC e quindi
     # -  l'ho inserito come flag
-    #
-    # - credo che questa funzione venga chiamata non direttamente da me
-    # - in quanto ho notato che non prende ulteriori parametri.
     #######################################################################
     def readData(self, timeoutValue=1000, fDEBUG=False):
         logger = self._setLogger(package=__name__)
 
-        bufferData = self._readSerialBuffer(SOD=self.STX, EOD=self.ETX, timeoutValue=timeoutValue, fDEBUG=fDEBUG)
+        bufferData = self._readSerialBuffer(SOD=self._STX, EOD=self._ETX, timeoutValue=timeoutValue, fDEBUG=fDEBUG)
         hexData    = ' '.join('{0:02X}'.format(x) for x in bufferData)
         msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='readDataLib: full data', LEN=len(bufferData), DATA=hexData)
-        # print(msg)
         logger.debug(msg)
 
         if not bufferData:
             msg = 'ERROR: no data received!'
-            # print(msg)
             logger.error(msg)
             return bytearray(), bufferData
 
             # Prendiamo i dati fissi
-        if not bufferData[0] == self.STX:
+        if not bufferData[0] == self._STX:
             msg = 'ERROR: STX missed'
             print(msg)
             logger.error(msg)
             return bytearray(), bufferData
 
-        if not bufferData[-1] == self.ETX:
+        if not bufferData[-1] == self._ETX:
             msg = 'ERROR: ETX missed'
             print(msg)
             logger.error(msg)
@@ -617,15 +620,6 @@ class LnRs485_Instrument():
             print (' - SeqNo: {0:05}'.format(rcvData[SEQNO_HIGH]*256+rcvData[SEQNO_LOW]), end="")
             print (' - [rcvdCode: {0:03}]'.format(xMitCode))
             print ()
-            '''
-            print ()
-            print ('[Pi-RX] - ', end="")
-            print (' [{0:02X}/{0:03}]'.format(rcvData[SENDER_ADDR]), end="")
-            print (' --> [{0:02X}/{0:03}]'.format(rcvData[DESTINATION_ADDR]), end="")
-            print (' - SeqNo: {0:05}'.format(rcvData[SEQNO_HIGH]*256+rcvData[SEQNO_LOW]), end="")
-            print (' - [rcvdCode: {0:03}]'.format(xMitCode))
-            print ()
-            '''
 
 
                 # hezadecimal
@@ -662,8 +656,8 @@ class LnRs485_Instrument():
 
 
     def _getSendCounter(self):
-        self.sendCounter += 1
-        yy = self.sendCounter.to_bytes(2, byteorder='big')
+        self._sendCounter += 1
+        yy = self._sendCounter.to_bytes(2, byteorder='big')
         return yy
 
     #######################################################################
@@ -673,15 +667,19 @@ class LnRs485_Instrument():
     def sendDataSDD(self, sourceAddress, destAddress, dataStr, fDEBUG=False):
         ''' formato esplicito dei parametri '''
         dataToSend = bytearray()
-        dataToSend.append(sourceAddress)
-        dataToSend.append(destAddress)
+        dataToSend.append(int(sourceAddress))
+        dataToSend.append(int(destAddress))
 
         yy = self._getSendCounter()
         dataToSend.append(yy[0])  # high byte
         dataToSend.append(yy[1])  # Low byte
+        if isinstance(dataStr, str):
+            for x in dataStr:
+                dataToSend.append(ord(x))
+        elif isinstance(dataStr, bytearray):
+            for x in dataStr:
+                dataToSend.append(x)
 
-        for x in dataStr:
-            dataToSend.append(ord(x))
 
         dataSent = self.sendData(dataToSend, fDEBUG=fDEBUG)
         return dataSent
@@ -733,55 +731,14 @@ class LnRs485_Instrument():
     #######################################################################
     def sendData(self, txData, fDEBUG=False):
         ''' formato in bytearray dei parametri '''
+
         logger = self._setLogger(package=__name__)
-        if fDEBUG:
-            # print()
-            # seqNO = data[SEQNO_LOW]+data[SEQNO_HIGH]*256
-            # print ('sendDataLib: dataLen=', len(data))
-            # print ('    source:{sADDR:03}  dest:{dADDR:03} CMD:{CMD:03} seqNo:{SEQ:05}'.format(sADDR=data[SENDER_ADDR], dADDR=data[DESTINATION_ADDR], SEQ=seqNO, CMD=data[COMMAND]))
-            # print ('    {DESCR:<10}: {DATA}'.format(DESCR="payload", DATA=' '.join('{0:02x}'.format(x) for x in data)))
-
-            '''
-
-            print ('sendDataLib:')
-            print ('    seqNo    : {0:05}'.format(payLoad[SEQNO_HIGH]*256+payLoad[SEQNO_LOW]))
-            print ('    xMitCode : {0:03} (0 for TX)'.format(0))
-            print ()
-
-            print ('    full data - len: [{0:03}] - '.format(len(payLoad)), end="")
-            for byte in payLoad: print ('{0:02X} '.format(byte), end="")
-            print ()
-
-            userData = payLoad[USER_DATA:]
-            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*USER_DATA, end="")
-            for byte in userData: print ('{0:02X} '.format(byte), end="")
-
-            print ('')
-            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*USER_DATA, end="")
-            print ('[', end="")
-            for byte in userData:
-                if byte in self._printableChars:   # Handle only printable ASCII
-                    print(chr(byte), end="")
-                else:
-                    print(' ', end="")
-            print (']')
-            print ('')
-            print ('    SourceAddr 0x : {0:02X}'.format(payLoad[SENDER_ADDR]))
-            print ('    DestAddr   0x : {0:02X}'.format(payLoad[DESTINATION_ADDR]))
-            print ('    SEQNO      0x : {0:02X} {1:02X}'.format(payLoad[SEQNO_HIGH], payLoad[SEQNO_LOW]))
-            print ('    Command    0x : {0:02X}'.format(payLoad[COMMAND]))
-            print ('    userRCode  0x : {0:02X}'.format(payLoad[USER_RCODE]))
-
-            '''
-
 
             # - preparaiamo il bytearray con i dati da inviare
         dataToSend=bytearray()
 
             # - STX nell'array
-        dataToSend.append(self.STX)
+        dataToSend.append(self._STX)
 
             # - Data nell'array
         for thisByte in txData:
@@ -790,50 +747,53 @@ class LnRs485_Instrument():
             dataToSend.append(byte2)
 
             # - CRC nell'array
-        if self.CRC:
+        if self._CRC:
             CRC_value    = self._getCRC8(txData)
             byte1, byte2 = self._splitComplementedByte(CRC_value)
             dataToSend.append(byte1)
             dataToSend.append(byte2)
 
             # - ETX
-        dataToSend.append(self.ETX)
+        dataToSend.append(self._ETX)
 
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             self.serial.open()
 
             # INVIO dati
         self.serial.write(dataToSend)
 
 
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             self.serial.close()
 
 
 
         if fDEBUG:
-            print ('[Pi-TX] - ', end="")
-            '''
-            print (' [{0:02X}/{0:03}]'.format(txData[SENDER_ADDR]), end="")
-            print (' --> [{0:02X}/{0:03}]'.format(txData[DESTINATION_ADDR]), end="")
-            '''
-            print (' 0x{0:02X}'.format(txData[SENDER_ADDR]), end="")
-            print (' --> 0x{0:02X}'.format(txData[DESTINATION_ADDR]), end="")
-            print (' - SeqNo: {0:05}'.format(txData[SEQNO_HIGH]*256+txData[SEQNO_LOW]), end="")
-            print ()
-            print ()
+            print ('\n[Pi-TX] - 0x{SA:02X} --> 0x{DA:02X} - SeqNo: {SeqNO:05}\n'.format(
+                                                            SA=txData[SENDER_ADDR],
+                                                            DA=txData[DESTINATION_ADDR],
+                                                            SeqNO=txData[SEQNO_HIGH]*256+txData[SEQNO_LOW]
+                                                            )
+                )
 
+            appoDataStr = " ".join("{:02X}".format(x) for x in txData)
+            print ('    full data - len: [{LEN:03}] - {DATA}'.format(
+                                                                LEN=len(txData),
+                                                                DATA=appoDataStr
+                                                                )
+                )
 
-
-            print ('    full data - len: [{0:03}] - '.format(len(txData)), end="")
-            for byte in txData: print ('{0:02X} '.format(byte), end="")
-            print ()
 
             userData = txData[COMMAND_DATA:]
-            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*COMMAND_DATA, end="")
-            for byte in userData: print ('{0:02X} '.format(byte), end="")
+            appoDataStr = " ".join("{:02X}".format(x) for x in userData)
+            print ('    user data - len: [{LEN:03}] - {TAB}{DATA}'.format(
+                                                                        LEN=len(userData),
+                                                                        TAB='   '*COMMAND_DATA,
+                                                                        DATA=appoDataStr
+                                                                    )
+                )
 
+            ''' formato printable
             print ('')
             print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
             print ('   '*COMMAND_DATA, end="")
@@ -844,12 +804,25 @@ class LnRs485_Instrument():
                 else:
                     print(' ', end="")
             print (']')
-            print ('')
-            print ('    xMitted CRC 0x : {0:02X}'.format(CRC_value))
-            print ('    SEQNO       0x : {0:02X} {1:02X}'.format(txData[SEQNO_HIGH], txData[SEQNO_LOW]))
-            print ('    CMD_RCode   0x : {0:02X}'.format(txData[CMD_RCODE]))
-            print ('    CMD/subCMD  0x : {0:02X} {1:02X}'.format(txData[COMMAND], txData[SUBCOMMAND]))
+            '''
 
+            print ('''
+    xMitted CRC 0x : {CRC:02X}
+    SEQNO       0x : {SeqH:02X} {SeqL:02X}
+    CMD_RCode   0x : {CMD_RC:02X}
+    CMD.subCMD  0x : {CMD:02X}.{SUB_CMD:02X}
+                '''.format(
+                            CRC=CRC_value,
+                            SeqH=txData[SEQNO_HIGH],
+                            SeqL=txData[SEQNO_LOW],
+                            CMD_RC=txData[CMD_RCODE],
+                            CMD=txData[COMMAND],
+                            SUB_CMD=txData[SUBCOMMAND]
+                            )
+                    )
+
+
+            print ('    {DESCR:<10}: {DATA}'.format(DESCR="", DATA='ST |SA-| |DA-| |sqH| |sqL| |CMD| |SUB|'))
             print ('    {DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in dataToSend)))
 
         return dataToSend
@@ -992,12 +965,12 @@ if __name__ == '__main__':
     def _read_SOD_EOD_Buffer(self, SOD=None, EOD=None, TIMEOUT=1000):
         logger = self._setLogger(package=__name__)
 
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             logger.debug('opening port...')
             self.serial.open()
 
-        if not SOD: SOD = self.STX
-        if not EOD: EOD = self.ETX
+        if not SOD: SOD = self._STX
+        if not EOD: EOD = self._ETX
         buffer = bytearray()
 
         logger.debug( "reading buffer")
@@ -1026,7 +999,7 @@ if __name__ == '__main__':
             if chInt==EOD: break
 
 
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             logger.debug('closing port...')
             self.serial.close()
 
@@ -1043,7 +1016,7 @@ if __name__ == '__main__':
     def _readBuffer_OK_TO_BE_DELETED(self):
         logger = self._setLogger(package=__name__)
 
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             logger.debug('opening port...')
             self.serial.open()
 
@@ -1051,7 +1024,7 @@ if __name__ == '__main__':
 
         logger.debug( "reading buffer")
         chInt=-1
-        while chInt != self.STX:
+        while chInt != self._STX:
             ch = self.serial.read(1)       # ch e' un bytes
             if ch == b'': continue
             chInt = int.from_bytes(ch, 'little')
@@ -1060,14 +1033,14 @@ if __name__ == '__main__':
         buffer.append(chInt)
         logger.debug( "Received: STX")
         chInt=-1
-        while chInt != self.ETX:
+        while chInt != self._ETX:
             ch = self.serial.read(1)       # ch e' un bytes
             if ch == b'': continue
             chInt = int.from_bytes(ch, 'little')
             buffer.append(chInt)
-            logger.debug( "Received: byte hex: {0:02x}... waiting for {1:02x}".format(chInt, self.ETX) )
+            logger.debug( "Received: byte hex: {0:02x}... waiting for {1:02x}".format(chInt, self._ETX) )
 
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             logger.debug('closing port...')
             self.serial.close()
 
@@ -1082,7 +1055,7 @@ if __name__ == '__main__':
     def _readRawBuffer_OK_TO_BE_DELETED(self, EOD=None):
         logger = self._setLogger(package=__name__)
 
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             logger.debug('opening port...')
             self.serial.open()
 
@@ -1106,7 +1079,7 @@ if __name__ == '__main__':
                 buffer.append(chInt)
                 logger.debug( "Received byte: {0:02x}... waiting for NULL".format(chInt) )
 
-        if self.close_port_after_each_call:
+        if self._close_port_after_each_call:
             logger.debug('closing port...')
             self.serial.close()
 
