@@ -27,7 +27,7 @@ void Relay_Main() {
     }
 
     pData->timeout     = 5000;
-    pData->rx[DATALEN] = 0;
+    pData->rx[fld_DATALEN] = 0;
 
         // --------------------------------------
         // - ricezione messaggio da RaspBerry
@@ -136,8 +136,8 @@ byte Relay_waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
         // - lo scriviamo su ->rx
         // - perché poi sarà copiato su ->tx
         // -----------------------------------------
-        pData->rx[SENDER_ADDR]      = pData->rx[DESTINATION_ADDR];
-        pData->rx[DESTINATION_ADDR] = 0;
+        pData->rx[fld_SENDER_ADDR]      = pData->rx[fld_DESTINATION_ADDR];
+        pData->rx[fld_DESTINATION_ADDR] = 0;
 
                       //-- 01234567
         char errorMsg[] = "ERROR: ........ occurred!";

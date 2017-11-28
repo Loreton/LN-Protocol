@@ -7,6 +7,7 @@ Scope:      Funzione di slave.
                 se lo riguarda processa il comando ed invia la risposta.
 */
 
+#include <Boards.h>
 unsigned char respData[MAX_DATA_SIZE];
 int pinNO;
 
@@ -36,7 +37,7 @@ void Slave_Main() {
         processRequest(pData);
     }
 
-    else if (pData->rx[DATALEN] == 0) {
+    else if (pData->rx[fld_DATALEN] == 0) {
         Serial.print(myID);
         Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
         Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));Serial.print(pData->timeout);
@@ -58,12 +59,12 @@ void Slave_Main() {
 // #
 // #############################################################
 void processRequest(RXTX_DATA *pData) {
-    byte senderAddr = pData->rx[SENDER_ADDR];
-    byte destAddr   = pData->rx[DESTINATION_ADDR];
-    // byte subCommand = pData->rx[SUBCOMMAND];
+    byte senderAddr = pData->rx[fld_SENDER_ADDR];
+    byte destAddr   = pData->rx[fld_DESTINATION_ADDR];
+    // byte fld_subCommand = pData->rx[fld_SUBCOMMAND];
     byte analogValue = 0;
-    byte pinNO        = pData->tx[COMMAND_DATA+1];
-    byte valueToWrite = pData->tx[COMMAND_DATA+2];
+    byte pinNO        = pData->tx[fld_COMMAND_DATA+1];
+    byte valueToWrite = pData->tx[fld_COMMAND_DATA+2];
 
 
 
@@ -78,17 +79,22 @@ void processRequest(RXTX_DATA *pData) {
         return;
     }
 
-    char myMsg1[] = "Polling answer!";
-    char myMsg3[] = "Comando non riconosciuto";
-    char AnalogCMD[] = "Working on ANALOG command: ";
-    char DigitalCMD[] = "Working on DIGITAL command: ";
-    char readingPin[] = "reading pin: ";
-    char writingPin[] = "writing pin: ";
+    char pollingAnswer[] = "Polling answer!";
+    char unknownCommand[] = "UNKNOWN command";
+    char AnalogCMD[]  = "ANALOG";
+    char DigitalCMD[] = "DIGITAL";
+    char readingPin[] = " - reading pin: ";
+    char writingPin[] = " - writing pin: ";
+    // byte myANALOG_PINS[] =  {PIN_A0, PIN_A1, PIN_A2, PIN_A3, PIN_A4, PIN_A5, PIN_A6, PIN_A7 };
 
     // copiamo RX to TX per poi andare a modificare solo il necessario
     copyRxMessageToTx(pData);
 
-    switch (pData->rx[COMMAND]) {
+    Serial.println(F(""));
+    Serial.print(F(" DIGITAL command     -> "));Serial.println(DIGITAL_CMD);
+    Serial.print(F(" ANALOG  command     -> "));Serial.println(ANALOG_CMD);
+    Serial.print(F(" Command    ricevuto -> "));Serial.print(pData->rx[fld_COMMAND]);Serial.print(F("."));Serial.println(pData->rx[fld_SUBCOMMAND]);
+    switch (pData->rx[fld_COMMAND]) {
 
             // ------------------------------------------------------
             //                  ANALOG
@@ -98,9 +104,11 @@ void processRequest(RXTX_DATA *pData) {
             //      val = analogRead(analogPin);   // read the input pin
             //      analogWrite(ledPin, val / 4);  // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
             // ------------------------------------------------------
-        case ANALOG:
+        case ANALOG_CMD:
             Serial.print("\n\n");Serial.print(TAB);Serial.print(AnalogCMD);
-            switch (pData->rx[SUBCOMMAND]) {
+            Serial.print(" is pin Analog? ->");Serial.print(IS_PIN_ANALOG(pinNO)); // board.h
+            // for(i=5; i < 11; i++);
+            switch (pData->rx[fld_SUBCOMMAND]) {
 
                 case READ_PIN:
                     Serial.print(readingPin);Serial.println(pinNO);
@@ -116,7 +124,7 @@ void processRequest(RXTX_DATA *pData) {
             }
             returnDATA[0] = (char) analogValue;
             setCommandData(pData->tx, returnDATA, 1);
-            pData->tx[CMD_RCODE] = OK;
+            pData->tx[fld_CMD_RCODE] = OK;
 
             // ------------------------------------------------------
             //                  DIGITA
@@ -126,14 +134,15 @@ void processRequest(RXTX_DATA *pData) {
             //      val = analogRead(analogPin);   // read the input pin
             //      analogWrite(ledPin, val / 4);  // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
             // ------------------------------------------------------
-        case DIGITAL:
-            Serial.print("\n\n");Serial.print(TAB);Serial.print(DigitalCMD);
-            switch (pData->rx[SUBCOMMAND]) {
+        case DIGITAL_CMD:
+            Serial.print("\n\n");Serial.print(TAB);Serial.print(DigitalCMD);Serial.print(readingPin);
+            Serial.print(": ");Serial.print(pinNO);Serial.print(" - is pin Digital?: ");Serial.print(IS_PIN_DIGITAL(pinNO)); // board.h
+            switch (pData->rx[fld_SUBCOMMAND]) {
 
                 case READ_PIN:
                     Serial.print(readingPin);Serial.println(pinNO);
                     readValue = digitalRead(pinNO);
-                    setCommandData(pData->tx, myMsg1, sizeof(myMsg1));
+                    setCommandData(pData->tx, pollingAnswer, sizeof(pollingAnswer));
                     break;
 
                 case WRITE_PIN:
@@ -145,10 +154,10 @@ void processRequest(RXTX_DATA *pData) {
             }
             returnDATA[0] = (char) readValue;
             setCommandData(pData->tx, returnDATA, 1);
-            pData->tx[CMD_RCODE] = OK;
+            pData->tx[fld_CMD_RCODE] = OK;
 
-        case PWM:
-            switch (pData->rx[SUBCOMMAND]) {
+        case PWM_CMD:
+            switch (pData->rx[fld_SUBCOMMAND]) {
                 case READ_PIN:
                 break;
 
@@ -156,29 +165,29 @@ void processRequest(RXTX_DATA *pData) {
                 break;
             }
 
-        case SLAVE_POLLING:
-            switch (pData->rx[SUBCOMMAND]) {
+        case SLAVE_POLLING_CMD:
+            switch (pData->rx[fld_SUBCOMMAND]) {
                 case REPLY:
                     Serial.print("\n\n");Serial.print(TAB);Serial.println(F("preparing response message... "));
 
-                    setCommandData(pData->tx, myMsg1, sizeof(myMsg1));
-                    pData->tx[CMD_RCODE] = OK;
+                    setCommandData(pData->tx, pollingAnswer, sizeof(pollingAnswer));
+                    pData->tx[fld_CMD_RCODE] = OK;
                 }
                 break;
 
-        case SET_PINMODE:
-            // writeEEprom(pData->rx[SUBCOMMAND], pData->rx[COMMAND_DATA]);
-            // pData->tx[CMD_RCODE] = OK;
+        case SET_PINMODE_CMD:
+            // writeEEprom(pData->rx[fld_SUBCOMMAND], pData->rx[fld_COMMAND_DATA]);
+            // pData->tx[fld_CMD_RCODE] = OK;
             break;
 
         default:
-            setCommandData(pData->tx, myMsg3, sizeof(myMsg3));
-            pData->tx[CMD_RCODE] = UNKNOWN_CMD;
+            setCommandData(pData->tx, unknownCommand    , sizeof(unknownCommand ));
+            pData->tx[fld_CMD_RCODE] = UNKNOWN_CMD;
             break;
     }
 
-    pData->tx[DESTINATION_ADDR] = senderAddr;
-    pData->tx[SENDER_ADDR]      = myEEpromAddress;
+    pData->tx[fld_DESTINATION_ADDR] = senderAddr;
+    pData->tx[fld_SENDER_ADDR]      = myEEpromAddress;
     sendMsg485(pData);
 }
 
@@ -246,18 +255,18 @@ int avgValue = 0;                // the avgValue
 // # 0x10 per digital-pin > 0x80 se INPUT
 // # 0x20 per analog-pin    non importa input/output
 // # 0x30 per pwm-pin     > 0x80 se INPUT
-// # pinType = enum rs485_SubCOMMANDs in LnRs485.h
+// # pinType = enum fld_rs485_SubCOMMANDs in LnRs485.h
 // #############################################################
 void writeEEprom(byte pinType,  RXTX_DATA *pData) {
 byte startAddress = 0;
-byte subCommand = pData->rx[SUBCOMMAND];
+byte fld_subCommand = pData->rx[fld_SUBCOMMAND];
 
-    if      (subCommand == DIGITAL_OUT)  startAddress = 0x10;
-    else if (subCommand == DIGITAL_INP)  startAddress = 0x20;
-    else if (subCommand == ANALOG_INP)   startAddress = 0x30;
-    else if (subCommand == ANALOG_OUT)   startAddress = 0x40;
-    else if (subCommand == PWM_OUT)      startAddress = 0x50;
-    else if (subCommand == PWM_INP)      startAddress = 0x60;
+    if      (fld_subCommand == DIGITAL_OUT)  startAddress = 0x10;
+    else if (fld_subCommand == DIGITAL_INP)  startAddress = 0x20;
+    else if (fld_subCommand == ANALOG_INP)   startAddress = 0x30;
+    else if (fld_subCommand == ANALOG_OUT)   startAddress = 0x40;
+    else if (fld_subCommand == PWM_OUT)      startAddress = 0x50;
+    else if (fld_subCommand == PWM_INP)      startAddress = 0x60;
     else                                 startAddress = 0x0;
 
     // copiamo il codice errore nei [....]

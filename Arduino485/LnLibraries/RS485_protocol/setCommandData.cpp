@@ -13,9 +13,9 @@ void setCommandData(byte *pData, char cmdData[], byte dataLen) {
     }
 
 
-    byte index = COMMAND_DATA-1;
+    byte index = fld_COMMAND_DATA-1;
     for (byte i=0; (i<dataLen) && (i<MAX_DATA_SIZE); i++)
         pData[++index] = cmdData[i];         // copiamo i dati nel buffer da inviare
 
-    pData[DATALEN] = --index;  // update dataLen
+    pData[fld_DATALEN] = --index;  // update dataLen
 }

@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 26-11-2017 16.42.37
+# Version ......: 28-11-2017 16.05.03
 #
 # ######################################################################################
 
@@ -22,7 +22,8 @@ import Source as Prj
 ########################################################
 def digitalRead(rs485Port, iniData, srcAddress, destAddr, pinNO):
     logger  = Ln.SetLogger(package=__name__)
-
+    CMD = iniData.COMMAND
+    subCMD = iniData.SUB_COMMAND
 
         # ===================================================
         # = RS-485 sendMessage
@@ -34,8 +35,8 @@ def digitalRead(rs485Port, iniData, srcAddress, destAddr, pinNO):
     # destAddr    = int.from_bytes(iniData.slave_address, 'little')
 
     commandData  = bytearray()
-    commandData.append( int(iniData.COMMAND.DIGITAL, 16) )    # COMMAND
-    commandData.append( int(iniData.SUB_COMMAND.READ_PIN, 16) )    # SubCOMMAND
+    commandData.append( int(CMD.DIGITAL_CMD, 16) )    # COMMAND
+    commandData.append( int(subCMD.READ_PIN, 16) )    # SubCOMMAND
     commandData.append( pinNO )    # PinNumber
 
     print (srcAddress, destAddr, commandData  )

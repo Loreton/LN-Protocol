@@ -81,3 +81,5 @@
     char *joinStr(const char *fmt, ...);
     byte stringLen(const char* data);
     void setMyID(const char *name, byte myEEpromAddress);
+
+    void printPINs(void);

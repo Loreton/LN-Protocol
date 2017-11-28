@@ -76,7 +76,11 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
     if toFILE:
         LOG_FILE_NAME = logfilename
         LOG_DIR = Path(logfilename).parent
-        LOG_DIR.mkdir(parents=True, exist_ok=True) # se esiste non dare errore
+        # LOG_DIR.mkdir(parents=True, exist_ok=True) # se esiste non dare errore dalla versione 3.5
+        try:
+            LOG_DIR.mkdir(parents=True) # se esiste non dare errore dalla versione 3.5
+        except (FileExistsError):
+            pass
 
         if fDEBUG: print ('using log file:', LOG_FILE_NAME)
 

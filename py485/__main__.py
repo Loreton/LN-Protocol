@@ -3,13 +3,13 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-11-2017 16.35.28
+# Version ......: 27-11-2017 17.33.44
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
 import os
 
-
+'''
 from pathlib import Path
 
 ######### SET LIB PATH #######################
@@ -29,10 +29,13 @@ def LibPath(libName, libType='zip'):
     sys.path.insert(0, str(LnLibPath))  # deve essere una stringa e non WindowsPath
 
 
-LibPath('LnLib_20171123', libType='zipx')
+'''
+
+import  Source as Prj
+# Inserimento del path corretto per il caricamneto della LnLib
+Prj.gVars.LibPath('LnLib_20171123', libType='zipx')
 
 import  LnLib  as Ln
-import  Source as Prj
 
 ################################################################################
 # - M A I N

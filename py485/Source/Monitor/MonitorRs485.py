@@ -33,7 +33,7 @@ def monitorRS485(rs485Port):
 
     while True:
         try:
-            payLoad, rawData = xrs485Port.readData(fDEBUG=True)
+            payLoad, rawData = rs485Port.readData(fDEBUG=True)
 
         except (KeyboardInterrupt) as key:
             print (__name__, "Keybord interrupt has been pressed")

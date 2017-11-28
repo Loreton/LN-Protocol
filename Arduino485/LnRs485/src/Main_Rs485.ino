@@ -13,6 +13,8 @@ Scope:      Funzione di relay.
 Ref:        http://www.gammon.com.au/forum/?id=11428
 */
 
+
+//  /opt/arduino-1.8.1/hardware/arduino/avr/variants/standard/pins_arduino.h:#define PIN_A0   (14)
 #include    <SoftwareSerial.h>
 #include    <EEPROM.h>
 
@@ -76,6 +78,9 @@ void setup() {
 }
 
 
+void loopx() {
+    printPINs();
+}
 
 
 // ################################################################

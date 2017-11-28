@@ -1,7 +1,7 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 26-11-2017 18.17.02
+# Version ......: 28-11-2017 08.06.10
 #
 # -----------------------------------------------
 
@@ -9,13 +9,16 @@
 
 from . Main.Main                         import Main
 
+# ------ SETUP -----
+from . Setup                                import GlobalVars_Module as gVars
+from . Setup.Main_ParseInput                import ParseInput
+
 # ------ User ParseInput -----
-from . ParseInput.Main_ParseInput        import ParseInput
-from . ParseInput.DigitalPin             import read                as DIGITAL_READ
-from . ParseInput.DigitalPin             import write               as DIGITAL_WRITE
-from . ParseInput.MonitorRS485           import monitorRs485        as MONITOR_RS485
-from . ParseInput.MonitorRS485           import monitorRaw          as MONITOR_RAW
-from . ParseInput.Program_Options        import programOptions
+from . Setup.ParseInput.DigitalPin_Options     import read                as DIGITAL_READ
+from . Setup.ParseInput.DigitalPin_Options     import write               as DIGITAL_WRITE
+from . Setup.ParseInput.MonitorRS485_Options   import monitorRs485        as MONITOR_RS485
+from . Setup.ParseInput.MonitorRS485_Options   import monitorRaw          as MONITOR_RAW
+from . Setup.ParseInput.Program_Options        import programOptions
 
 
 

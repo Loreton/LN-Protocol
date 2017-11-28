@@ -61,15 +61,15 @@
         #define MAX_DATA_SIZE     60
     // definizione messa qui per comodità con  il printMessage.
     enum RXTX_MAP  {
-                        DATALEN=0,          // - lunghezza dei dati escluso STX ed ETX
-                        SENDER_ADDR,        // - Dest Address      (FF = Broadcast)
-                        DESTINATION_ADDR,   // - source Address    (00 = Master)
-                        SEQNO_HIGH,         // - numero del messaggio utile per associare la risposta
-                        SEQNO_LOW,          // -
-                        CMD_RCODE,          // - rCode di ritorno per il comando eseguito (in TX è ignorato)
-                        COMMAND,            // - comando da eseguire
-                        SUBCOMMAND,         // - eventuale dettaglio per il comando
-                        COMMAND_DATA,       // - TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
+                        fld_DATALEN=0,          // - lunghezza dei dati escluso STX ed ETX
+                        fld_SENDER_ADDR,        // - Dest Address      (FF = Broadcast)
+                        fld_DESTINATION_ADDR,   // - source Address    (00 = Master)
+                        fld_SEQNO_HIGH,         // - numero del messaggio utile per associare la risposta
+                        fld_SEQNO_LOW,          // -
+                        fld_CMD_RCODE,          // - rCode di ritorno per il comando eseguito (in TX è ignorato)
+                        fld_COMMAND,            // - comando da eseguire
+                        fld_SUBCOMMAND,         // - eventuale dettaglio per il comando
+                        fld_COMMAND_DATA,       // - TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
                     };
 
 //  identifica il byte che contiene la lunghezza dati

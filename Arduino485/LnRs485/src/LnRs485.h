@@ -31,20 +31,20 @@
 
 
     enum rs485_COMMANDs {
-                            RELAY_ECHO    = 1,
-                            SLAVE_ECHO    = 2,
-                            SLAVE_POLLING = 3,
-                            SET_PINMODE   = 4,
-                            DIGITAL       = 5,
-                            ANALOG        = 6,
-                            PWM           = 7,
+                            RELAY_ECHO_CMD          = 01,
+                            SLAVE_ECHO_CMD          = 02,
+                            SLAVE_POLLING_CMD       = 03,
+                            SET_PINMODE_CMD         = 11,
+                            DIGITAL_CMD             = 12,
+                            ANALOG_CMD              = 13,
+                            PWM_CMD                 = 14,
                         };
 
     enum rs485_SubCOMMANDs {
-                            NO_REPLY      = 1,
-                            REPLY         = 2,
-                            READ_PIN      = 4,
-                            WRITE_PIN     = 5,
+                            NO_REPLY                = 1,     // for echo command
+                            REPLY                   = 2,     // for echo command
+                            READ_PIN                = 4,     // for analog/digital commands
+                            WRITE_PIN               = 5,     // for analog/digital commands
                         };
 
 
