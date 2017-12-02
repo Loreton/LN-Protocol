@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 26-11-2017 18.07.07
+# Version ......: 29-11-2017 08.19.41
 
 
 import os
@@ -673,6 +673,8 @@ class LnRs485_Instrument():
         yy = self._getSendCounter()
         dataToSend.append(yy[0])  # high byte
         dataToSend.append(yy[1])  # Low byte
+        dataToSend.append(0x00)  # 0 per una TX
+
         if isinstance(dataStr, str):
             for x in dataStr:
                 dataToSend.append(ord(x))
@@ -707,8 +709,8 @@ class LnRs485_Instrument():
         yy = self._getSendCounter()
         dataToSend.append(yy[0])  # high byte
         dataToSend.append(yy[1])  # Low byte
-
         dataToSend.append(CMD.xmitRcode)  # 0 per una TX
+
         dataToSend.append(CMD.command)
         dataToSend.append(CMD.subCommand)
 

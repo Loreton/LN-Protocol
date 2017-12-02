@@ -25,6 +25,18 @@ void printHex(const char *data, byte len, const char *suffixData, const char *se
     Serial.print(suffixData);
 }
 
+// print di ogni carattere di una stringa
+// convertito in HEX e con il separatore indicato
+void printDataToHex(const char *data, byte len, const char *sep) {
+    byte i;
+    for (i=0; i<len; i++) {
+        Serial.print(D2X(data[i], 2));
+        if ( (len-i) > 1 )
+            Serial.print(sep);
+    }
+
+}
+
 
 void printHex(const byte data) {
     Serial.print(D2X(data, 2));

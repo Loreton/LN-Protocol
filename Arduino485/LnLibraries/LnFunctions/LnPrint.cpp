@@ -43,3 +43,18 @@ void printDelimitedStr(const char *data, byte len, const char *delimiter) {
 }
 
 
+void print6Str(const char *s1, const char *s2, const char *s3, const char *s4, const char *s5, const char *s6) {
+    Serial.print(s1);
+    Serial.print(s2);
+    Serial.print(s3);
+    Serial.print(s4);
+    Serial.print(s5);
+    Serial.print(s6);
+}
+
+
+// void print4Str1I(const char *s1, const char *s2, const char *s3, int value) {
+//     Serial.print(s1);
+//     Serial.print(s2);
+//     Serial.print(s3);
+//     Serial.print(value);

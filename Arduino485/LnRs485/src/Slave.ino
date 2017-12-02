@@ -25,8 +25,6 @@ void Slave_Main() {
         pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
         pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
         pData->fDisplayRawData      = false;                // display raw data
-
-        pData->timeout          = 5000;
     }
 
     // Serial.println();
@@ -38,10 +36,10 @@ void Slave_Main() {
     }
 
     else if (pData->rx[fld_DATALEN] == 0) {
-        Serial.print(myID);
-        Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
-        Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));Serial.print(pData->timeout);
-        Serial.println();
+        // Serial.print(myID);
+        // Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
+        // Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));Serial.print(pData->timeout);
+        // Serial.println();
 
     }
 
@@ -59,42 +57,103 @@ void Slave_Main() {
 // #
 // #############################################################
 void processRequest(RXTX_DATA *pData) {
-    byte senderAddr = pData->rx[fld_SENDER_ADDR];
-    byte destAddr   = pData->rx[fld_DESTINATION_ADDR];
-    // byte fld_subCommand = pData->rx[fld_SUBCOMMAND];
+    unsigned char *Rx = pData->rx;
+    unsigned char *Tx = pData->tx;
+    byte senderAddr = Rx[fld_SENDER_ADDR];
+    byte destAddr   = Rx[fld_DESTINATION_ADDR];
+
     byte analogValue = 0;
-    byte pinNO        = pData->tx[fld_COMMAND_DATA+1];
-    byte valueToWrite = pData->tx[fld_COMMAND_DATA+2];
+    byte pinNO        = Rx[fld_DATA_COMMAND];
+    byte valueToWrite = Rx[fld_DATA_COMMAND+1];
 
+    // displayMyData("Ciao", LN_DEBUG, pData);
+    // Serial.print(TAB);Serial.print(F( "SEQNO       0x : "));printHex(pData[fld_SEQNO_HIGH], 2);
+    // Serial.print(TAB);Serial.print(F( "CMD_RCode   0x : "));printHex(pData[fld_CMD_RCODE]);
+    // Serial.print(TAB);Serial.print(F( "CMD/subCMD  0x : "));printHex(pData[fld_COMMAND]);Serial.print(" ");printHex(pdata[fld_SUBCOMMAND]);
 
-
-    byte readValue  = 0;
-    // byte writeValue = 0;
-    // byte rCode      = 0;
+    byte readValue1  = 0;
+    byte readValue2  = 0;
     char returnDATA[20];
+    byte counter;
 
     if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
         // [Slave-012] - RX-data [rcvdCode: OK] - [00/000] --> [0B/011] - SeqNO: 00007 - [it's NOT for me...]
-
         return;
     }
 
-    char pollingAnswer[] = "Polling answer!";
-    char unknownCommand[] = "UNKNOWN command";
-    char AnalogCMD[]  = "ANALOG";
-    char DigitalCMD[] = "DIGITAL";
-    char readingPin[] = " - reading pin: ";
-    char writingPin[] = " - writing pin: ";
+    char descr_PollingAnswer[]  = "Polling answer!";
+    char descr_UnknownCommand[] = "UNKNOWN command";
+    char descr_AnalogCMD[]      = "ANALOG";
+    char descr_DigitalCMD[]     = "DIGITAL";
+    char descr_ReadingPin[]     = " - read  pin: ";
+    char descr_WritingPin[]     = " - write pin: ";
+    char descr_TogglePin[]      = " - toggle pin: ";
     // byte myANALOG_PINS[] =  {PIN_A0, PIN_A1, PIN_A2, PIN_A3, PIN_A4, PIN_A5, PIN_A6, PIN_A7 };
 
     // copiamo RX to TX per poi andare a modificare solo il necessario
     copyRxMessageToTx(pData);
 
-    Serial.println(F(""));
-    Serial.print(F(" DIGITAL command     -> "));Serial.println(DIGITAL_CMD);
-    Serial.print(F(" ANALOG  command     -> "));Serial.println(ANALOG_CMD);
-    Serial.print(F(" Command    ricevuto -> "));Serial.print(pData->rx[fld_COMMAND]);Serial.print(F("."));Serial.println(pData->rx[fld_SUBCOMMAND]);
-    switch (pData->rx[fld_COMMAND]) {
+    counter = 0;
+    switch (Rx[fld_COMMAND]) {
+
+            // ------------------------------------------------------
+            //                  DIGITAL Command
+            // ------------------------------------------------------
+        case DIGITAL_CMD:
+            // print6Str("\n",  TAB4, "DIGITAL_CMD    0x", D2X(DIGITAL_CMD, 2));
+            // print6Str(       TAB4, "fld_COMMAND    0x", D2X(Rx[fld_COMMAND], 2));
+            // print6Str(       TAB4, "fld_SUBCOMMAND 0x", D2X(Rx[fld_SUBCOMMAND], 2));
+            // print6Str(       TAB4, "DATA_fld       0x", D2X(Rx[fld_DATA_COMMAND], 2));
+            // print6Str(       TAB4, "DATApinNO      0x", D2X(pinNO, 2));
+            switch (Rx[fld_SUBCOMMAND]) {
+                // print6Str(); ... il codice qui non viene considerato
+
+                case READ_PIN:
+                    print6Str(TAB4, descr_DigitalCMD, descr_ReadingPin);Serial.print(pinNO);
+                    readValue1 = digitalRead(pinNO);
+                    returnDATA[counter++] = (char) readValue1;
+                    setDataCommand(Tx, descr_ReadingPin, sizeof(descr_ReadingPin));
+                    break;
+
+                    // Write Pin (if level is different from requested value)
+                    // return [x,y] - previous and current
+                case WRITE_PIN:
+                    print6Str(TAB4, descr_DigitalCMD, descr_WritingPin);Serial.print(pinNO);
+
+                    readValue1 = digitalRead(pinNO);
+                    if (readValue1 != valueToWrite)
+                        digitalWrite(pinNO, valueToWrite);
+
+                    delay(10);
+                    readValue2 = digitalRead(pinNO);
+
+                    returnDATA[counter++] = (char) readValue1;
+                    returnDATA[counter++] = (char) readValue2;
+                    print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
+                    break;
+
+                    // led lampeggiante
+                    // return [x,y] - previous and current
+                case TOGGLE_PIN:
+                    print6Str(TAB4, descr_DigitalCMD, descr_TogglePin);Serial.print(pinNO);
+
+                    readValue1 = digitalRead(pinNO);
+                    if (readValue1 == LOW)
+                        digitalWrite(pinNO, HIGH);
+                    else
+                        digitalWrite(pinNO, LOW);
+                    delay(10);
+                    readValue2 = digitalRead(pinNO);
+
+                    returnDATA[counter++] = (char) readValue1;
+                    returnDATA[counter++] = (char) readValue2;
+                    print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
+                    break;
+            }
+            setDataCommand(Tx, returnDATA, counter);
+            Tx[fld_CMD_RCODE] = OK;
+            break;
+
 
             // ------------------------------------------------------
             //                  ANALOG
@@ -105,89 +164,63 @@ void processRequest(RXTX_DATA *pData) {
             //      analogWrite(ledPin, val / 4);  // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
             // ------------------------------------------------------
         case ANALOG_CMD:
-            Serial.print("\n\n");Serial.print(TAB);Serial.print(AnalogCMD);
+            Serial.print("\n\n");Serial.print(TAB4);Serial.print(descr_AnalogCMD);
             Serial.print(" is pin Analog? ->");Serial.print(IS_PIN_ANALOG(pinNO)); // board.h
             // for(i=5; i < 11; i++);
-            switch (pData->rx[fld_SUBCOMMAND]) {
+            switch (Rx[fld_SUBCOMMAND]) {
 
                 case READ_PIN:
-                    Serial.print(readingPin);Serial.println(pinNO);
+                    Serial.print(descr_ReadingPin);Serial.println(pinNO);
                     analogValue = LnReadAnalogPin(pinNO);
                     break;
 
                 case WRITE_PIN:
-                    Serial.print(writingPin);Serial.println(pinNO);
+                    Serial.print(descr_WritingPin);Serial.println(pinNO);
                     analogWrite(pinNO, valueToWrite);
                     delay(500);
                     analogValue = LnReadAnalogPin(pinNO); // re-read to check the value and return it
                     break;
             }
             returnDATA[0] = (char) analogValue;
-            setCommandData(pData->tx, returnDATA, 1);
-            pData->tx[fld_CMD_RCODE] = OK;
-
-            // ------------------------------------------------------
-            //                  DIGITA
-            // pin:     the pin to write to. Allowed data types: int.
-            // value:   the duty cycle: between 0 (always off) and 255 (always on). Allowed data types: int
-            // Es.:
-            //      val = analogRead(analogPin);   // read the input pin
-            //      analogWrite(ledPin, val / 4);  // analogRead values go from 0 to 1023, analogWrite values from 0 to 255
-            // ------------------------------------------------------
-        case DIGITAL_CMD:
-            Serial.print("\n\n");Serial.print(TAB);Serial.print(DigitalCMD);Serial.print(readingPin);
-            Serial.print(": ");Serial.print(pinNO);Serial.print(" - is pin Digital?: ");Serial.print(IS_PIN_DIGITAL(pinNO)); // board.h
-            switch (pData->rx[fld_SUBCOMMAND]) {
-
-                case READ_PIN:
-                    Serial.print(readingPin);Serial.println(pinNO);
-                    readValue = digitalRead(pinNO);
-                    setCommandData(pData->tx, pollingAnswer, sizeof(pollingAnswer));
-                    break;
-
-                case WRITE_PIN:
-                    Serial.print(writingPin);Serial.println(pinNO);
-                    digitalWrite(pinNO, valueToWrite);
-                    delay(500);
-                    readValue = digitalRead(pinNO);
-                    break;
-            }
-            returnDATA[0] = (char) readValue;
-            setCommandData(pData->tx, returnDATA, 1);
-            pData->tx[fld_CMD_RCODE] = OK;
+            setDataCommand(Tx, returnDATA, 1);
+            Tx[fld_CMD_RCODE] = OK;
+            break;
 
         case PWM_CMD:
-            switch (pData->rx[fld_SUBCOMMAND]) {
+            switch (Rx[fld_SUBCOMMAND]) {
                 case READ_PIN:
                 break;
 
                 case WRITE_PIN:
                 break;
             }
+            break;
 
-        case SLAVE_POLLING_CMD:
-            switch (pData->rx[fld_SUBCOMMAND]) {
+        case POLLING_CMD:
+            switch (Rx[fld_SUBCOMMAND]) {
                 case REPLY:
-                    Serial.print("\n\n");Serial.print(TAB);Serial.println(F("preparing response message... "));
+                    Serial.print("\n");Serial.print(TAB4);Serial.println(F("preparing response message... "));
 
-                    setCommandData(pData->tx, pollingAnswer, sizeof(pollingAnswer));
-                    pData->tx[fld_CMD_RCODE] = OK;
+                    setDataCommand(Tx, descr_PollingAnswer, sizeof(descr_PollingAnswer));
+                    Tx[fld_CMD_RCODE] = OK;
                 }
                 break;
+            break;
 
         case SET_PINMODE_CMD:
-            // writeEEprom(pData->rx[fld_SUBCOMMAND], pData->rx[fld_COMMAND_DATA]);
+            // writeEEprom(Rx[fld_SUBCOMMAND], Rx[fld_DATA_COMMAND]);
             // pData->tx[fld_CMD_RCODE] = OK;
             break;
 
         default:
-            setCommandData(pData->tx, unknownCommand    , sizeof(unknownCommand ));
-            pData->tx[fld_CMD_RCODE] = UNKNOWN_CMD;
+            setDataCommand(Tx, descr_UnknownCommand    , sizeof(descr_UnknownCommand ));
+            Tx[fld_CMD_RCODE] = UNKNOWN_CMD;
             break;
     }
 
-    pData->tx[fld_DESTINATION_ADDR] = senderAddr;
-    pData->tx[fld_SENDER_ADDR]      = myEEpromAddress;
+    Tx[fld_DESTINATION_ADDR] = senderAddr;
+    Tx[fld_SENDER_ADDR]      = myEEpromAddress;
+    print6Str(TAB4, "returning Data: ");printDataToHex(returnDATA, counter, " ");
     sendMsg485(pData);
 }
 

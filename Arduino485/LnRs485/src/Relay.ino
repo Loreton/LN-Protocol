@@ -1,6 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-08-15_11.16.57
+version:    LnVer_2017-11-30_19.07.33
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -26,7 +26,7 @@ void Relay_Main() {
         pData->fDisplayRawData      = false;                // display raw data
     }
 
-    pData->timeout     = 5000;
+    pData->timeout     = RECV_DEFAULT_TIMEOUT; // re-set timeout to default value
     pData->rx[fld_DATALEN] = 0;
 
         // --------------------------------------
@@ -91,14 +91,12 @@ void Relay_fwdToRaspBerry(RXTX_DATA *pData, byte rcvdRCode) {
     copyRxMessageToTx(pData);
 
         // inviamo sulla 232 in formato rs485
-    if (returnRS485) {
+    #ifdef ON_RS232_RETURN_RS485
         sendMsg232(pData);
-    }
+    #else
         // ... oppure lo inviamo sulla 232 in formato ascii
-    else {
-        Serial.print(F("\n\n"));
-        displayMyData("TX-poll", rcvdRCode, pData);
-    }
+        displayMyData("RX-poll", rcvdRCode, pData);
+    #endif
 
 }
 
@@ -147,7 +145,7 @@ byte Relay_waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT) {
         for (byte i=7; *ptr != '\0'; i++, ptr++)
             errorMsg[i] = *ptr;
 
-        setCommandData(pData->rx, errorMsg);
+        setDataCommand(pData->rx, errorMsg, sizeof(errorMsg));
 
     }
     return rcvdRCode;

@@ -69,8 +69,9 @@
 
     char *D2X(unsigned int Valore, char size);      // deve essere D2X.cpp
     void printHex(const byte data);
-    void printHex(const char *data,     byte len=0,  const char *suffixData="", const char *sep=" ");
+    void printHex(const char *data,  byte len=0,  const char *suffixData="", const char *sep=" ");
     void printHexPDS(const char *prefixStr, const byte data,        const char *suffixStr="\n");
+    void printDataToHex(const char *data, byte len, const char *sep);
 
 
     void printNchar(const char data, byte counter); // print un byte N volte
@@ -81,5 +82,8 @@
     char *joinStr(const char *fmt, ...);
     byte stringLen(const char* data);
     void setMyID(const char *name, byte myEEpromAddress);
+
+    void print6Str(const char *s1, const char *s2="", const char *s3="", const char *s4="", const char *s5="", const char *s6="");
+
 
     void printPINs(void);

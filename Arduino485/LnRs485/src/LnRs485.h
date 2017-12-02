@@ -1,12 +1,15 @@
 #if not defined I_AM_MY485
     #define I_AM_MY485
 
-    #define RS485_TX_PIN        2   // D2  DI
-    #define RS485_RX_PIN        3   // D3  R0
-    #define RS485_ENABLE_PIN    4   // D4  DE/RE up-->DE-->TX  down-->RE-->RX
-    #define LED_PIN             13
+    #define RS485_TX_PIN        D02   // D2  DI
+    #define RS485_RX_PIN        D03   // D3  R0
+    #define RS485_ENABLE_PIN    D04   // D4  DE/RE up-->DE-->TX  down-->RE-->RX
+
 
     #define MASTER_ADDRESS      0
+
+    #define MASTER_SIMULATOR
+    #define RETURN_TEXT_DATA_TO_MASTER   // on MASTER-RELAY-RS232 port return RS485 data or Text data
 
 
     RXTX_DATA   RxTx, *pData;             // struttura dati
@@ -16,7 +19,7 @@
         byte  myEEpromAddress = 0;        // who we are
         char sharedWorkingBuff[50];
         bool firstRun = true;
-        const char TAB[] = "\n    ";
+        const char TAB4[] = "\n    ";
 
     #else
         extern byte  myEEpromAddress;        // who we are
@@ -31,28 +34,29 @@
 
 
     enum rs485_COMMANDs {
-                            RELAY_ECHO_CMD          = 01,
-                            SLAVE_ECHO_CMD          = 02,
-                            SLAVE_POLLING_CMD       = 03,
-                            SET_PINMODE_CMD         = 11,
-                            DIGITAL_CMD             = 12,
-                            ANALOG_CMD              = 13,
-                            PWM_CMD                 = 14,
+                            RELAY_ECHO_CMD          = 0x01,
+                            SLAVE_ECHO_CMD          = 0x02,
+                            POLLING_CMD             = 0x03,
+                            SET_PINMODE_CMD         = 0x21,
+                            DIGITAL_CMD             = 0x31,
+                            ANALOG_CMD              = 0x32,
+                            PWM_CMD                 = 0x33,
                         };
 
     enum rs485_SubCOMMANDs {
-                            NO_REPLY                = 1,     // for echo command
-                            REPLY                   = 2,     // for echo command
-                            READ_PIN                = 4,     // for analog/digital commands
-                            WRITE_PIN               = 5,     // for analog/digital commands
+                            NO_REPLY                = 0x01,     // for echo command
+                            REPLY                   = 0x02,     // for echo command
+                            READ_PIN                = 0x04,     // for analog/digital commands
+                            WRITE_PIN               = 0x05,     // for analog/digital commands
+                            TOGGLE_PIN              = 0x06,     // for digital commands
                         };
 
 
     enum rs485_ERRORs {
-                            OK            = 0,    // ERRORE nel ricevere dati da rs485
-                            RS485_ERROR   = 1,    // ERRORE nel ricevere dati da rs485
-                            TIMEOUT_ERROR = 2,    // TIMEOUT nel ricevere dati da rs485
-                            UNKNOWN_CMD   = 3,    // TIMEOUT nel ricevere dati da rs485
+                            OK            = 0x00,    // ERRORE nel ricevere dati da rs485
+                            RS485_ERROR   = 0x01,    // ERRORE nel ricevere dati da rs485
+                            TIMEOUT_ERROR = 0x02,    // TIMEOUT nel ricevere dati da rs485
+                            UNKNOWN_CMD   = 0x03,    // TIMEOUT nel ricevere dati da rs485
                         };
 
     // ##########################################

@@ -1,6 +1,6 @@
 // ########################################
 // Author:  Loreto notarantonio
-// Version: LnVer_2017-08-15_10.55.05
+// Version: LnVer_2017-11-29_19.04.39
 // ########################################
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -9,6 +9,7 @@
     #include "WConstants.h"
 #endif
 
+#define RECV_DEFAULT_TIMEOUT 2*1000
 
 // #if not defined I_AM_RS485_PROTOCOL_H
 #if defined I_AM_RS485_PROTOCOL_CPP
@@ -25,8 +26,8 @@
 
 
 
-    extern byte myEEpromAddress;
-    const char TAB4[] = "\n    ";
+    // extern byte myEEpromAddress;
+
 
 #else
     // extern const char TAB[];
@@ -69,7 +70,7 @@
                         fld_CMD_RCODE,          // - rCode di ritorno per il comando eseguito (in TX è ignorato)
                         fld_COMMAND,            // - comando da eseguire
                         fld_SUBCOMMAND,         // - eventuale dettaglio per il comando
-                        fld_COMMAND_DATA,       // - TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
+                        fld_DATA_COMMAND,      // - TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
                     };
 
 //  identifica il byte che contiene la lunghezza dati
@@ -94,7 +95,7 @@
 
         byte            myEEpromAddress;                // indirizzo identificativo di Arduino
         char            *myID;                          // stringa identificativo di Arduino
-        unsigned long   timeout         = 10000;        // send/receive timeout
+        unsigned long   timeout         = RECV_DEFAULT_TIMEOUT;        // receive timeout
 
     }  RXTX_DATA, *pRXTX_DATA;
 
@@ -116,6 +117,6 @@
 
 
     void copyRxMessageToTx(RXTX_DATA *pData);
-    void setCommandData(byte *pData, char cmdData[], byte dataLen=0);
+    void setDataCommand(byte *pData, char cmdData[], byte dataLen);
     byte waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT);
 
