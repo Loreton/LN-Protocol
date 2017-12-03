@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 26-11-2017 18.04.00
+# Version ......: 03-12-2017 08.47.20
 #
 # ######################################################################################
 
@@ -44,6 +44,9 @@ def Main(gv):
 
     if myReqCommand == 'digital.read':
         Prj.digitalRead(myPort, gv.iniFile, srcAddress=rs485.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
+
+    elif myReqCommand == 'digital.toggle':
+        Prj.digitalToggle(myPort, gv.iniFile, srcAddress=rs485.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
 
     elif myReqCommand == 'digital.write':
         Prj.digitalWrite(myPort, gv.args.slave_address, gv.iniFile)

@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 28-11-2017 16.05.03
+# Version ......: 03-12-2017 08.46.30
 #
 # ######################################################################################
 
@@ -17,8 +17,7 @@ import  LnLib as Ln; C = Ln.Color()
 import Source as Prj
 
 ########################################################
-# keepAlive()
-#   invia un messaggio per verificare che sia presente
+# - digitalRead()
 ########################################################
 def digitalRead(rs485Port, iniData, srcAddress, destAddr, pinNO):
     logger  = Ln.SetLogger(package=__name__)
@@ -37,6 +36,63 @@ def digitalRead(rs485Port, iniData, srcAddress, destAddr, pinNO):
     commandData  = bytearray()
     commandData.append( int(CMD.DIGITAL_CMD, 16) )    # COMMAND
     commandData.append( int(subCMD.READ_PIN, 16) )    # SubCOMMAND
+    commandData.append( pinNO )    # PinNumber
+
+    print (srcAddress, destAddr, commandData  )
+
+    while True:
+        print ()
+        print ("sending read digital pin...")
+        try:
+            dataSent = rs485Port.sendDataSDD(sourceAddress=srcAddress, destAddress=destAddr, dataStr=commandData, fDEBUG=True)
+            time.sleep(3)
+
+        except (KeyboardInterrupt) as key:
+            print (__name__, "Keybord interrupt has been pressed")
+            sys.exit()
+
+        sys.exit()
+
+        print ()
+        print ("waiting for response...")
+        try:
+            data = port.readRawData(EOD=[], hex=True, text=True, char=False, TIMEOUT=1000)
+            if data:
+                print('data has been received...')
+
+
+            payLoad, rawData = serialRelayPort.readData(TIMEOUT=1000, fDEBUG=True)
+            if not payLoad:
+                print ('payLoad ERROR....')
+            print()
+
+
+        except (KeyboardInterrupt) as key:
+            print (__name__, "Keybord interrupt has been pressed")
+            sys.exit()
+
+    return 0
+
+########################################################
+# - digitalRead()
+########################################################
+def digitalToggle(rs485Port, iniData, srcAddress, destAddr, pinNO):
+    logger  = Ln.SetLogger(package=__name__)
+    CMD    = iniData.COMMAND
+    subCMD = iniData.SUB_COMMAND
+
+        # ===================================================
+        # = RS-485 sendMessage
+        # ===================================================
+    C.printColored (color=C.yellowH, text='... press ctrl-c to stop the process.', tab=8)
+    iniData.printTree()
+
+    # sourceAddr  = int.from_bytes(iniData.COMMANDS.master, 'little')
+    # destAddr    = int.from_bytes(iniData.slave_address, 'little')
+
+    commandData  = bytearray()
+    commandData.append( int(CMD.DIGITAL_CMD, 16) )    # COMMAND
+    commandData.append( int(subCMD.TOGGLE_PIN, 16) )    # SubCOMMAND
     commandData.append( pinNO )    # PinNumber
 
     print (srcAddress, destAddr, commandData  )

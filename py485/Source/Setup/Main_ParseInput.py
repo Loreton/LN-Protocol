@@ -1,7 +1,7 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 26-11-2017 18.02.30
+# Version ......: 03-12-2017 08.33.41
 # -----------------------------------------------
 
 import  sys
@@ -30,8 +30,9 @@ def ParseInput(description='Ln-RS485 protocol', programVersion='V0.1'):
             'write':  "write analog bit",
             },
     'digital'   : {
-            'read':   "read  digital bit",
-            'write':  "write digital bit",
+            'read':   "read   digital bit",
+            'write':  "write  digital bit",
+            'toggle': "toggle digital bit",
             },
     'monitor'   : {
             'rs485':   "read RS485-bus traffic",

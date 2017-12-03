@@ -19,7 +19,7 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 void loop_MasterSimulator() {
 
     // forziamo myAddress a MASTER
-    myEEpromAddress = 0;
+    // myEEpromAddress = 0;
 
     #ifdef RETURN_TEXT_DATA_TO_MASTER
         pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
@@ -64,7 +64,7 @@ void Simulator(RXTX_DATA *pData) {
     #define DIGITALREAD     2
     #define DIGITALWRITE    3
     #define TOGGLEPIN       4
-    #define SIMULATION_TYPE DIGITALWRITE
+    #define SIMULATION_TYPE TOGGLEPIN
 
 
     for (i=0; i<nElem; i++) {
@@ -120,7 +120,7 @@ void Simulator(RXTX_DATA *pData) {
         }
 
 
-        delay(10000); // aspettiamo 10 secondi tra un indirizzo ed il successivo
+        delay(5000); // aspettiamo 2 secondi tra un indirizzo ed il successivo
     }
     seqNO++;
 

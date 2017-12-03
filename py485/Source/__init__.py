@@ -1,7 +1,7 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 28-11-2017 08.06.10
+# Version ......: 03-12-2017 08.43.59
 #
 # -----------------------------------------------
 
@@ -16,6 +16,7 @@ from . Setup.Main_ParseInput                import ParseInput
 # ------ User ParseInput -----
 from . Setup.ParseInput.DigitalPin_Options     import read                as DIGITAL_READ
 from . Setup.ParseInput.DigitalPin_Options     import write               as DIGITAL_WRITE
+from . Setup.ParseInput.DigitalPin_Options     import toggle              as DIGITAL_TOGGLE
 from . Setup.ParseInput.MonitorRS485_Options   import monitorRs485        as MONITOR_RS485
 from . Setup.ParseInput.MonitorRS485_Options   import monitorRaw          as MONITOR_RAW
 from . Setup.ParseInput.Program_Options        import programOptions
@@ -34,4 +35,5 @@ from . Monitor.MonitorRs485              import monitorRaw
 
 # - Process
 from . Process.DigitalPin                import digitalRead
+from . Process.DigitalPin                import digitalToggle
 # from . Process.DigitalPin                import digitalWrite

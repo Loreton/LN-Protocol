@@ -15,6 +15,9 @@ import  LnLib as Ln; C=Ln.Color()
 def read(myParser):
     digitalPin(myParser)
 
+def toggle(myParser):
+    digitalPin(myParser)
+
 def write(myParser):
     digitalPin(myParser)
 

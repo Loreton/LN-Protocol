@@ -19,6 +19,9 @@ Scope:      Funzione di relay.
 // #    - torniamo indietro la risposta
 // ################################################################
 void Relay_Main() {
+unsigned char *Rx = pData->rx;
+unsigned char *Tx = pData->tx;
+
     if (firstRun) {     // Il relay on deve scrivere sulla seriale in chiaro
         pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
         pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
@@ -26,13 +29,18 @@ void Relay_Main() {
         pData->fDisplayRawData      = false;                // display raw data
     }
 
-    pData->timeout     = RECV_DEFAULT_TIMEOUT; // re-set timeout to default value
+    pData->timeout         = RECV_DEFAULT_TIMEOUT; // re-set timeout to default value
     pData->rx[fld_DATALEN] = 0;
 
         // --------------------------------------
         // - ricezione messaggio da RaspBerry
         // --------------------------------------
     byte rCode = recvMsg232(pData);
+    Rx = pData->rx;
+    Tx = pData->tx;
+    byte senderAddr = Rx[fld_SENDER_ADDR];
+    byte destAddr   = Rx[fld_DESTINATION_ADDR];
+
     // delay(1000)
 
 
@@ -50,21 +58,24 @@ void Relay_Main() {
         // - altrimenti:
         // -    1. ignora
         // --------------------------------------
-    // if ( (rCode == LN_OK) && (pData[COMMAND] == RELAY_ECHO) ) {
     if (rCode == LN_OK) {
-        // if (pData[COMMAND] == byte(RELAY_ECHO))  {
-        //     char respMSG[] = "Echo Relay response!";
-        //     copyRxMessageToTx(pData);
-        //     setCommandData(pData->tx, respMSG, sizeof(respMSG));
-        //     pData->tx[CMD_RCODE] = OK;
-        //     sendMsg232(pData);
-        // }
-    }
-    else if (rCode == LN_OK) {
-        Relay_fwdToRs485(pData);
-            // qualsiasi esito il msg è pronto da inviare sulla rs232
-        byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-        Relay_fwdToRaspBerry(pData, rcvdRCode);
+        if (destAddr == myEEpromAddress)  {
+            copyRxMessageToTx(pData);
+            Tx[fld_DESTINATION_ADDR] = Rx[fld_SENDER_ADDR];
+            Tx[fld_SENDER_ADDR]      = myEEpromAddress;
+            char respMSG[] = "Echo Relay response!";
+            setDataCommand(Tx, respMSG, sizeof(respMSG));
+            Tx[fld_CMD_RCODE] = OK;
+            sendMsg232(pData);
+
+
+        }
+        else {
+            Relay_fwdToRs485(pData);
+                // qualsiasi esito il msg è pronto da inviare sulla rs232
+            byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
+            Relay_fwdToRaspBerry(pData, rcvdRCode);
+        }
     }
 
 
@@ -90,12 +101,12 @@ void Relay_fwdToRs485(RXTX_DATA *pData) {
 void Relay_fwdToRaspBerry(RXTX_DATA *pData, byte rcvdRCode) {
     copyRxMessageToTx(pData);
 
-        // inviamo sulla 232 in formato rs485
-    #ifdef ON_RS232_RETURN_RS485
-        sendMsg232(pData);
-    #else
-        // ... oppure lo inviamo sulla 232 in formato ascii
+    #ifdef RETURN_TEXT_DATA_TO_MASTER
+        // inviamo sulla 232 in formato ascii
         displayMyData("RX-poll", rcvdRCode, pData);
+    #else
+        // ... oppure lo inviamo in formato rs485
+        sendMsg232(pData);
     #endif
 
 }
