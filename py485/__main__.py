@@ -3,33 +3,18 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 27-11-2017 17.33.44
+# Version ......: 03-12-2017 17.54.03
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
 import os
 
-'''
-from pathlib import Path
+# current:  03-12-2017
+#               attualmente in simulator con ritorno in RS485
+#               leggere la porta del Relay in RS485
 
-######### SET LIB PATH #######################
-def LibPath(libName, libType='zip'):
-    thisFile      = Path(sys.argv[0]).resolve()
-    projectDir    = thisFile.parent
-    extensionFile = thisFile.suffix.lower()
-
-    if libType == 'zip' or extensionFile.lower() == '.zip':
-        zipFile   = '{}.zip'.format(libName)
-        LnLibPath = Path(sys.argv[0]).resolve().parent / 'bin' / zipFile
-    else:
-        LnLibPath = Path(sys.argv[0]).resolve().parent
-        # LnLibPath = Path('y:\GIT-REPO\Python3\LnPythonLib\@LNLIB_BASE')
-        print(' loading LnLibrary from Source directory.....')
-
-    sys.path.insert(0, str(LnLibPath))  # deve essere una stringa e non WindowsPath
-
-
-'''
+#@TODO: impostare il monitoring leggendo una porta specifica di un Arduino.
+#       La lettura potrà avvenire come TEXT oppure come Rs485
 
 import  Source as Prj
 # Inserimento del path corretto per il caricamneto della LnLib

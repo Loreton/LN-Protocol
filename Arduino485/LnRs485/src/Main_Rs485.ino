@@ -112,7 +112,7 @@ void loop() {
     if (myEEpromAddress <= 10) {
         #ifdef MASTER_SIMULATOR
             if (firstRun) {
-                setMyID("Emula", myEEpromAddress);
+                setMyID("Simul", myEEpromAddress);
                 pData->myID             = myID;
             }
             loop_MasterSimulator();

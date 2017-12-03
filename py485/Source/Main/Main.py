@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 03-12-2017 08.47.20
+# Version ......: 03-12-2017 14.36.36
 #
 # ######################################################################################
 
@@ -23,8 +23,8 @@ def Main(gv):
 
     iniMain     = gv.iniFile.MAIN
     relay       = gv.iniFile.ARDUINO_RELAY_PORT
-    monitor     = gv.iniFile.RS485_MONITOR_PORT
-    rs485       = gv.iniFile.RS485_PROTOCOL
+    monitor     = gv.iniFile.OTHER_MONITOR_PORT
+    rs485Prot   = gv.iniFile.RS485_PROTOCOL
     myCMD       = gv.iniFile.COMMAND
     mySubCMD    = gv.iniFile.SUB_COMMAND
 
@@ -37,25 +37,32 @@ def Main(gv):
     # relay.printTree(header='RELAY values', fPAUSE=False)
 
     myReqCommand = '{}.{}'.format(gv.args.firstPosParameter, gv.args.secondPosParameter)
+
         # ==========================================
         # = Apertura porta seriale
         # ==========================================
-    myPort = Prj.openRs485Port(relay, rs485)
 
-    if myReqCommand == 'digital.read':
-        Prj.digitalRead(myPort, gv.iniFile, srcAddress=rs485.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
+    if gv.args.firstPosParameter in ['digital']:
+        myPort = Prj.openRs485Port(relay, rs485Prot)
+        if gv.args.secondPosParameter == 'read':
+            Prj.digitalRead(myPort, gv.iniFile, srcAddress=rs485Prot.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
 
-    elif myReqCommand == 'digital.toggle':
-        Prj.digitalToggle(myPort, gv.iniFile, srcAddress=rs485.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
+        elif gv.args.secondPosParameter == 'toggle':
+            Prj.digitalToggle(myPort, gv.iniFile, srcAddress=rs485Prot.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
 
-    elif myReqCommand == 'digital.write':
-        Prj.digitalWrite(myPort, gv.args.slave_address, gv.iniFile)
+        elif gv.args.secondPosParameter == 'write':
+            Prj.digitalWrite(myPort, gv.args.slave_address, gv.iniFile)
 
-    elif myReqCommand == 'monitor.rs485':
-        Prj.monitorRS485(myPort)
 
-    elif myReqCommand == 'monitor.raw':
-        Prj.monitorRaw(myPort)
+    elif gv.args.firstPosParameter in ['monitor']:
+        if gv.args.port: monitor.port = gv.args.port
+        myPort = Prj.openRs485Port(monitor, rs485Prot)
+
+        if gv.args.secondPosParameter == 'rs485':
+            Prj.monitorRS485(myPort)
+
+        elif gv.args.secondPosParameter == 'raw':
+            Prj.monitorRaw(myPort, inpArgs=gv.args)
 
     else:
         errMsg = 'comando primario non previsto'
@@ -79,10 +86,10 @@ def Main(gv):
             # ----------------------------------------------------
             # = RS-485 open/initialize port
             # ----------------------------------------------------
-        port = Prj.Rs485(port=relay.Port, baudrate=relay.BaudRate, mode=rs485.mode, STX=4, ETX=5, CRC=False, logger=Ln.SetLogger)
-        # port.STX = int(rs485.STX, 16)
-        # port.ETX = int(rs485.ETX, 16)
-        # port.CRC = eval(rs485.CRC)
+        port = Prj.Rs485(port=relay.Port, baudrate=relay.BaudRate, mode=rs485Prot.mode, STX=4, ETX=5, CRC=False, logger=Ln.SetLogger)
+        # port.STX = int(rs485Prot.STX, 16)
+        # port.ETX = int(rs485Prot.ETX, 16)
+        # port.CRC = eval(rs485Prot.CRC)
 
         # logger.info('{0:<15}: {1}'.format('STX',  port.STX))
         # logger.info('{0:<15}: {1}'.format('STX',  port.ETX))
@@ -135,7 +142,7 @@ def Main(gv):
         # ===================================================
     elif gv.args.actionCommand == 'serial.send':
         if gv.args.fRS485:
-            gv.Prj.SendMsg(gv, port, rs485)
+            gv.Prj.SendMsg(gv, port, rs485Prot)
         elif gv.args.fRAW:
             print ('... not yet implemented.\n')
 

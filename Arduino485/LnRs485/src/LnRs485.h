@@ -9,7 +9,7 @@
     #define MASTER_ADDRESS      0
 
     #define MASTER_SIMULATOR
-    #define RETURN_TEXT_DATA_TO_MASTER   // on MASTER-RELAY-RS232 port return RS485 data or Text data
+    #define RETURN_TEXT_DATA_TO_MASTER_XXXX   // on MASTER-RELAY-RS232 port return RS485 data or Text data
 
 
     RXTX_DATA   RxTx, *pData;             // struttura dati

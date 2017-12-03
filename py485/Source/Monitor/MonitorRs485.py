@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 26-11-2017 18.17.43
+# Version ......: 03-12-2017 18.46.19
 #
 # ######################################################################################
 
@@ -17,10 +17,9 @@ import  LnLib as Ln; C = Ln.Color()
 import Source as Prj
 
 ########################################################
-# keepAlive()
-#   invia un messaggio per verificare che sia presente
+# - monitorRS485()
 ########################################################
-def monitorRS485(rs485Port):
+def monitorRS485(myPort):
     logger  = Ln.SetLogger(package=__name__)
 
 
@@ -33,28 +32,38 @@ def monitorRS485(rs485Port):
 
     while True:
         try:
-            payLoad, rawData = rs485Port.readData(fDEBUG=True)
+            data= myPort.readData_New(timeoutValue=2000)
 
         except (KeyboardInterrupt) as key:
             print (__name__, "Keybord interrupt has been pressed")
             sys.exit()
 
-def monitorRaw(rs485Port):
+
+
+########################################################
+# - monitorRaw()
+########################################################
+def monitorRaw(myPort, inpArgs):
     logger  = Ln.SetLogger(package=__name__)
 
 
         # ===================================================
         # = RS-485 sendMessage
         # ===================================================
-    C.printColored (color=C.yellowH, text='... press ctrl-c to stop the process.', tab=8)
-
-
-
+    C.printColored (color=C.yellowH, text=__name__ + '... press ctrl-c to stop the process.', tab=8)
+    # from string import Template
     while True:
         try:
-            data = rs485Port.readRawData(EOD=[], hex=True, text=False, char=False)
-            if data: print()
-            print()
+            data = myPort.readRawData(timeoutValue=500)
+            if data:
+                dataDict = Ln.Dict(data)
+                if inpArgs.text: print(data['text_data'])
+                if inpArgs.char: print(data['char_data'])
+                if inpArgs.hex:  print(data['hex_data'])
+                    # template = Template(data['TEXT'])
+                    # out = template.substitute(startData=C.yellowH, endData=C.RESET)
+                    # print(out)
+
 
         except (KeyboardInterrupt) as key:
             print (__name__, "Keybord interrupt has been pressed")

@@ -10,8 +10,12 @@ Scope:      Funzione di relay.
 
 */
 
-
-
+// #ifdef RETURN_TEXT_DATA_TO_MASTER
+// if  == 1 return data in TEXT mode (for debugging)
+// byte ReturnTextDataToMaster;
+// #else
+    // byte ReturnTextDataToMaster = 0;
+// #endif
 // ################################################################
 // # - M A I N     Loop_Relay
 // #    - riceviamo i dati da RaspBerry
@@ -41,7 +45,10 @@ unsigned char *Tx = pData->tx;
     byte senderAddr = Rx[fld_SENDER_ADDR];
     byte destAddr   = Rx[fld_DESTINATION_ADDR];
 
-    // delay(1000)
+    // if Rx[fld_CMD_RCODE] == 1 return data in TEXT mode (for debugging)
+    // Save value
+    // ReturnTextDataToMaster = Rx[fld_CMD_RCODE];
+
 
 
         // --------------------------------------
@@ -59,17 +66,16 @@ unsigned char *Tx = pData->tx;
         // -    1. ignora
         // --------------------------------------
     if (rCode == LN_OK) {
-        if (destAddr == myEEpromAddress)  {
-            copyRxMessageToTx(pData);
-            Tx[fld_DESTINATION_ADDR] = Rx[fld_SENDER_ADDR];
-            Tx[fld_SENDER_ADDR]      = myEEpromAddress;
-            char respMSG[] = "Echo Relay response!";
-            setDataCommand(Tx, respMSG, sizeof(respMSG));
-            Tx[fld_CMD_RCODE] = OK;
-            sendMsg232(pData);
-
-
+        if (destAddr == myEEpromAddress)  { // facciamo echo del comando....
+            // copyRxMessageToTx(pData);
+            // Tx[fld_DESTINATION_ADDR] = Rx[fld_SENDER_ADDR];
+            // Tx[fld_SENDER_ADDR]      = myEEpromAddress;
+            // char respMSG[] = "Echo Relay response!";
+            // setDataCommand(Tx, respMSG, sizeof(respMSG));
+            // Tx[fld_CMD_RCODE] = LN_OK;
+            // Relay_fwdToRaspBerry(pData, LN_OK);
         }
+
         else {
             Relay_fwdToRs485(pData);
                 // qualsiasi esito il msg è pronto da inviare sulla rs232
@@ -102,7 +108,7 @@ void Relay_fwdToRaspBerry(RXTX_DATA *pData, byte rcvdRCode) {
     copyRxMessageToTx(pData);
 
     #ifdef RETURN_TEXT_DATA_TO_MASTER
-        // inviamo sulla 232 in formato ascii
+            // inviamo sulla 232 in formato ascii
         displayMyData("RX-poll", rcvdRCode, pData);
     #else
         // ... oppure lo inviamo in formato rs485

@@ -68,8 +68,8 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
         # logFormatter = logging.Formatter('[%(asctime)s] [%(module)s:%(funcName)s:%(lineno)d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
         # ------------------
     # logFormatter = logging.Formatter('[%(asctime)s] [%(name)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
-    logFormatter = logging.Formatter('[%(asctime)s] [%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
-    # logFormatter = logging.Formatter('[%(asctime)s] [%(module)s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+    # logFormatter = logging.Formatter('[%(asctime)s] [%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+    logFormatter = logging.Formatter('[%(asctime)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
     logger       = logging.getLogger()
     logger.setLevel(logging.DEBUG)
         # log to file
@@ -238,8 +238,8 @@ def _GetCaller(deepLevel=0, funcName=None):
         data = "[{0}:{1}]".format(fname, lineNumber)
     else:
         # data = "[{0}:{1}]".format(fname, lineNumber)
-        data = "[{0}:{1}]".format(funcName, lineNumber)
-        # data = "[{0}.{1}:{2}]".format(fname, funcName, lineNumber)
+        # data = "[{0}:{1}]".format(funcName, lineNumber)
+        data = "[{0}.{1}:{2}]".format(fname, funcName, lineNumber)
 
 
     return data
