@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 04-12-2017 17.18.54
+# Version ......: 04-12-2017 07.56.47
 
 import LnLib as Ln
 import os
@@ -14,10 +14,7 @@ import inspect
 import string
 import time
 
-class LnClass():
-    def __init__(self):
-        self.rCode  = 0
-        self.errMsg = None
+def LnClass(): pass
 
 ####################
 ## Default values ##
@@ -100,13 +97,13 @@ LnRs485_validBytesHex = [
 
 
 
-from . LnRs485_Formatter import Formatter485
+# ln485Map = LnClass()
+# ln485Map.DATALEN = 0
+# ln485Map.COMMAND_DATA = 8
 
-#####################################################################
-# - MAIN LnRS485 CLASS
-#####################################################################
+
 class LnRs485_Instrument():
-    def __init__(self, port, mode='ascii', baudrate=9600, logger=None, myDict=LnClass):
+    def __init__(self, port, mode='ascii', baudrate=9600, logger=None):
 
         if logger:
             self._setLogger = logger
@@ -114,8 +111,6 @@ class LnRs485_Instrument():
             self._setLogger = self._internaLogger
 
         logger = self._setLogger(package=__package__)
-        self._myDict = myDict
-
 
         if port not in _SERIALPORTS or not _SERIALPORTS[port]:
             try:
@@ -168,15 +163,6 @@ class LnRs485_Instrument():
         """If this is :const:'True', the serial port will be closed after each call. """
         if  self._close_port_after_each_call: self.serial.close()
 
-            # classe per formattare i dati
-        self.formatter = Formatter485
-
-        self._rs485RawData    = bytearray()    # contiene i dati letti o da scrivere sulla rs485
-        self._rs485PayLoad    = bytearray()    # contiene i dati letti ripuliti da STX, CRC, ETX
-        self._rs485RawHexData = ''             # contiene i dati raw convertiti in Hex
-
-
-
 
 
 
@@ -187,11 +173,21 @@ class LnRs485_Instrument():
         class nullLogger():
                 def __init__(self, package=None, stackNum=1):
                     pass
-                def info(self, data): pass
-                def debug(self, data): pass
-                    # self._print(data)
+                def info(self, data):
+                    self._print(data)
+                def debug(self, data):
+                    self._print(data)
                 def error(self, data):  pass
                 def warning(self, data):  pass
+
+                def _print(self, data):
+                    pass
+                def _print_(self, data):
+                    caller = inspect.stack()[3]
+                    dummy, programFile, lineNumber, funcName, lineCode, rest = caller
+                    if funcName == '<module>': funcName = '__main__'
+                    str = "[{FUNC:<20}:{LINENO}] - {DATA}".format(FUNC=funcName, LINENO=lineNumber, DATA=data)
+                    print (str)
 
         return nullLogger()
 
@@ -203,6 +199,7 @@ class LnRs485_Instrument():
             <class-id                  = 0x{ID:x},
             mode                       = {MODE},
             close_port_after_each_call = {CPAEC},
+            precalculate_read_size     = {PRS},
             CRC                        = {CRC},
             STX                        = 0x{STX:02x},
             ETX                        = 0x{ETX:02x},
@@ -220,11 +217,6 @@ class LnRs485_Instrument():
             )
                         # ADDRESS=self.address,
 
-
-
-    # =====================================================
-    # - _getCRC8
-    # =====================================================
     def _getCRC8(self, byteArray_data):
         logger = self._setLogger(package=__package__)
         crcValue = 0
@@ -416,14 +408,15 @@ class LnRs485_Instrument():
     # -    raw_data:  bytearray di integer  oppure vuoto
     # -    hex_data:  dati in Hex oppure None
     #######################################################################
-    def _serialRead(self, timeoutValue=1000, fDEBUG=False):
+    def _readSerialBuffer_New(self, timeoutValue=1000, fDEBUG=False):
         logger = self._setLogger(package=__package__)
 
         if self._close_port_after_each_call:
             logger.debug('opening port...')
             self.serial.open()
 
-        _dataBuffer = bytearray()
+
+        bufferData = bytearray()
         fLOOP        = True
         fDATA_AVAIL  = False
 
@@ -458,7 +451,7 @@ class LnRs485_Instrument():
                     continue
 
             chInt = int.from_bytes(ch, 'little')
-            _dataBuffer.append(chInt)
+            bufferData.append(chInt)
             fDATA_AVAIL = True
             logLine = "Received byte: {0:02x}".format(chInt)
 
@@ -467,8 +460,16 @@ class LnRs485_Instrument():
             logger.debug('closing port...')
             self.serial.close()
 
-        self._rs485RawData    = _dataBuffer
-        self._rs485RawHexData = ' '.join('{0:02x}'.format(x) for x in self._rs485RawData)
+        if bufferData:
+            hexData = ' '.join('{0:02x}'.format(x) for x in bufferData)
+            # comunque scriviamo nel logger
+            hexMsg = 'readRawDataLib:  {DESCR:^10}:  {DATA}'.format(DESCR="raw", DATA=hexData)
+            logger.debug(hexMsg)
+            returnData = {'raw_data': bufferData, 'hex_data': hexData}
+        else:
+            returnData = {}
+
+        return returnData
 
 
 
@@ -529,7 +530,7 @@ class LnRs485_Instrument():
         logger = self._setLogger(package=__package__)
 
 
-        data = self._serialRead(timeoutValue=timeoutValue)
+        data = self._readSerialBuffer_New(timeoutValue=timeoutValue)
 
         if data:
             bufferData  = data['raw_data']
@@ -721,7 +722,7 @@ class LnRs485_Instrument():
 
         returnData = {'rCode': 1, 'err_msg': 'unknown'}
 
-        data = self._serialRead(timeoutValue=timeoutValue)
+        data = self._readSerialBuffer_New(timeoutValue=timeoutValue)
         if data:
             bufferData  = data['raw_data']
             hexData     = data['hex_data']
@@ -1034,53 +1035,7 @@ class LnRs485_Instrument():
 
 
 
-    ######################################################
-    # - @property
-    # - Utilizzo i metodi come fossero attributi
-    # - se compare l'utput di __repr__ vuol dire che
-    # - è stato omesso @property
-    ######################################################
-    @property
-    def rawData(self):
-        return self._rs485RawData
-
-    @property
-    def payload(self):
-        self.formatter._verifyData(self)
-        return self._rs485PayLoad
-
-    @property
-    def rawHex(self):
-        hexData, hexMsg = self.formatter._toHex(self)
-        return hexMsg
-
-    @property
-    def payloadHex(self):
-        hexData, hexMsg = self.formatter._toHex(self, payload=True)
-        return hexMsg
-
-    @property
-    def rawText(self):
-        text, char = self.formatter._toText(self)
-        return text
-
-    @property
-    def rawChr(self):
-        text, char = self.formatter._toText(self)
-        return char
-
-    @property
-    def toDict(self):
-        if not self._rs485PayLoad:
-            self.formatter._verifyData(self)
-        myDict = self.formatter._toDict(self)
-        return myDict
-
-
-
-
-
-
+class LnClass(): pass
 ################################################################################
 # - M A I N
 # - Prevede:
@@ -1207,3 +1162,133 @@ if __name__ == '__main__':
 
 
 
+''' OLD functions
+    #######################################################################
+    # - Lettura dati da StartOfData fino a EndOfData
+    # - Ritorna una bytearray di integer
+    #######################################################################
+    def _read_SOD_EOD_Buffer(self, SOD=None, EOD=None, TIMEOUT=1000):
+        logger = self._setLogger(package=__package__)
+
+        if self._close_port_after_each_call:
+            logger.debug('opening port...')
+            self.serial.open()
+
+        if not SOD: SOD = self._STX
+        if not EOD: EOD = self._ETX
+        buffer = bytearray()
+
+        logger.debug( "reading buffer")
+
+            # facciamo partire il timer
+        startRun = time.time()
+        elapsed = 0
+
+        while TIMEOUT:
+            TIMEOUT -= (time.time()-startRun)
+            ch = self.serial.read(1)       # ch e' un bytes
+            if ch==b'': continue
+            chInt = int.from_bytes(ch, 'little')
+            buffer.append(chInt)
+            break
+
+        logger.debug( "Received: SOD {0:02x}, waiting for EOD {1:02x}".format(SOD, EOD))
+
+        while TIMEOUT:
+            TIMEOUT -= (time.time()-startRun)
+            ch = self.serial.read(1)       # ch e' un bytes
+            if ch == b'': continue
+            chInt = int.from_bytes(ch, 'little')
+            buffer.append(chInt)
+            logger.debug( "Received: byte hex: {0:02x}... waiting for {1:02x}".format(chInt, EOD) )
+            if chInt==EOD: break
+
+
+        if self._close_port_after_each_call:
+            logger.debug('closing port...')
+            self.serial.close()
+
+        return buffer
+
+
+
+
+
+    #######################################################################
+    # - Lettura dati da StartOfData fino a EndOfData
+    # - Ritorna una bytearray di integer
+    #######################################################################
+    def _readBuffer_OK_TO_BE_DELETED(self):
+        logger = self._setLogger(package=__package__)
+
+        if self._close_port_after_each_call:
+            logger.debug('opening port...')
+            self.serial.open()
+
+        buffer = bytearray()
+
+        logger.debug( "reading buffer")
+        chInt=-1
+        while chInt != self._STX:
+            ch = self.serial.read(1)       # ch e' un bytes
+            if ch == b'': continue
+            chInt = int.from_bytes(ch, 'little')
+
+
+        buffer.append(chInt)
+        logger.debug( "Received: STX")
+        chInt=-1
+        while chInt != self._ETX:
+            ch = self.serial.read(1)       # ch e' un bytes
+            if ch == b'': continue
+            chInt = int.from_bytes(ch, 'little')
+            buffer.append(chInt)
+            logger.debug( "Received: byte hex: {0:02x}... waiting for {1:02x}".format(chInt, self._ETX) )
+
+        if self._close_port_after_each_call:
+            logger.debug('closing port...')
+            self.serial.close()
+
+        return buffer
+
+    #######################################################################
+    # - Lettura dati fino a:
+    # -     EOD = None ... fino al primo NULL byte
+    # -     EOD = xxx ... fino al char xxx
+    # - Ritorna una bytearray di integer
+    #######################################################################
+    def _readRawBuffer_OK_TO_BE_DELETED(self, EOD=None):
+        logger = self._setLogger(package=__package__)
+
+        if self._close_port_after_each_call:
+            logger.debug('opening port...')
+            self.serial.open()
+
+        # print ('..............', EOD)
+        buffer = bytearray()
+
+        if EOD:
+            chInt=-1
+            while chInt != EOD:
+                ch = self.serial.read(1)       # ch e' un bytes
+                if ch == b'': continue
+                chInt = int.from_bytes(ch, 'little')
+                buffer.append(chInt)
+                logger.debug( "Received byte: {0:02x}... waiting for {1:02x}".format(chInt, EOD) )
+
+        else:
+            while True:
+                ch = self.serial.read(1)       # ch e' un bytes
+                if ch == b'': break
+                chInt = int.from_bytes(ch, 'little')
+                buffer.append(chInt)
+                logger.debug( "Received byte: {0:02x}... waiting for NULL".format(chInt) )
+
+        if self._close_port_after_each_call:
+            logger.debug('closing port...')
+            self.serial.close()
+
+        return buffer
+
+
+'''

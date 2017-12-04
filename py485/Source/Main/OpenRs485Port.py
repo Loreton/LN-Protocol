@@ -20,7 +20,7 @@ def openRs485Port(portData, rs485):
         # ----------------------------------------------------
         # = RS-485 open/initialize port
         # ----------------------------------------------------
-    port = Prj.Rs485(port=portData.port, baudrate=portData.baudrate, mode=rs485.mode, logger=Ln.SetLogger)
+    port = Prj.Rs485(port=portData.port, baudrate=portData.baudrate, mode=rs485.mode, logger=Ln.SetLogger, myDict=Ln.Dict)
     port.SetSTX(rs485.STX)
     port.SetETX(rs485.ETX)
     port.SetCRC(rs485.CRC)

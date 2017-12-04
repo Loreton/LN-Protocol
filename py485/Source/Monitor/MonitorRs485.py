@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 03-12-2017 18.46.19
+# Version ......: 04-12-2017 17.19.12
 #
 # ######################################################################################
 
@@ -19,7 +19,7 @@ import Source as Prj
 ########################################################
 # - monitorRS485()
 ########################################################
-def monitorRS485(myPort):
+def monitorRS485(LnRs485):
     logger  = Ln.SetLogger(package=__name__)
 
 
@@ -32,7 +32,19 @@ def monitorRS485(myPort):
 
     while True:
         try:
-            data= myPort.readData_New(timeoutValue=2000)
+                # return bytearray
+            LnRs485._serialRead(timeoutValue=2000)
+            if LnRs485.rawData:
+                # print (LnRs485.rawData)
+                # print (LnRs485.rawHex)
+                # print (LnRs485.rawChr)
+                # xx = LnRs485.payload
+                # print (xx)
+                xx = LnRs485.toDict
+                xx.printTree()
+
+
+
 
         except (KeyboardInterrupt) as key:
             print (__name__, "Keybord interrupt has been pressed")
@@ -43,7 +55,7 @@ def monitorRS485(myPort):
 ########################################################
 # - monitorRaw()
 ########################################################
-def monitorRaw(myPort, inpArgs):
+def monitorRaw(LnRs485, inpArgs):
     logger  = Ln.SetLogger(package=__name__)
 
 
@@ -54,7 +66,7 @@ def monitorRaw(myPort, inpArgs):
     # from string import Template
     while True:
         try:
-            data = myPort.readRawData(timeoutValue=500)
+            data = LnRs485.readRawData(timeoutValue=500)
             if data:
                 dataDict = Ln.Dict(data)
                 if inpArgs.text: print(data['text_data'])
