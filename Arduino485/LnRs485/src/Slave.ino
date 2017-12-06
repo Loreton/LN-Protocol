@@ -19,7 +19,7 @@ int pinNO;
 // #    - rispondiamo se siamo interessati
 // lo slave scrive sulla seriale come debug
 // ################################################################
-void Slave_Main() {
+void Slave_Main(unsigned long RxTimeout) {
     if (firstRun) {
         pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
         pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
@@ -28,7 +28,8 @@ void Slave_Main() {
     }
 
     // Serial.println();
-    byte rcvdRCode = recvMsg485(pData);
+    pData->Rx_Timeout   = RxTimeout;         // set RXtimeout
+    byte rcvdRCode      = recvMsg485(pData);
     // byte rcvdRCode = 0;
 
     if (rcvdRCode == LN_OK) {

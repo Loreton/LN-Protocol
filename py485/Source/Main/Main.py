@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 03-12-2017 14.36.36
+# Version ......: 06-12-2017 16.43.18
 #
 # ######################################################################################
 
@@ -11,6 +11,8 @@ import os, sys
 import LnLib as Ln
 import Source as Prj
 
+# from Source.Setup import GlobalVars_Module as projectGlobalVars
+# gV = projectGlobalVars
 
 ################################################################################
 # - M A I N
@@ -25,8 +27,16 @@ def Main(gv):
     relay       = gv.iniFile.ARDUINO_RELAY_PORT
     monitor     = gv.iniFile.OTHER_MONITOR_PORT
     rs485Prot   = gv.iniFile.RS485_PROTOCOL
-    myCMD       = gv.iniFile.COMMAND
+    myCMD       = gv.iniFile.MAIN_COMMAND
     mySubCMD    = gv.iniFile.SUB_COMMAND
+
+    # convert payload fields in integer value
+    fld = Ln.Dict()
+    for key,val in gv.iniFile.RS485_PAYLOAD_FIELD.items(): fld[key] = int(val)
+    gv.payloadFieldName = fld   # save in prjGlobalVars
+
+
+
 
 
     for key, val in myCMD.items():      logger.debug('command     {0:<15}: {1}'.format(key, val))
@@ -36,7 +46,16 @@ def Main(gv):
     # gv.args.printTree(header='Args values', fPAUSE=False)
     # relay.printTree(header='RELAY values', fPAUSE=False)
 
-    myReqCommand = '{}.{}'.format(gv.args.firstPosParameter, gv.args.secondPosParameter)
+    # myReqCommand = '{}.{}'.format(gv.args.firstPosParameter, gv.args.secondPosParameter)
+
+
+
+        # ==========================================
+        # = Preparazione del PAYLOAD
+        # ==========================================
+    payload                 = bytearray(len(fld))
+    payload[fld.SRC_ADDR]   = int(rs485Prot.MasterAddress, 16)
+
 
         # ==========================================
         # = Apertura porta seriale
@@ -48,7 +67,8 @@ def Main(gv):
             Prj.digitalRead(myPort, gv.iniFile, srcAddress=rs485Prot.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
 
         elif gv.args.secondPosParameter == 'toggle':
-            Prj.digitalToggle(myPort, gv.iniFile, srcAddress=rs485Prot.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
+            # Prj.digitalToggle(myPort, gv.iniFile, srcAddress=rs485Prot.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
+            Prj.digitalToggle(gv, myPort, payload=payload)
 
         elif gv.args.secondPosParameter == 'write':
             Prj.digitalWrite(myPort, gv.args.slave_address, gv.iniFile)

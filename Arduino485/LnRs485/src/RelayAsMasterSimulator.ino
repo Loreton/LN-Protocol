@@ -11,17 +11,31 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 */
 
 
+#define RETURN_RS485_TO_MASTER   // on MASTER-RELAY-RS232 port return RS485 data or Text data
 #ifdef MASTER_SIMULATOR
 
 // ##########################################################
 // se vogliamo che Arduino invii un echo autonomamente
 // ##########################################################
 void loop_MasterSimulator() {
-
+    unsigned long RX_TIMEOUT = 2000;
     // forziamo myAddress a MASTER
     // myEEpromAddress = 0;
 
-    #ifdef RETURN_TEXT_DATA_TO_MASTER
+    #ifdef RETURN_RS485_TO_MASTER
+        returnRs485ToMaster         = true;
+        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayRawData      = false;                // display raw data
+
+        Simulator(pData);
+
+        // proviamo ad intercettare una richiesta da RaspBerry per massimo
+        Relay_Main(RX_TIMEOUT);
+
+    #else
+        returnRs485ToMaster         = false;
         pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
         pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
         pData->fDisplayOtherFull    = true;                // display dati relativi ad  altri indirizzi
@@ -30,17 +44,10 @@ void loop_MasterSimulator() {
 
         Simulator(pData);
         Serial.println();
-    #else
-        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData      = false;                // display raw data
-
-        Simulator(pData);
     #endif
 
 
-    delay(10000);
+    delay(5000);
 }
 
 // #############################################################
@@ -55,8 +62,8 @@ void Simulator(RXTX_DATA *pData) {
     volatile byte i;
     byte dataLen;
 
-    // int destAddresses[] = {11, 12, 13};
-    int destAddresses[] = {12};
+    int destAddresses[] = {11, 12, 13};
+    // int destAddresses[] = {12};
     // int destAddresses[] = {11};
     byte nElem = sizeof(destAddresses)/sizeof(int);
 
@@ -74,7 +81,7 @@ void Simulator(RXTX_DATA *pData) {
             // - dovendo simulare la ricezione da parte del raspberry
             // - preparo un messaggio come se fosse stato ricevuto
             // ---------------------------------------------------------
-        pData->rx[fld_SENDER_ADDR]      = 0;                                    // proviene dal master
+        pData->rx[fld_SENDER_ADDR]      = MASTER_ADDRESS;                                    // proviene dal master
         pData->rx[fld_DESTINATION_ADDR] = destAddresses[i];                    // DA
         pData->rx[fld_SEQNO_HIGH]       = seqNO >> 8;
         pData->rx[fld_SEQNO_LOW]        = seqNO & 0x00FF;
@@ -100,7 +107,14 @@ void Simulator(RXTX_DATA *pData) {
             char data[]  = "......";
             pData->rx[fld_COMMAND]         = DIGITAL_CMD;
             pData->rx[fld_SUBCOMMAND]      = TOGGLE_PIN;
-            data[dataLen++]  = D13;     // pin number
+
+            if (destAddresses[i] == 11)
+                data[dataLen++]  = D11;     // pin number
+            else if (destAddresses[i] == 12)
+                data[dataLen++]  = D13;     // pin number
+            else
+                data[dataLen++]  = D13;     // pin number
+
         #endif
 
         // pData->rx[fld_DATALEN]          = fld_SUBCOMMAND;
@@ -116,11 +130,11 @@ void Simulator(RXTX_DATA *pData) {
             Relay_fwdToRs485(pData);
                 // qualsiasi esito il msg è pronto da inviare sulla rs232
             byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-            Relay_fwdToRaspBerry(pData, rcvdRCode);
+            Relay_fwdToRaspBerry(pData, rcvdRCode, returnRs485ToMaster);
         }
 
 
-        delay(5000); // aspettiamo 2 secondi tra un indirizzo ed il successivo
+        delay(500); // aspettiamo tra uno slave ed il successivo
     }
     seqNO++;
 

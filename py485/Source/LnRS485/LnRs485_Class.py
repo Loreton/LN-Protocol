@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 04-12-2017 17.18.54
+# Version ......: 06-12-2017 17.16.59
 
 import LnLib as Ln
 import os
@@ -42,35 +42,6 @@ read_TIMEOUT  = 0.05
 
 MODE_RTU   = 'rtu'
 MODE_ASCII = 'ascii'
-##############################
-## Modbus instrument object ##
-##############################
-
-
-# Ln_SOURCE_ADDR = 0
-# Ln_DEST_ADDR   = 1
-# Ln_SEQNO_HIGH  = 2
-# Ln_SEQNO_LOW   = 3
-# Ln_COMMAND     = 4
-
-# DATALEN             = 0     # - lunghezza dei dati escluso STX ed ETX
-# SENDER_ADDR         = 0     # - Dest Address      (FF = Broadcast)
-# DESTINATION_ADDR    = 1     # - source Address    (00 = Master)
-# SEQNO_HIGH          = 2     # - numero del messaggio utile per associare la risposta
-# SEQNO_LOW           = 3     # -
-# COMMAND             = 4     # - comando da eseguire
-# USER_RCODE          = 5     # - esito del comando
-# USER_DATA           = 6     # - dati necessari per l'esecuzione del comando oppure i dati di risposta
-
-# DATALEN           = 0    # - lunghezza dei dati escluso STX ed ETX
-SENDER_ADDR       = 0    # - Dest Address      (FF = Broadcast)
-DESTINATION_ADDR  = 1    # - source Address    (00 = Master)
-SEQNO_HIGH        = 2    # - numero del messaggio utile per associare la risposta
-SEQNO_LOW         = 3    # -
-CMD_RCODE         = 4    # rCode di ritorno per il comando eseguito (in TX è ignorato)
-COMMAND           = 5    # comando da eseguire
-SUBCOMMAND        = 6    # eventuale dettaglio per il comando
-COMMAND_DATA      = 7    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
 
 
 
@@ -131,9 +102,6 @@ class LnRs485_Instrument():
                                                     dsrdtr   = False,
                                                     timeout  = read_TIMEOUT)
 
-
-
-
             except (Exception) as why:
                 print ('ERROR:  ', str(why))
                 sys.exit()
@@ -157,9 +125,6 @@ class LnRs485_Instrument():
         self._printableChars                = list(range(31,126))
         self._sendCounter = 0
 
-
-        # self._STX = int('0x02', 16) # integer
-        # self._ETX = int('0x03', 16) # integer
         self._STX = 0xF0
         self._ETX = 0xF1
         self._CRC = True
@@ -171,12 +136,9 @@ class LnRs485_Instrument():
             # classe per formattare i dati
         self.formatter = Formatter485
 
-        self._rs485RawData    = bytearray()    # contiene i dati letti o da scrivere sulla rs485
-        self._rs485PayLoad    = bytearray()    # contiene i dati letti ripuliti da STX, CRC, ETX
-        self._rs485RawHexData = ''             # contiene i dati raw convertiti in Hex
-
-
-
+        self._rs485RxRawData    = bytearray()    # contiene i dati letti o da scrivere sulla rs485
+        self._rs485RxPayLoad    = bytearray()    # contiene i dati letti ripuliti da STX, CRC, ETX
+        self._rs485RxRawHexData = ''             # contiene i dati raw convertiti in Hex
 
 
 
@@ -244,37 +206,44 @@ class LnRs485_Instrument():
         return crcValue
 
 
-    # ---------------------------------------------
-    # - aaaa bbbb
-    # -     byte1 = aaaa !aaaa
-    # -     byte2 = bbbb !bbbb
-    # -     byte = byte1_HNibble * 16 + byte2_HNibble
-    # ---------------------------------------------
-    def _splitComplementedByte(self, byte):
+
+    #######################################################################
+    # - by Loreto
+    # - Scrittura dati basato sul protocollo:
+    # -     RS485 protocol library by Nick Gammon
+    # - STX - data - CRC - ETX
+    # - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
+    # -  byte complemented (incluso il CRC)
+    # -  only values sent would be (in hex):
+    # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
+    #######################################################################
+    def _prepareRs485Data(self, payload):
+        assert type(payload)==bytearray
         logger = self._setLogger(package=__package__)
-        logger.debug ("byte to be converted: {0} - type: {1}".format(byte, type(byte)))
-        # if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
 
-        # print ('....', type(byte), byte)
-        # logger.debug ("converting: x{0:02X}".format(byte))
+             # - preparaiamo il bytearray con i dati da inviare
+        dataToSend=bytearray()
 
-            # first nibble
-        c = byte >> 4;
-        byteValue = (c << 4) | (c ^ 0x0F)
-        highNibble = byteValue
-        logger.debug  ("    x{0:02X}".format( highNibble))
+            # - STX nell'array
+        dataToSend.append(self._STX)
 
-            # second nibble
-        c = byte & 0x0F;
-        byteValue = (c << 4) | (c ^ 0x0F)
-        lowNibble = byteValue
-        logger.debug  ("    x{0:02X}".format(lowNibble))
+            # - Data nell'array
+        for thisByte in payload:
+            byte1, byte2 = self._splitComplementedByte(thisByte)
+            dataToSend.append(byte1)
+            dataToSend.append(byte2)
 
+            # - CRC nell'array
+        if self._CRC:
+            CRC_value    = self._getCRC8(txData)
+            byte1, byte2 = self._splitComplementedByte(CRC_value)
+            dataToSend.append(byte1)
+            dataToSend.append(byte2)
 
-            # second two bytes
-        return highNibble, lowNibble
+            # - ETX
+        dataToSend.append(self._ETX)
 
-
+        return dataToSend
 
 
     # ---------------------------------------------
@@ -284,8 +253,6 @@ class LnRs485_Instrument():
     # ---------------------------------------------
     def _combineComplementedByte(self, byte1, byte2):
         logger = self._setLogger(package=__package__)
-        # if isinstance(byte1, str): byte1 = ord(byte1)            # onverte nel valore ascii
-        # if isinstance(byte2, str): byte2 = ord(byte2)            # onverte nel valore ascii
 
         logger.debug("complementedData: x{0:02X} + x{1:02X}".format(byte1, byte2))
 
@@ -310,103 +277,35 @@ class LnRs485_Instrument():
         return realByte
 
 
-    #######################################################################
-    # - Lettura dati fino a:
-    # -     SOD = StartOfData  carattere che identifica l'inizio dei dati.
-    # -             quelli arrivati prima saranno ignorati
-    # -     EOD = None ... avanti fino al primo null char
-    # -     EOD = xxx ... fino al char xxx
-    # - Ritorna una bytearray di integer
-    #######################################################################
-    def _readSerialBuffer(self, SOD=[], EOD=[], timeoutValue=0, fDEBUG=False):
+
+    # ---------------------------------------------
+    # - aaaa bbbb
+    # -     byte1 = aaaa !aaaa
+    # -     byte2 = bbbb !bbbb
+    # -     byte = byte1_HNibble * 16 + byte2_HNibble
+    # ---------------------------------------------
+    def _splitComplementedByte(self, byte):
         logger = self._setLogger(package=__package__)
+        logger.debug ("byte to be converted: {0} - type: {1}".format(byte, type(byte)))
 
-        if self._close_port_after_each_call:
-            logger.debug('opening port...')
-            self.serial.open()
+            # first nibble
+        c = byte >> 4;
+        byteValue = (c << 4) | (c ^ 0x0F)
+        highNibble = byteValue
+        logger.debug  ("    x{0:02X}".format( highNibble))
 
-            # creiamo LIST nel caso sia un intero
-        if isinstance(SOD, int): SOD=[SOD]
-        if isinstance(EOD, int): EOD=[EOD]
-
-            # se non abbiamo SOD nè EOD
-        RAW = True if (not SOD and not EOD) else False
-
-            # -------------------
-            # - solo per DEBUG
-            # -------------------
-        sodString=''
-        for val in SOD: sodString += " x{0:02x}".format(val)
-        logger.debug( "SOD:          {0}".format(sodString))
-
-        eodString=''
-        for val in EOD: eodString += " x{0:02x}".format(val)
-        logger.debug( "EOD:          {0}".format(eodString))
-        logger.debug( "RAW:          {}".format(RAW))
-        logger.debug( "TIMEOUT (ms): {}".format(timeoutValue))
-        logger.debug( "reading buffer")
+            # second nibble
+        c = byte & 0x0F;
+        byteValue = (c << 4) | (c ^ 0x0F)
+        lowNibble = byteValue
+        logger.debug  ("    x{0:02X}".format(lowNibble))
 
 
-        # facciamo partire il timer
-        startRun = time.time()*1000
-        elapsed = 0
-        TIMEOUT = True      # flag per indicare se siamo andati in timeout o meno
-        logger.debug( "starting timer... for {} mSec".format(timeoutValue))
-
-        buffer = bytearray()
-        while elapsed <= timeoutValue:
-            elapsed = int((time.time()*1000)-startRun)
-            if elapsed%100 == 0:
-                logger.debug( "elapsed {0}/{1}".format(elapsed, timeoutValue))
-
-                # - in attesa di un byte
-            ch    = self.serial.read(1)       # ch e' un type->bytes
-            chInt = int.from_bytes(ch, 'little')
-
-                # ------------------------------------------
-                # - se  abbiamo ricevuto qualcosa... usciamo
-                # ------------------------------------------
-            if ch == b'':
-                if len(buffer) > 0:
-                    break
-                else:
-                    continue
-
-            buffer.append(chInt)
-            logLine = "Received byte: {0:02x}".format(chInt)
-
-                # se richiesto Start of Data
-            if SOD and chInt in SOD:
-                buffer = bytearray()    # reinizializza il buffer
-                buffer.append(chInt)
-                logLine +=  "     found SOD"
-                logger.debug(logLine)
-
-                # se richiesto End Of Data
-            elif EOD:
-                if chInt in EOD:
-                    logLine += "     found EOD {}".format(chInt)
-                    TIMEOUT = False
-                    logger.debug(logLine)
-                    break
-                else:
-                    logLine += "     waiting for EOD {}".format(EOD)
-                    logger.debug(logLine)
-
-                # - andiamo liberi senza delimiters
-            else:
-                logLine += "     inside RAW"
-                logger.debug(logLine)
+            # second two bytes
+        return highNibble, lowNibble
 
 
-        msg = "stopped  timer... after {} mSec".format(elapsed)
-        # print(msg)
-        logger.debug(msg)
-        if self._close_port_after_each_call:
-            logger.debug('closing port...')
-            self.serial.close()
 
-        return buffer
 
 
 
@@ -467,11 +366,61 @@ class LnRs485_Instrument():
             logger.debug('closing port...')
             self.serial.close()
 
-        self._rs485RawData    = _dataBuffer
-        self._rs485RawHexData = ' '.join('{0:02x}'.format(x) for x in self._rs485RawData)
+        self._rs485RxRawData    = _dataBuffer
+        self._rs485RxRawHexData = ' '.join('{0:02x}'.format(x) for x in self._rs485RxRawData)
 
 
 
+    #######################################################################
+    # - Scrittura dati sulla seriale
+    #######################################################################
+    def _serialWrite(self, txData):
+        assert type(txData)==bytearray
+
+        logger = self._setLogger(package=__package__)
+
+        if self._close_port_after_each_call:
+            self.serial.open()
+
+            # INVIO dati
+        logger.info('xmitting data on serial port')
+        self.serial.write(txData)
+
+        if self._close_port_after_each_call:
+            self.serial.close()
+
+
+
+    #######################################################################
+    # - Scrittura dati sulla seriale
+    #######################################################################
+    def _rs485Write(self, payload):
+        assert type(txData)==bytearray
+
+            # - preparaiamo il bytearray con i dati da inviare
+        dataToSend=bytearray()
+
+            # - STX nell'array
+        dataToSend.append(self._STX)
+
+            # - Data nell'array
+        for thisByte in payload:
+            byte1, byte2 = self._splitComplementedByte(thisByte)
+            dataToSend.append(byte1)
+            dataToSend.append(byte2)
+
+            # - CRC nell'array
+        if self._CRC:
+            CRC_value    = self._getCRC8(txData)
+            byte1, byte2 = self._splitComplementedByte(CRC_value)
+            dataToSend.append(byte1)
+            dataToSend.append(byte2)
+
+            # - ETX
+        dataToSend.append(self._ETX)
+
+            # INVIO dati
+         self._serialWrite(txData)
 
 
 
@@ -479,6 +428,13 @@ class LnRs485_Instrument():
     #######################################################################
     # # PUBLIC methods
     #######################################################################
+
+
+
+    def getSeqCounter(self):
+        self._sendCounter += 1
+        yy = self._sendCounter.to_bytes(2, byteorder='big')
+        return yy
 
     def SetSTX(self, value):
         logger = self._setLogger(package=__package__)
@@ -519,517 +475,11 @@ class LnRs485_Instrument():
             self.serial.close()
 
 
-    #######################################################################
-    # - by Loreto
-    # - EOD = int('0x0A', 16) # integer
-    # - EOD = None   ... legge fino al primo byte null
-    #######################################################################
 
-    def readRawData(self, timeoutValue=1000):
-        logger = self._setLogger(package=__package__)
-
-
-        data = self._serialRead(timeoutValue=timeoutValue)
-
-        if data:
-            bufferData  = data['raw_data']
-            hexData     = data['hex_data']
-            validChars = self._printableChars
-            validChars.append(10) # aggiungiamo il newline in modo che venga displayato
-
-            if isinstance(bufferData, bytes):
-                bufferData = bufferData.decode('utf-8')
-
-
-            lineToPrint = []
-            for i in bufferData:
-                if i in validChars:                    # Handle only printable ASCII
-                    lineToPrint.append(chr(i))
-                else:
-                    lineToPrint.append(" ")
-
-
-            chrMsg = 'readRawDataLib:  {DESCR:^10}:  {DATA}'.format(DESCR="chr", DATA='  '.join(lineToPrint))
-            textMsg = 'readRawDataLib: {DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="text", DATA=''.join(lineToPrint))
-            # textMsg = 'readRawDataLib: {DESCR:^10}:  $startData{DATA}$endData'.format(DESCR="text", DATA=''.join(lineToPrint))
-
-            returnData = {'raw_data': bufferData, 'hex_data': hexData, 'text_data': textMsg, 'char_data': chrMsg}
-        else:
-            returnData = {}
-
-        return returnData
-
-
-
-
-
-
-
-
-    #######################################################################
-    # - by Loreto
-    # - Lettura dati basato sul protocollo:
-    # -    LnRS485
-    # -         STX - data - CRC - ETX
-    # - A parte STX e ETX tutti gli altri byte sono inviati come
-    # -  due nibble byte complemented (incluso il CRC)
-    # -  i dati trasmessi posso assumere solo i seguenti valori (in hex):
-    # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
-    # -  Con il fatto che solo i byte di sopra possono essere inviati,
-    # -  il controllo su di essi forse fa venire meno il CRC e quindi
-    # -  l'ho inserito come flag
-    #######################################################################
-    def readData(self, timeoutValue=1000, fDEBUG=False):
-        logger = self._setLogger(package=__package__)
-
-        bufferData = self._readSerialBuffer(SOD=self._STX, EOD=self._ETX, timeoutValue=timeoutValue, fDEBUG=fDEBUG)
-        hexData    = ' '.join('{0:02X}'.format(x) for x in bufferData)
-        msg = '{TITLE:<15}: ({LEN}) {DATA}'.format(TITLE='readDataLib: full data', LEN=len(bufferData), DATA=hexData)
-        logger.debug(msg)
-
-        if not bufferData:
-            msg = 'ERROR: no data received!'
-            logger.error(msg)
-            return bytearray(), bufferData
-
-            # Prendiamo i dati fissi
-        if not bufferData[0] == self._STX:
-            msg = 'ERROR: STX missed'
-            print(msg)
-            logger.error(msg)
-            return bytearray(), bufferData
-
-        if not bufferData[-1] == self._ETX:
-            msg = 'ERROR: ETX missed'
-            print(msg)
-            logger.error(msg)
-            return bytearray(), bufferData
-
-
-            # ---------------------------------------------
-            # - ricostruzione dei bytes originari
-            # - byte = byte1_HighNibble*16 + byte2_HighNibble
-            # - si potrebbe usare la funzione _combineComplementedByte
-            # -    che provvede anche a fare la verifica che
-            # -    il secondo nibble sia il complemento del primo ma
-            # -    avendo verificato che il byte si trova nei self._validBytes
-            # ---------------------------------------------
-
-            # il trick che segue ci permette di prelevare due bytes alla volta
-        rcvData = bytearray()
-        payLoadNibbled  = bufferData[1:-1] # skip STX and ETX - include nibbled_data+nibbled_CRC
-        xy = iter(payLoadNibbled)
-        for byte1, byte2 in zip(xy, xy):
-                # re-build real byte
-            if byte1 in self._validBytes and byte2 in self._validBytes:
-                byte1_HighNibble = (byte1 >> 4) & 0x0F
-                byte2_HighNibble = (byte2 >> 4) & 0x0F
-                realByte = byte1_HighNibble*16 + byte2_HighNibble
-
-
-            else:
-                msg = 'ERROR: some byte corrupted byte1:{0:02x} byte2:{1:02x}'.format(byte1, byte2)
-                print(msg)
-                logger.error(msg)
-                return bytearray(), bufferData
-
-            rcvData.append(realByte)
-
-
-            # -----------------------------------------------------------------------
-            # - Una volta ricostruidi i bytes origilali,
-            # - calcoliamo il CRC sui dati (ovviamento escluso il byte di CRC stesso)
-            # -----------------------------------------------------------------------
-        CRC_calculated  = self._getCRC8(rcvData[:-1])
-            # ---------------------------------
-            # - check CRC (drop STX and ETX)
-            # ---------------------------------
-        CRC_received    = rcvData[-1]
-        rcvData         = rcvData[:-1]
-
-        logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
-        logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
-        xMitCode = CRC_received - CRC_calculated
-
-        if xMitCode:
-            logger.error('Il valore di CRC non coincide')
-            print ('ERROR: Il valore di CRC non coincide')
-            print ()
-            print ("    CRC received  : x{0:02X}".format(CRC_received))
-            print ("    CRC calculated: x{0:02X}".format(CRC_calculated))
-            print ()
-            return bytearray(), bufferData
-
-        if fDEBUG and len(rcvData) > 0:
-                # sommario
-            print ()
-            print ('[Pi-RX] - ', end="")
-            print (' 0x{0:02X}'.format(rcvData[SENDER_ADDR]), end="")
-            print (' --> 0x{0:02X}'.format(rcvData[DESTINATION_ADDR]), end="")
-            print (' - SeqNo: {0:05}'.format(rcvData[SEQNO_HIGH]*256+rcvData[SEQNO_LOW]), end="")
-            print (' - [rcvdCode: {0:03}]'.format(xMitCode))
-            print ()
-
-
-                # hezadecimal
-            print ('    full data - len: [{0:03}] - '.format(len(rcvData)), end="")
-            for byte in rcvData: print ('{0:02X} '.format(byte), end="")
-            print ()
-
-                # hezadecimal solo la parte comando
-            userData = rcvData[COMMAND_DATA:]
-            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*COMMAND_DATA, end="")
-            for byte in userData: print ('{0:02X} '.format(byte), end="")
-
-                # ascii solo la parte comando
-            print ('')
-            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*COMMAND_DATA, end="")
-            print ('[', end="")
-            for byte in userData:
-                if byte in self._printableChars:   # Handle only printable ASCII
-                    print(chr(byte), end="")
-                else:
-                    print(' ', end="")
-            print (']')
-            print ('')
-            print ('    CRC Rec/Cal 0x : {0:02X} {1:02X}'.format(CRC_received, CRC_calculated))
-            print ('    SEQNO       0x : {0:02X} {1:02X}'.format(rcvData[SEQNO_HIGH], rcvData[SEQNO_LOW]))
-            print ('    CMD_RCode   0x : {0:02X}'.format(rcvData[CMD_RCODE]))
-            print ('    CMD/subCMD  0x : {0:02X} {1:02X}'.format(rcvData[COMMAND], rcvData[SUBCOMMAND]))
-
-
-        return rcvData, bufferData
-
-    #######################################################################
-    # - by Loreto
-    # - Lettura dati basato sul protocollo:
-    # -    LnRS485
-    # -         STX - data - CRC - ETX
-    # - A parte STX e ETX tutti gli altri byte sono inviati come
-    # -  due nibble byte complemented (incluso il CRC)
-    # -  i dati trasmessi posso assumere solo i seguenti valori (in hex):
-    # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
-    # -  Con il fatto che solo i byte di sopra possono essere inviati,
-    # -  il controllo su di essi forse fa venire meno il CRC e quindi
-    # -  l'ho inserito come flag
-    # -  ritorna ....
-    #######################################################################
-    def readData_New(self, timeoutValue=1000):
-        logger = self._setLogger(package=__package__)
-
-        returnData = {'rCode': 1, 'err_msg': 'unknown'}
-
-        data = self._serialRead(timeoutValue=timeoutValue)
-        if data:
-            bufferData  = data['raw_data']
-            hexData     = data['hex_data']
-        else:
-            errMsg = 'no data received!'
-            logger.error(errMsg)
-            returnData['err_msg': 'ERROR: {} (see log)'.format(errMsg)]
-            return returnData
-
-
-            # cerchiamo STX
-        myRawData = bytearray()
-        for index, byte in enumerate(bufferData):
-            if byte == self._STX:
-                myRawData = bufferData[index:]
-                # print (byte, index, myRawData)
-
-            # cerchiamo ETX
-        for index, byte in enumerate(myRawData):
-            if byte == self._ETX:
-                myRawData = myRawData[:index+1]
-                # print (byte, index, myData)
-
-        if not myRawData or not myRawData[0] == self._STX or not myRawData[-1] == self._ETX:
-            errMsg = 'STX or ETX missed'
-            logger.error(errMsg)
-            logger.error(myRawData)
-            returnData['err_msg': 'ERROR: {} (see log)'.format(errMsg)]
-            return returnData
-
-
-        # Ln.Exit(9999)
-            # ---------------------------------------------
-            # - ricostruzione dei bytes originari
-            # - byte = byte1_HighNibble*16 + byte2_HighNibble
-            # - si potrebbe usare la funzione _combineComplementedByte
-            # -    che provvede anche a fare la verifica che
-            # -    il secondo nibble sia il complemento del primo ma
-            # -    avendo verificato che il byte si trova nei self._validBytes
-            # ---------------------------------------------
-
-            # il trick che segue ci permette di prelevare due bytes alla volta
-        rcvData = bytearray()
-        payLoadNibbled  = myRawData[1:-1] # skip STX and ETX
-        xy = iter(payLoadNibbled)
-        for byte1, byte2 in zip(xy, xy):
-                # re-build real byte
-            if byte1 in self._validBytes and byte2 in self._validBytes:
-                byte1_HighNibble = (byte1 >> 4) & 0x0F
-                byte2_HighNibble = (byte2 >> 4) & 0x0F
-                realByte = byte1_HighNibble*16 + byte2_HighNibble
-
-            else:
-                errMsg = 'some byte corrupted byte1:{0:02x} byte2:{1:02x}'.format(byte1, byte2)
-                logger.error(errMsg)
-                returnData['err_msg': 'ERROR: {} (see log)'.format(errMsg)]
-                return returnData
-
-
-            rcvData.append(realByte)
-
-
-            # -----------------------------------------------------------------------
-            # - Una volta ricostruiti i bytes origilali,
-            # - calcoliamo il CRC sui dati (ovviamento escluso il byte di CRC stesso)
-            # -----------------------------------------------------------------------
-        CRC_calculated  = self._getCRC8(rcvData[:-1])
-            # ---------------------------------
-            # - check CRC (drop STX and ETX)
-            # ---------------------------------
-        CRC_received    = rcvData[-1]
-        rcvData         = rcvData[:-1]
-
-        logger.debug("    CRC received  : x{0:02X}".format(CRC_received))
-        logger.debug("    CRC calculated: x{0:02X}".format(CRC_calculated))
-        xMitCode = CRC_received - CRC_calculated
-
-        if xMitCode:
-            errMsg = 'Il valore di CRC non coincide'
-            logger.error ()
-            logger.error ("    CRC received  : x{0:02X}".format(CRC_received))
-            logger.error ("    CRC calculated: x{0:02X}".format(CRC_calculated))
-            logger.error ()
-            returnData['err_msg': 'ERROR: {} (see log)'.format(errMsg)]
-            return returnData
-
-        returnData['rCode': 0, 'data': rcvData]
-
-        return returnData
-
-#@todo: formattare l'output
-    def formatRs485Data(bufferData):
-        if fDEBUG and len(rcvData) > 0:
-                # sommario
-            print ()
-            print ('[Pi-RX] - ', end="")
-            print (' 0x{0:02X}'.format(rcvData[SENDER_ADDR]), end="")
-            print (' --> 0x{0:02X}'.format(rcvData[DESTINATION_ADDR]), end="")
-            print (' - SeqNo: {0:05}'.format(rcvData[SEQNO_HIGH]*256+rcvData[SEQNO_LOW]), end="")
-            print (' - [rcvdCode: {0:03}]'.format(xMitCode))
-            print ()
-
-
-                # hezadecimal
-            print ('    full data - len: [{0:03}] - '.format(len(rcvData)), end="")
-            for byte in rcvData: print ('{0:02X} '.format(byte), end="")
-            print ()
-
-                # hezadecimal solo la parte comando
-            userData = rcvData[COMMAND_DATA:]
-            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*COMMAND_DATA, end="")
-            for byte in userData: print ('{0:02X} '.format(byte), end="")
-
-                # ascii solo la parte comando
-            print ('')
-            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*COMMAND_DATA, end="")
-            print ('[', end="")
-            for byte in userData:
-                if byte in self._printableChars:   # Handle only printable ASCII
-                    print(chr(byte), end="")
-                else:
-                    print(' ', end="")
-            print (']')
-            print ('')
-            print ('    CRC Rec/Cal 0x : {0:02X} {1:02X}'.format(CRC_received, CRC_calculated))
-            print ('    SEQNO       0x : {0:02X} {1:02X}'.format(rcvData[SEQNO_HIGH], rcvData[SEQNO_LOW]))
-            print ('    CMD_RCode   0x : {0:02X}'.format(rcvData[CMD_RCODE]))
-            print ('    CMD/subCMD  0x : {0:02X} {1:02X}'.format(rcvData[COMMAND], rcvData[SUBCOMMAND]))
-
-
-
-
-
-    def _getSendCounter(self):
-        self._sendCounter += 1
-        yy = self._sendCounter.to_bytes(2, byteorder='big')
-        return yy
-
-    #######################################################################
-    # - sendDataSDD - con parametri di input diversi
-    # -    richiama comunque sendData
-    #######################################################################
-    def sendDataSDD(self, sourceAddress, destAddress, dataStr, fDEBUG=False):
-        ''' formato esplicito dei parametri '''
-        dataToSend = bytearray()
-        dataToSend.append(int(sourceAddress))
-        dataToSend.append(int(destAddress))
-
-        yy = self._getSendCounter()
-        dataToSend.append(yy[0])  # high byte
-        dataToSend.append(yy[1])  # Low byte
-        dataToSend.append(0x00)  # 0 per una TX
-
-        if isinstance(dataStr, str):
-            for x in dataStr:
-                dataToSend.append(ord(x))
-        elif isinstance(dataStr, bytearray):
-            for x in dataStr:
-                dataToSend.append(x)
-
-
-        dataSent = self.sendData(dataToSend, fDEBUG=fDEBUG)
-        return dataSent
-
-
-    #######################################################################
-    # - sendDataCMD - con parametri di input diversi
-    # -    richiama comunque sendData
-    # -    ordine:
-    # -      SENDER_ADDR       = 0    # - Dest Address      (FF = Broadcast)
-    # -      DESTINATION_ADDR  = 1    # - source Address    (00 = Master)
-    # -      SEQNO_HIGH        = 2    # - numero del messaggio utile per associare la risposta
-    # -      SEQNO_LOW         = 3    # -
-    # -      CMD_RCODE         = 4    # rCode di ritorno per il comando eseguito (in TX è ignorato)
-    # -      COMMAND           = 5    # comando da eseguire
-    # -      SUBCOMMAND        = 6    # eventuale dettaglio per il comando
-    # -      COMMAND_DATA      = 7    # TX - dati necessari al comando per la sua corretta esecuzione/RX - dati di risposta
-    #######################################################################
-    def sendDataCMD(self, CMD, fDEBUG=False):
-        ''' formato CLASS dei parametri '''
-        dataToSend = bytearray()
-        dataToSend.append(CMD.sourceAddr)
-        dataToSend.append(CMD.destAddr)
-
-        yy = self._getSendCounter()
-        dataToSend.append(yy[0])  # high byte
-        dataToSend.append(yy[1])  # Low byte
-        dataToSend.append(CMD.xmitRcode)  # 0 per una TX
-
-        dataToSend.append(CMD.command)
-        dataToSend.append(CMD.subCommand)
-
-        for x in CMD.dataStr:
-            dataToSend.append(ord(x))
-
-        dataSent = self.sendData(dataToSend, fDEBUG=fDEBUG)
-        return dataSent
-
-
-    #######################################################################
-    # - by Loreto
-    # - Scrittura dati basato sul protocollo:
-    # -     RS485 protocol library by Nick Gammon
-    # - STX - data - CRC - ETX
-    # - A parte STX e ETX tutti gli altri byte sono inviati come due nibble
-    # -  byte complemented (incluso il CRC)
-    # -  only values sent would be (in hex):
-    # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
-    #######################################################################
-    def sendData(self, txData, fDEBUG=False):
-        ''' formato in bytearray dei parametri '''
-
-        logger = self._setLogger(package=__package__)
-
-            # - preparaiamo il bytearray con i dati da inviare
-        dataToSend=bytearray()
-
-            # - STX nell'array
-        dataToSend.append(self._STX)
-
-            # - Data nell'array
-        for thisByte in txData:
-            byte1, byte2 = self._splitComplementedByte(thisByte)
-            dataToSend.append(byte1)
-            dataToSend.append(byte2)
-
-            # - CRC nell'array
-        if self._CRC:
-            CRC_value    = self._getCRC8(txData)
-            byte1, byte2 = self._splitComplementedByte(CRC_value)
-            dataToSend.append(byte1)
-            dataToSend.append(byte2)
-
-            # - ETX
-        dataToSend.append(self._ETX)
-
-        if self._close_port_after_each_call:
-            self.serial.open()
-
-            # INVIO dati
-        self.serial.write(dataToSend)
-
-
-        if self._close_port_after_each_call:
-            self.serial.close()
-
-
-
-        if fDEBUG:
-            print ('\n[Pi-TX] - 0x{SA:02X} --> 0x{DA:02X} - SeqNo: {SeqNO:05}\n'.format(
-                                                            SA=txData[SENDER_ADDR],
-                                                            DA=txData[DESTINATION_ADDR],
-                                                            SeqNO=txData[SEQNO_HIGH]*256+txData[SEQNO_LOW]
-                                                            )
-                )
-
-            appoDataStr = " ".join("{:02X}".format(x) for x in txData)
-            print ('    full data - len: [{LEN:03}] - {DATA}'.format(
-                                                                LEN=len(txData),
-                                                                DATA=appoDataStr
-                                                                )
-                )
-
-
-            userData = txData[COMMAND_DATA:]
-            appoDataStr = " ".join("{:02X}".format(x) for x in userData)
-            print ('    user data - len: [{LEN:03}] - {TAB}{DATA}'.format(
-                                                                        LEN=len(userData),
-                                                                        TAB='   '*COMMAND_DATA,
-                                                                        DATA=appoDataStr
-                                                                    )
-                )
-
-            ''' formato printable
-            print ('')
-            print ('    user data - len: [{0:03}] - '.format(len(userData)), end="")
-            print ('   '*COMMAND_DATA, end="")
-            print ('[', end="")
-            for byte in userData:
-                if byte in self._printableChars:   # Handle only printable ASCII
-                    print(chr(byte), end="")
-                else:
-                    print(' ', end="")
-            print (']')
-            '''
-
-            print ('''
-    xMitted CRC 0x : {CRC:02X}
-    SEQNO       0x : {SeqH:02X} {SeqL:02X}
-    CMD_RCode   0x : {CMD_RC:02X}
-    CMD.subCMD  0x : {CMD:02X}.{SUB_CMD:02X}
-                '''.format(
-                            CRC=CRC_value,
-                            SeqH=txData[SEQNO_HIGH],
-                            SeqL=txData[SEQNO_LOW],
-                            CMD_RC=txData[CMD_RCODE],
-                            CMD=txData[COMMAND],
-                            SUB_CMD=txData[SUBCOMMAND]
-                            )
-                    )
-
-
-            print ('    {DESCR:<10}: {DATA}'.format(DESCR="", DATA='ST |SA-| |DA-| |sqH| |sqL| |CMD| |SUB|'))
-            print ('    {DESCR:<10}: {DATA}'.format(DESCR="raw data", DATA=' '.join('{0:02x}'.format(x) for x in dataToSend)))
-
-        return dataToSend
+    # def _getSeqNumber(self):
+    #     self._sendCounter += 1
+    #     yy = self._sendCounter.to_bytes(2, byteorder='big')
+    #     return yy
 
 
 
@@ -1042,21 +492,17 @@ class LnRs485_Instrument():
     ######################################################
     @property
     def rawData(self):
-        return self._rs485RawData
+        return self._rs485RxRawData
 
     @property
-    def payload(self):
-        self.formatter._verifyData(self)
-        return self._rs485PayLoad
+    def cleanRxData(self):
+        self._rs485RxRawData = bytearray()
+        self._rs485RxRawHexData = ''
+        self._rs485RxPayLoad = ''
 
     @property
     def rawHex(self):
-        hexData, hexMsg = self.formatter._toHex(self)
-        return hexMsg
-
-    @property
-    def payloadHex(self):
-        hexData, hexMsg = self.formatter._toHex(self, payload=True)
+        hexData, hexMsg = self.formatter._toHex(self._rs485RxRawData)
         return hexMsg
 
     @property
@@ -1069,12 +515,34 @@ class LnRs485_Instrument():
         text, char = self.formatter._toText(self)
         return char
 
+
+
+
     @property
-    def toDict(self):
-        if not self._rs485PayLoad:
-            self.formatter._verifyData(self)
-        myDict = self.formatter._toDict(self)
+    def payload(self):
+        self.formatter._verifyData(self)
+        return self._rs485RxPayLoad
+
+
+    @property
+    def payloadHex(self):
+        self.formatter._verifyData(self)
+        hexData, hexMsg = self.formatter._toHex(self._rs485RxPayLoad)
+        return hexMsg
+
+    @property
+    def payloadToDict(self):
+        # if not self._rs485RxPayLoad:
+        self.formatter._verifyData(self)
+        myDict = self.formatter._payloadToDict(self)
         return myDict
+
+    # @property
+    def toRs485(self, payload):
+        self._rs485TxRawData = payload
+        self._rs485TxRawData = _prepareRs485Data(self, self._rs485TxRawData)
+        # _serialWrite(self, self._rs485TxRawData):
+
 
 
 

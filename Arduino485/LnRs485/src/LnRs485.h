@@ -6,13 +6,14 @@
     #define RS485_ENABLE_PIN    D04   // D4  DE/RE up-->DE-->TX  down-->RE-->RX
 
 
-    #define MASTER_ADDRESS      0
+    #define MASTER_ADDRESS      1
 
     #define MASTER_SIMULATOR
-    #define RETURN_TEXT_DATA_TO_MASTER_XXXX   // on MASTER-RELAY-RS232 port return RS485 data or Text data
-
 
     RXTX_DATA   RxTx, *pData;             // struttura dati
+    unsigned char *Rx;                  //    unsigned char *Rx = pData->rx;
+    unsigned char *Tx;                  //    unsigned char *Tx = pData->tx;
+    bool returnRs485ToMaster = false;
 
 
     #if defined (I_AM_MAIN_)
@@ -102,5 +103,9 @@
     inline byte recvMsg232(RXTX_DATA *rxData, ReadCallback fRead=Read232, AvailableCallback fAvailable=Available232) {
         return recvMsg (rxData, fRead, fAvailable);
     }
+
+
+    // inserite solo per impostare il valore di default nei paramentri
+    void Relay_fwdToRaspBerry(RXTX_DATA *pData, byte rcvdRCode, bool returnRS485=true);
 
 #endif

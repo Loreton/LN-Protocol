@@ -69,3 +69,4 @@ from . Process.RunProgram              import StartProgram     as runProgram
 from . Process.RunProgram              import OutOnFile        as runGetOnfile
 
 
+from . String.LnEnum                   import LnEnum         as Enum

@@ -106,7 +106,7 @@ void loopx() {
 // # - M A I N     Loop
 // ################################################################
 void loop() {
-
+    unsigned long RX_TIMEOUT = 2000;
     pData->myEEpromAddress  = myEEpromAddress;
 
     if (myEEpromAddress <= 10) {
@@ -123,7 +123,7 @@ void loop() {
                 setMyID("Relay", myEEpromAddress);
                 pData->myID             = myID;
             }
-            Relay_Main();
+            Relay_Main(RX_TIMEOUT);
         #endif
     }
     else {
@@ -131,7 +131,7 @@ void loop() {
             setMyID("Slave", myEEpromAddress);
             pData->myID             = myID;
         }
-        Slave_Main();
+        Slave_Main(RX_TIMEOUT);
 
     }
     firstRun = false;

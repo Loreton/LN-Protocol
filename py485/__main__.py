@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 03-12-2017 17.54.03
+# Version ......: 06-12-2017 15.35.55
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -18,7 +18,7 @@ import os
 
 import  Source as Prj
 # Inserimento del path corretto per il caricamneto della LnLib
-Prj.gVars.LibPath('LnLib_20171123', libType='zipx')
+Prj.projectGlobalVars.LibPath('LnLib_20171123', libType='zipx')
 
 import  LnLib  as Ln
 

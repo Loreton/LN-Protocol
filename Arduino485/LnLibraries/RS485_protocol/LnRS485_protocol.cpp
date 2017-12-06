@@ -176,7 +176,7 @@ byte recvMsg (RXTX_DATA *pData,
     unsigned long start_time = millis();
     pData->raw[pDATALEN] = 0;            // azzeramento dataLen
     pData->rx[pDATALEN] = 0;            // azzeramento dataLen
-    while ((millis() - start_time) < pData->timeout) {
+    while ((millis() - start_time) < pData->Rx_Timeout) {
         if (fAvailable () > 0) {
             byte inByte = fRead();
 

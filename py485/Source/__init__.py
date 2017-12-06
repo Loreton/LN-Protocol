@@ -1,7 +1,7 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 04-12-2017 17.01.47
+# Version ......: 06-12-2017 15.29.20
 #
 # -----------------------------------------------
 
@@ -10,7 +10,7 @@
 from . Main.Main                         import Main
 
 # ------ SETUP -----
-from . Setup                                import GlobalVars_Module as gVars
+from . Setup                                import GlobalVars_Module as projectGlobalVars
 from . Setup.Main_ParseInput                import ParseInput
 
 # ------ User ParseInput -----

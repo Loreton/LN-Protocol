@@ -3,44 +3,56 @@
 #
 # Scope:
 # ######################################################################################
-from  collections import OrderedDict as oDict
+from  collections import OrderedDict
 
-def LnEnum(data, myDict=oDict, weighted=False):
-    ENUM = myDict()
+class myEnumClass():
+    pass
+    def __str__(self):
+        _str_ = []
+        for key,val in self.__dict__.items():
+            _str_.append('{:<15}: {}'.format(key, val))
+
+        return '\n'.join(_str_)
+
+
+
+def LnEnum(data, myDictType=myEnumClass, weighted=False):
+    if not myDictType:
+        myDictType = myEnumClass
+
+    ENUM = myDictType()
     for index, name in enumerate(data):
         itemName = name.strip().replace(' ', '_')
         if weighted:
                 # - ritorna il nome con una sequenza binaria
-            ENUM[itemName] = 2**index
+            try:
+                ENUM[itemName] = 2**index
+            except (TypeError):
+                setattr(ENUM, itemName, 2**index)
         else:
                 # - ritorna il nome con una sequenza unitaria
-            ENUM[itemName] = index
-
-    return ENUM
-
-class LnClass(): pass
-
-def LnEnum2(data, myDict=LnClass, weighted=False):
-    ENUM = myDict()
-    for index, name in enumerate(data):
-        itemName = name.strip().replace(' ', '_')
-        if weighted:
-                # - ritorna il nome con una sequenza binaria
-            ENUM[itemName] = 2**index
-        else:
-                # - ritorna il nome con una sequenza unitaria
-            ENUM.itemName = index
+            try:
+                ENUM[itemName] = index
+            except (TypeError):
+                setattr(ENUM, itemName, index)
 
     return ENUM
 
 
+
+
+######################################################################
+# -    M  A  I  N
+######################################################################
 if __name__ == '__main__':
-    data = ['CIAO', 'DUE', 'TRE', 'QUATTRO', ]
-    val = LnEnum(data)
+    data = ['', 'CIAO', 'DUE', 'TRE', 'QUATTRO', ]
+    val = LnEnum(data, OrderedDict)
     print (val)
     print (val['TRE'])
 
 
-    val = LnEnum2(data)
+    val = LnEnum(data, myDictType=myEnumClass)
     print (val)
     print (val.TRE)
+    # for key in val.__dict__.keys():
+    #     print (key)

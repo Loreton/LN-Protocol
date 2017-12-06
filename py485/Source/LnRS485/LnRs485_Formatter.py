@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 04-12-2017 17.17.14
+# Version ......: 06-12-2017 09.54.27
 
 
 
@@ -23,10 +23,21 @@ class Formatter485:
     # -
     ######################################################
     @staticmethod
-    def _toHex(obj485, payLoad=False):
+    def _toHex(data):
+        assert type(data) == bytearray
+        if not data: return None
+        hexData = ' '.join('{0:02x}'.format(x) for x in data)
+        hexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=hexData)
+        return hexData, hexMsg
+
+    ######################################################
+    # -
+    ######################################################
+    @staticmethod
+    def _toHex2(obj485, payload=False):
         logger = obj485._setLogger(package=__package__)
 
-        data = obj485._rs485PayLoad if payLoad else obj485._rs485RawData
+        data = obj485._rs485RxPayLoad if payload else obj485._rs485RxRawData
         assert type(data) == bytearray
         if not data: return None
 
@@ -40,10 +51,10 @@ class Formatter485:
     # -
     ######################################################
     @staticmethod
-    def _toText(obj485, payLoad=False):
+    def _toText(obj485, payload=False):
         logger = obj485._setLogger(package=__package__)
 
-        data = obj485._rs485PayLoad if payLoad else obj485._rs485RawData
+        data = obj485._rs485RxPayLoad if payload else obj485._rs485RxRawData
         assert type(data) == bytearray
         if not data: return None
 
@@ -85,9 +96,9 @@ class Formatter485:
     def _verifyData(obj485):
         logger = obj485._setLogger(package=__package__)
 
-        if not obj485._rs485RawData: return bytearray()
+        if not obj485._rs485RxRawData: return bytearray()
 
-        rawData  = obj485._rs485RawData
+        rawData  = obj485._rs485RxRawData
 
             # cerchiamo STX
         for index, byte in enumerate(rawData):
@@ -105,7 +116,7 @@ class Formatter485:
         if not rawData or not rawData[0] == obj485._STX or not rawData[-1] == obj485._ETX:
             errMsg = 'STX or ETX missed'
             logger.error(errMsg)
-            logger.error(obj485._rs485RawData)
+            logger.error(obj485._rs485RxRawData)
             return bytearray()
 
 
@@ -153,7 +164,7 @@ class Formatter485:
             logger.error ()
             return bytearray()
 
-        obj485._rs485PayLoad = _packetData[:-1] # drop CRC
+        obj485._rs485RxPayLoad = _packetData[:-1] # drop CRC
 
 
 
@@ -166,11 +177,11 @@ class Formatter485:
     # -    4. mette i dati un un dictionnary
     ######################################################
     @staticmethod
-    def _toDict(obj485):
+    def _payloadToDict(obj485):
         logger = obj485._setLogger(package=__package__)
 
         myDict = obj485._myDict()
-        data  = obj485._rs485PayLoad
+        data  = obj485._rs485RxPayLoad
         # print (type(data), data)
         # assert type(data) == bytearray
         # assert (data == b''),"Colder than absolute zero!"
@@ -180,15 +191,14 @@ class Formatter485:
         data1 = ['DA', 'SA', 'seqNOHigh', 'seqNOLow', 'CMD', 'SUBCMD', '', '', '', '', '', ]
 
         myDict = obj485._myDict()
-        myDict.destAddr    = data[0]
-        myDict.sourceAddr  = data[1]
-        myDict.seqNo       = data[2]*256+data[3]
-        myDict.CMD         = data[4]
-        myDict.subCMD      = data[5]
-        myDict.dataCommand = data[6:]
+        myDict.s01_sourceAddr  = "x'{:02X}'".format(data[0])
+        myDict.s02_destAddr    = "x'{:02X}'".format(data[1])
+        myDict.s03_seqNo       = '{:05}'.format(data[2]*256+data[3])
+        myDict.s05_RCODE       = data[4]
+        myDict.s04_CMD         = "x'{:02X}'".format(data[5])
+        myDict.s06_subCMD      = "x'{:02X}'".format(data[6])
+        myDict.s07_dataCommand = data[7:]
 
         return myDict
-
-
 
 

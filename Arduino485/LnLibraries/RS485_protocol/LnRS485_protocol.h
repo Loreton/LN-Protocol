@@ -9,7 +9,7 @@
     #include "WConstants.h"
 #endif
 
-#define RECV_DEFAULT_TIMEOUT 2*1000
+// #define RECV_DEFAULT_TIMEOUT 2*1000
 
 // #if not defined I_AM_RS485_PROTOCOL_H
 #if defined I_AM_RS485_PROTOCOL_CPP
@@ -87,6 +87,7 @@
         byte            Tx_CRCcalc;    // CRC value
         byte            Rx_CRCcalc;    // CRC value
         byte            Rx_CRCrcvd;    // CRC value
+        unsigned long   Rx_Timeout         = 1000;        // receive default timeout
 
         bool            fDisplayMyData      = false;       // display dati relativi al mio indirizzo
         bool            fDisplayOtherHeader = false;       // display solo header di altri indirizzi
@@ -95,7 +96,6 @@
 
         byte            myEEpromAddress;                // indirizzo identificativo di Arduino
         char            *myID;                          // stringa identificativo di Arduino
-        unsigned long   timeout         = RECV_DEFAULT_TIMEOUT;        // receive timeout
 
     }  RXTX_DATA, *pRXTX_DATA;
 
@@ -118,5 +118,5 @@
 
     void copyRxMessageToTx(RXTX_DATA *pData);
     void setDataCommand(byte *pData, char cmdData[], byte dataLen);
-    byte waitRs485Response(RXTX_DATA *pData, unsigned long TIMEOUT);
+    byte waitRs485Response(RXTX_DATA *pData, unsigned long RxTimeout);
 

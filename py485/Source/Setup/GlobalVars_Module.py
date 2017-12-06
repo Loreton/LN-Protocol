@@ -1,7 +1,7 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 27-11-2017 17.34.15
+# Version ......: 06-12-2017 15.21.30
 #
 # -----------------------------------------------
 '''
@@ -37,3 +37,11 @@ def LibPath(libName, libType='zip'):
 
 
 
+def LnClass():
+    pass
+    def __str__(self):
+        _str_ = []
+        for key,val in self.__dict__.items():
+            _str_.append('{:<15}: {}'.format(key, val))
+
+        return '\n'.join(_str_)
