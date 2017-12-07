@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 06-12-2017 17.16.59
+# Version ......: 07-12-2017 13.36.11
 
 import LnLib as Ln
 import os
@@ -136,10 +136,38 @@ class LnRs485_Instrument():
             # classe per formattare i dati
         self.formatter = Formatter485
 
-        self._rs485RxRawData    = bytearray()    # contiene i dati letti o da scrivere sulla rs485
+        # self._rs485RxRawData    = bytearray()    # contiene i dati letti o da scrivere sulla rs485
         self._rs485RxPayLoad    = bytearray()    # contiene i dati letti ripuliti da STX, CRC, ETX
-        self._rs485RxRawHexData = ''             # contiene i dati raw convertiti in Hex
+        # self._rs485RxRawHexData = ''             # contiene i dati raw convertiti in Hex
 
+        self._TxDataRaw         =  bytearray()   # raw data in uscita   dalla seriale
+        self._TxDataHex         =  ''            # raw data in uscita   dalla seriale
+
+        self._Rx                = self._myDict()
+        self._Tx                = self._myDict()
+
+        self._cleanData(self._Rx)
+        self._cleanData(self._Tx)
+
+        # self._RxDataRaw         =  bytearray()   # raw data in ingresso dalla seriale
+        # self._RxDataHex         =  ''            # raw data in ingresso dalla seriale
+        self._fld               =  None            # dict che contiene i nomi dei campi del payload e la loro posizione nel pacchetto
+
+
+        # - clean delle variabili di RX e TX
+    def _cleanData(self, ptr):
+        ptr.raw           = self._myDict()
+        ptr.payload       = self._myDict()
+
+        ptr.raw.data      = None        # bytearray()
+        ptr.raw.hexd      = None
+        ptr.raw.hexm      = None
+        ptr.raw.fmted     = False
+
+        ptr.payload.data  = None        # bytearray()
+        ptr.payload.hexd  = None
+        ptr.payload.hexm  = None
+        ptr.payload.fmted = False
 
 
     def _internaLogger(self, package=None):
@@ -217,7 +245,7 @@ class LnRs485_Instrument():
     # -  only values sent would be (in hex):
     # -    0F, 1E, 2D, 3C, 4B, 5A, 69, 78, 87, 96, A5, B4, C3, D2, E1, F0
     #######################################################################
-    def _prepareRs485Data(self, payload):
+    def _prepareRs485Packet(self, payload):
         assert type(payload)==bytearray
         logger = self._setLogger(package=__package__)
 
@@ -243,7 +271,8 @@ class LnRs485_Instrument():
             # - ETX
         dataToSend.append(self._ETX)
 
-        return dataToSend
+        self._rs485TxRawData = dataToSend
+        # return dataToSend
 
 
     # ---------------------------------------------
@@ -317,6 +346,8 @@ class LnRs485_Instrument():
     #######################################################################
     def _serialRead(self, timeoutValue=1000, fDEBUG=False):
         logger = self._setLogger(package=__package__)
+        self._cleanData(self._Rx)
+        Rx = self._Rx.raw
 
         if self._close_port_after_each_call:
             logger.debug('opening port...')
@@ -366,8 +397,18 @@ class LnRs485_Instrument():
             logger.debug('closing port...')
             self.serial.close()
 
-        self._rs485RxRawData    = _dataBuffer
-        self._rs485RxRawHexData = ' '.join('{0:02x}'.format(x) for x in self._rs485RxRawData)
+        if _dataBuffer:
+            Rx.data  = _dataBuffer
+            Rx.hexd  = ' '.join('{0:02x}'.format(x) for x in Rx.data)
+            Rx.hexm  = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=Rx.hexd)
+            return True
+
+        else:
+            logger.debug('NO data to be returned...')
+            return False
+
+
+
 
 
 
@@ -376,6 +417,7 @@ class LnRs485_Instrument():
     #######################################################################
     def _serialWrite(self, txData):
         assert type(txData)==bytearray
+        Tx = self._TxRaw; self.cleanData(Tx)
 
         logger = self._setLogger(package=__package__)
 
@@ -383,8 +425,11 @@ class LnRs485_Instrument():
             self.serial.open()
 
             # INVIO dati
+        Tx.raw = txData
+        Tx.hexd = ' '.join('{0:02x}'.format(x) for x in Tx.raw)
+        Tx.hexm = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=Tx.hexd)
         logger.info('xmitting data on serial port')
-        self.serial.write(txData)
+        self.serial.write(Tx.raw)
 
         if self._close_port_after_each_call:
             self.serial.close()
@@ -420,8 +465,89 @@ class LnRs485_Instrument():
         dataToSend.append(self._ETX)
 
             # INVIO dati
-         self._serialWrite(txData)
+        self._serialWrite(txData)
 
+
+
+
+    ######################################################
+    # - unpack data
+    # - partendo dal rawData:
+    # -    1. riconosce STX ed ETX
+    # -    2. verifica la correttezza del pacchetto CRC
+    # -    3. ricostruisce i byte originali (2bytes --> 1 byte)
+    # -    4. estrae il payload
+    # -    5. mette i dati un un dictionnary
+    ######################################################
+    def _extractPayload(self, rawData):
+        assert type(rawData) == bytearray
+        logger = self._setLogger(package=__package__)
+
+            # cerchiamo STX
+        for index, byte in enumerate(rawData):
+            if byte == self._STX:
+                rawData = rawData[index:]
+                break
+
+            # cerchiamo ETX
+        for index, byte in enumerate(rawData):
+            if byte == self._ETX:
+                rawData = rawData[:index+1]
+                break
+
+
+        if not rawData or not rawData[0] == self._STX or not rawData[-1] == self._ETX:
+            errMsg = 'STX or ETX missed'
+            logger.error(errMsg)
+            logger.error(rawData)
+            return bytearray()
+
+
+            # ---------------------------------------------
+            # - ricostruzione dei bytes originari
+            # - byte = byte1_HighNibble*16 + byte2_HighNibble
+            # il trick che segue ci permette di prelevare due bytes alla volta
+            # ---------------------------------------------
+        _payloadData = bytearray()
+        xy = iter(rawData[1:-1]) # skip STX and ETX
+        for byte1, byte2 in zip(xy, xy):
+                # re-build real byte
+            if byte1 in self._validBytes and byte2 in self._validBytes:
+                byte1_HighNibble = (byte1 >> 4) & 0x0F
+                byte2_HighNibble = (byte2 >> 4) & 0x0F
+                realByte = byte1_HighNibble*16 + byte2_HighNibble
+                _payloadData.append(realByte)
+
+            else:
+                errMsg = 'some byte corrupted byte1:{0:02x} byte2:{1:02x}'.format(byte1, byte2)
+                logger.error(errMsg)
+                return bytearray()
+
+
+
+
+            # -----------------------------------------------------------------------
+            # - Una volta ricostruiti i bytes origilali,
+            # - calcoliamo il CRC sui dati (ovviamento escluso il byte di CRC stesso)
+            # -----------------------------------------------------------------------
+        _CRC_calculated  = self._getCRC8(_payloadData[:-1]) # skipping ETX
+        _CRC_received    = _payloadData[-1]
+
+        logger.debug("    CRC received  : x{0:02X}".format(_CRC_received))
+        logger.debug("    CRC calculated: x{0:02X}".format(_CRC_calculated))
+
+            # ---------------------------------
+            # - check CRC (drop STX and ETX)
+            # ---------------------------------
+        if not _CRC_calculated == _CRC_received:
+            errMsg = 'Il valore di CRC non coincide'
+            logger.error ()
+            logger.error ("    CRC received  : x{0:02X}".format(CRC_received))
+            logger.error ("    CRC calculated: x{0:02X}".format(CRC_calculated))
+            logger.error ()
+            return bytearray()
+
+        return _payloadData[:-1] # drop CRC
 
 
 
@@ -435,6 +561,22 @@ class LnRs485_Instrument():
         self._sendCounter += 1
         yy = self._sendCounter.to_bytes(2, byteorder='big')
         return yy
+
+    def SetPayloadFieldName(self, mydict):
+        logger = self._setLogger(package=__package__)
+        assert type(mydict) == self._myDict
+
+            # ---- solo per logging ------------
+            # - per fare il logging ordinato per value
+            # - trasformiamo il dict in una LIST di tuple
+            # ---- solo per logging ------------
+        xx = sorted(mydict.items(), key=lambda x:x[1])
+        logger.debug('Payload fields name:')
+        for k, v in xx:
+            logger.debug('  {:<15}:{}'.format(k,v))
+        self._fld = mydict
+
+
 
     def SetSTX(self, value):
         logger = self._setLogger(package=__package__)
@@ -476,14 +618,6 @@ class LnRs485_Instrument():
 
 
 
-    # def _getSeqNumber(self):
-    #     self._sendCounter += 1
-    #     yy = self._sendCounter.to_bytes(2, byteorder='big')
-    #     return yy
-
-
-
-
     ######################################################
     # - @property
     # - Utilizzo i metodi come fossero attributi
@@ -492,55 +626,122 @@ class LnRs485_Instrument():
     ######################################################
     @property
     def rawData(self):
-        return self._rs485RxRawData
+        return self._RxDataRaw
 
-    @property
-    def cleanRxData(self):
-        self._rs485RxRawData = bytearray()
-        self._rs485RxRawHexData = ''
-        self._rs485RxPayLoad = ''
+    def rx_verifyRs485Data(self):
+        raw     = self._Rx.raw
+        payLoad = self._Rx.payload
+        return self._verifyRs485Data(raw, payLoad)
 
-    @property
-    def rawHex(self):
-        hexData, hexMsg = self.formatter._toHex(self._rs485RxRawData)
-        return hexMsg
-
-    @property
-    def rawText(self):
-        text, char = self.formatter._toText(self)
-        return text
-
-    @property
-    def rawChr(self):
-        text, char = self.formatter._toText(self)
-        return char
+    def rx_verifyRs485Data(self):
+        raw     = self._Tx.raw
+        payLoad = self._Tx.payload
+        return self._verifyRs485Data(raw, payLoad)
 
 
+    def _verifyRs485Data(self, raw, payload):
+        assert type(raw)     == self._myDict
+        assert type(payload) == self._myDict
+
+            # formatting della parte RAW
+        if not raw.fmted:
+            data = self.formatter._fmtData(self, raw.data)
+            raw.hexd = data['HEXD']
+            raw.hexm = data['HEXM']
+            raw.text = data['TEXT']
+            raw.char = data['CHAR']
+            raw.fmted = True
+
+            # ritorna payload bytearray
+        payLoad.data = self._extractPayload(raw.data)
+
+            # formatting della parte PayLoad
+        if not payload.fmted:
+            data = self.formatter._fmtData(self, payLoad.data)
+            payLoad.hexd = data['HEXD']
+            payLoad.hexm = data['HEXM']
+            payLoad.text = data['TEXT']
+            payLoad.char = data['CHAR']
+            payload.fmted = True
+            print ('.... sono qui')
+            Ln.Exit(9999)
+            payload.dict  = self.formatter._payloadToDict(self, payLoad.data)
 
 
-    @property
-    def payload(self):
-        self.formatter._verifyData(self)
-        return self._rs485RxPayLoad
+        return raw, payLoad
 
-
-    @property
-    def payloadHex(self):
-        self.formatter._verifyData(self)
-        hexData, hexMsg = self.formatter._toHex(self._rs485RxPayLoad)
-        return hexMsg
-
-    @property
-    def payloadToDict(self):
-        # if not self._rs485RxPayLoad:
-        self.formatter._verifyData(self)
-        myDict = self.formatter._payloadToDict(self)
-        return myDict
 
     # @property
-    def toRs485(self, payload):
-        self._rs485TxRawData = payload
-        self._rs485TxRawData = _prepareRs485Data(self, self._rs485TxRawData)
+    # def rawHex(self):
+    #     hexData, hexMsg = self.formatter._toHex(self._RxDataRaw)
+    #     return hexMsg
+
+    # # @property
+    # def RxRaw(self, text=False, hexd=False, hexm=False, char=False):
+    #     if not self._RxDataCharMsg:
+    #         data = self.formatter._fmtData(self, self._RxDataRaw)
+    #         self._RxDataHexMsg  = data['HEXM']
+    #         self._RxDataTextMsg = data['TEXT']
+    #         self._RxDataCharMsg = data['CHAR']
+
+    #     if   hexd:  return self._RxDataHex
+    #     elif hexm:  return self._RxDataHexMsg
+    #     elif text:  return self._RxDataTextMsg
+    #     elif char:  return self._RxDataCharMsg
+    #     else:
+    #         return None
+
+    # # @property
+    # def RxPayload(self, text=False, hexd=False, hexm=False, char=False):
+    #     data = self.formatter._fmtData(self, self._RxDataRaw)
+    #     if hexd:
+    #         return data['HEXD']
+    #     elif hexm:
+    #         return data['HEXM']
+    #     elif text:
+    #         return data['TEXT']
+    #     elif char:
+    #         return data['CHAR']
+    #     return None
+
+    # @property
+    # def rawChr(self):
+    #     text, char = self.formatter._toText(self)
+    #     return char
+
+
+
+
+    # @property
+    # def payload(self):
+    #     self.formatter._verifyData(self)
+    #     return self._rs485RxPayLoad
+
+
+    # @property
+    # def payloadHex(self):
+    #     self.formatter._verifyData(self)
+    #     hexData, hexMsg = self.formatter._toHex(self._rs485RxPayLoad)
+    #     return hexMsg
+
+    # # @property
+    # def getPayload(self, rawdata):
+    #     self.formatter._extractPayload(self, rawdata)
+    #     myDict = self.formatter._payloadToDict(self)
+    #     return myDict
+
+
+    @property
+    def rx_PayloadToDict(self):
+        # self.formatter._verifyData(self)
+        # myDict = self.formatter._payloadToDict(self)
+        # return myDict
+        return 'ciao'
+
+    # @property
+    # def toRs485(self, payload):
+    #     self._prepareRs485Packet(self, payload)
+        # self._rs485TxRawData.printDict()
         # _serialWrite(self, self._rs485TxRawData):
 
 
@@ -565,113 +766,6 @@ if __name__ == '__main__':
             monitor.0   : per monitorare la porta /dev/ttyUSB0
             send.0      : per inviare messaggi sulla porta /dev/ttyUSB0
     """
-
-
-
-    if len(sys.argv) > 1:
-        token = sys.argv[1].split('.')
-
-        if len(token) == 2:
-            action, portNO = sys.argv[1].split('.')
-            EOD = b'\x03'
-
-        elif len(token) == 3:
-            action, portNO, EOD = sys.argv[1].split('.')
-            iEOD = int(EOD)
-            EOD = bytes([iEOD])
-
-        else:
-            print (Sintax)
-            sys.exit()
-    else:
-        print (Sintax)
-        sys.exit()
-
-
-
-
-    LnRs485                = LnRs485_Instrument   # short pointer alla classe
-    rs485                  = LnClass()
-    rs485.MASTER_ADDRESS   = 0
-    rs485.bSTX             = b'\x02'
-    rs485.bETX             = b'\x03'
-    rs485.usbDevPath       = '/dev/ttyUSB{0}'.format(portNO)
-    # rs485.baudRate         = 9600
-    rs485.mode             = 'ascii'
-
-    print('     .....action:', action)
-    print('     .....portNO:', portNO)
-    print('     .....EOD:   ', EOD)
-
-
-        # ===================================================
-        # = RS-485 port monitor
-        # ===================================================
-    if action == 'monitor':
-        print('Monitoring port: {0}'.format(rs485.usbDevPath))
-            # ------------------------------
-            # - Inizializzazione
-            # ------------------------------
-        try:
-            address = 5
-            print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
-            monPort = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
-            monPort.CRC = True
-
-            print ('... press ctrl-c to stop the process.')
-            while True:
-                payLoad, rawData = monPort.readData()
-                print ('rawData (Hex):  {0}'.format(' '.join('{0:02x}'.format(x) for x in rawData)))
-                if payLoad:
-                    print ('payLoad (Hex):      {0}'.format(' '.join('{0:02x}'.format(x) for x in payLoad)))
-                    print ('payLoad (chr):      {0}'.format(' '.join('{0:>2}'.format(chr(x)) for x in payLoad)))
-                else:
-                    print ('payLoad ERROR....')
-                print()
-
-
-        except (KeyboardInterrupt) as key:
-            print ("Keybord interrupt has been pressed")
-            sys.exit()
-
-
-    elif action == 'send':
-        print('Sending data to port: {0}'.format(rs485.usbDevPath))
-            # ------------------------------
-            # - Inizializzazione
-            # ------------------------------
-        try:
-            address = 5
-            print('setting port {0} to address {1}'.format(rs485.usbDevPath, address))
-            wrPort = LnRs485(rs485.usbDevPath, address, rs485.mode, logger=None)  # port name, slave address (in decimal)
-            # - setting di alcuni parametri delle funzioni
-            # - me li ritrovo come self.PARAM
-            wrport.CRC       = False
-            print ('... press ctrl-c to stop the process.')
-            index = 0
-            basedata = 'Loreto.'
-            while True:
-                index += 1
-                dataToSend  = '[{0}.{1:04}]'.format(basedata, index)
-                line        = '[{0}:{1:04}] - {2}'.format(rs485.usbDevPath, index, dataToSend)
-                print (line)
-                dataSent = wrPort.sendData(dataToSend, CRC=True)
-                print ('sent (Hex): {0}'.format(' '.join('{0:02x}'.format(x) for x in dataSent)))
-                print()
-                time.sleep(5)
-
-
-        except (KeyboardInterrupt) as key:
-            print ("Keybord interrupt has been pressed")
-            sys.exit()
-
-
-    else:
-        print(gv.INPUT_PARAM.actionCommand, 'not available')
-
-
-
-
 
 
 

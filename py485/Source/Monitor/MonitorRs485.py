@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 06-12-2017 15.14.30
+# Version ......: 07-12-2017 13.33.58
 #
 # ######################################################################################
 
@@ -31,19 +31,20 @@ def monitorRS485(LnRs485):
 
 
     while True:
-        LnRs485.cleanRxData
+        # LnRs485.cleanRxData
         try:
                 # return bytearray
-            LnRs485._serialRead(timeoutValue=2000)
-            if LnRs485.rawData:
-                # print (LnRs485.rawData)
-                # print (LnRs485.rawHex)
-                # print (LnRs485.rawChr)
-                # print(LnRs485.payload)
-                # print(LnRs485.payloadHex)
-                # print (xx)
-                xx = LnRs485.payloadToDict
-                xx.printTree()
+            data = LnRs485._serialRead(timeoutValue=2000)
+            if data:
+                raw, payload = LnRs485.rx_verifyRs485Data()
+                # print (payload.data)
+                # print (payload.hexd)
+                print (payload.hexm)
+                # print (payload.char)
+                print (payload.text)
+                # print(LnRs485.rx_PayloadToDict)
+                # xx = LnRs485.payloadToDict
+                # xx.printTree()
                 print ('\n'*2)
 
 
@@ -70,10 +71,10 @@ def monitorRaw(LnRs485, inpArgs):
     while True:
         LnRs485.cleanRxData
         try:
-            LnRs485._serialRead(timeoutValue=2000)
-            if LnRs485.rawData:
-                # print (LnRs485.rawData)
-                print (LnRs485.rawText)
+                # return bytearray
+            rawData = LnRs485._serialRead(timeoutValue=2000)
+            if rawData:
+                print (LnRs485.RxRaw(text=True))
                 # print (LnRs485.rawHex)
                 # print (LnRs485.rawChr)
                 # print(LnRs485.payload)

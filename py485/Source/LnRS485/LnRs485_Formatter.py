@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 06-12-2017 09.54.27
+# Version ......: 07-12-2017 13.37.38
 
 
 
@@ -51,12 +51,9 @@ class Formatter485:
     # -
     ######################################################
     @staticmethod
-    def _toText(obj485, payload=False):
-        logger = obj485._setLogger(package=__package__)
-
-        data = obj485._rs485RxPayLoad if payload else obj485._rs485RxRawData
+    def _fmtData(obj485, data):
         assert type(data) == bytearray
-        if not data: return None
+        logger = obj485._setLogger(package=__package__)
 
 
         _validChars = obj485._printableChars
@@ -65,7 +62,12 @@ class Formatter485:
         if isinstance(data, bytes):
             data = data.decode('utf-8')
 
+            # PARTE HEX
+        hexData = ' '.join('{0:02x}'.format(x) for x in data)
+        hexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=hexData)
 
+
+            # PARTE TEXT or CHAR
         _lineToPrint = []
         for i in data:
             if i in _validChars:                    # Handle only printable ASCII
@@ -79,7 +81,8 @@ class Formatter485:
         textMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="text", DATA=''.join(_lineToPrint))
         logger.debug(textMsg)
 
-        return textMsg, chrMsg
+
+        return {'TEXT': textMsg, 'CHAR': chrMsg, 'HEXD': hexData, 'HEXM': hexMsg}
 
 
 
@@ -168,6 +171,8 @@ class Formatter485:
 
 
 
+
+
     ######################################################
     # - unpack data
     # - partendo dal rawData:
@@ -177,15 +182,11 @@ class Formatter485:
     # -    4. mette i dati un un dictionnary
     ######################################################
     @staticmethod
-    def _payloadToDict(obj485):
+    def _payloadToDict(obj485, data):
+        assert type(data) == bytearray
         logger = obj485._setLogger(package=__package__)
 
         myDict = obj485._myDict()
-        data  = obj485._rs485RxPayLoad
-        # print (type(data), data)
-        # assert type(data) == bytearray
-        # assert (data == b''),"Colder than absolute zero!"
-        # if not data: raise
         if not data: return myDict
 
         data1 = ['DA', 'SA', 'seqNOHigh', 'seqNOLow', 'CMD', 'SUBCMD', '', '', '', '', '', ]

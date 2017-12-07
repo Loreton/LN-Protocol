@@ -6,15 +6,15 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 06-12-2017 17.13.51
+# Version ......: 07-12-2017 09.39.56
 #
 # ######################################################################################
 
 
-import sys
-import time
+import  sys
+import  time
 import  LnLib as Ln; C = Ln.Color()
-import Source as Prj
+import  Source as Prj
 
 # gV = Prj.gVars
 
@@ -29,13 +29,11 @@ def digitalToggle(gv, LnRs485, payload):
     assert type(payload) == bytearray
     logger  = Ln.SetLogger(package=__package__)
 
-    _fld = gv.payloadFieldName
+    _fld     = gv.payloadFieldName
 
     _mainCmd = gv.iniFile.MAIN_COMMAND
     _subCmd  = gv.iniFile.SUB_COMMAND
     _args    = gv.args
-
-
 
 
         # ===================================================
@@ -47,14 +45,12 @@ def digitalToggle(gv, LnRs485, payload):
     # sourceAddr  = int.from_bytes(iniData.COMMANDS.master, 'little')
     # destAddr    = int.from_bytes(iniData.slave_address, 'little')
 
-    payload[_fld.DEST_ADDR] = int(gv.args.slave_address)
-    payload[_fld.CMD]       = int(_mainCmd.DIGITAL_CMD, 16)     # COMMAND
-    payload[_fld.SUB_CMD]   = int(_subCmd.TOGGLE_PIN,   16)     # SubCOMMAND
-    payload[_fld.PIN_NO]    = _args.pin_number     # pinNO
-    high, low               = LnRs485.getSeqCounter()
-    payload[_fld.SEQNO_L]   = low
-    payload[_fld.SEQNO_H]   = high
-    payload[_fld.RCODE]     = 0 # 0 per la TX
+    payload[_fld.DEST_ADDR]                      = int(gv.args.slave_address)
+    payload[_fld.CMD]                            = int(_mainCmd.DIGITAL_CMD, 16)     # COMMAND
+    payload[_fld.SUB_CMD]                        = int(_subCmd.TOGGLE_PIN,   16)     # SubCOMMAND
+    payload[_fld.PIN_NO]                         = _args.pin_number     # pinNO
+    payload[_fld.SEQNO_H], payload[_fld.SEQNO_L] = LnRs485.getSeqCounter()
+    payload[_fld.RCODE]                          = 0 # 0 per la TX
 
 
     while True:

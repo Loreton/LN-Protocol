@@ -25,7 +25,11 @@ def openRs485Port(portData, rs485):
     port.SetETX(rs485.ETX)
     port.SetCRC(rs485.CRC)
     port.ClosePortAfterEachCall(False)
+        # carichiamo i nomi dei campi del payload
+    port.SetPayloadFieldName(rs485.payloadFieldName)
 
+
+    # rs485.printTree()
     logger.info(port.__repr__())
     # port.Close()
     return port

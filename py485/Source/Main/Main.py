@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 06-12-2017 16.43.18
+# Version ......: 07-12-2017 09.39.59
 #
 # ######################################################################################
 
@@ -33,21 +33,12 @@ def Main(gv):
     # convert payload fields in integer value
     fld = Ln.Dict()
     for key,val in gv.iniFile.RS485_PAYLOAD_FIELD.items(): fld[key] = int(val)
-    gv.payloadFieldName = fld   # save in prjGlobalVars
-
-
+    rs485Prot.payloadFieldName = fld
 
 
 
     for key, val in myCMD.items():      logger.debug('command     {0:<15}: {1}'.format(key, val))
     for key, val in mySubCMD.items():   logger.debug('sub_command {0:<15}: {1}'.format(key, val))
-
-
-    # gv.args.printTree(header='Args values', fPAUSE=False)
-    # relay.printTree(header='RELAY values', fPAUSE=False)
-
-    # myReqCommand = '{}.{}'.format(gv.args.firstPosParameter, gv.args.secondPosParameter)
-
 
 
         # ==========================================
@@ -77,7 +68,6 @@ def Main(gv):
     elif gv.args.firstPosParameter in ['monitor']:
         if gv.args.port: monitor.port = gv.args.port
         myPort = Prj.openRs485Port(monitor, rs485Prot)
-
         if gv.args.secondPosParameter == 'rs485':
             Prj.monitorRS485(myPort)
 
