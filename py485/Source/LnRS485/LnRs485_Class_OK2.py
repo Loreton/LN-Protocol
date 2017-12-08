@@ -143,11 +143,11 @@ class LnRs485_Instrument():
         self._TxDataRaw         =  bytearray()   # raw data in uscita   dalla seriale
         self._TxDataHex         =  ''            # raw data in uscita   dalla seriale
 
-        # self._Rx                = self._myDict()
-        # self._Tx                = self._myDict()
+        self._Rx                = self._myDict()
+        self._Tx                = self._myDict()
 
-        # self._cleanData(self._Rx)
-        # self._cleanData(self._Tx)
+        self._cleanData(self._Rx)
+        self._cleanData(self._Tx)
 
         # self._RxDataRaw         =  bytearray()   # raw data in ingresso dalla seriale
         # self._RxDataHex         =  ''            # raw data in ingresso dalla seriale
@@ -155,19 +155,19 @@ class LnRs485_Instrument():
 
 
         # - clean delle variabili di RX e TX
-    # def _cleanData(self, ptr):
-    #     ptr.raw           = self._myDict()
-    #     ptr.payload       = self._myDict()
+    def _cleanData(self, ptr):
+        ptr.raw           = self._myDict()
+        ptr.payload       = self._myDict()
 
-    #     ptr.raw.data      = bytearray()
-    #     ptr.raw.hexd      = None
-    #     ptr.raw.hexm      = None
-    #     ptr.raw.fmted     = False
+        ptr.raw.data      = bytearray()
+        ptr.raw.hexd      = None
+        ptr.raw.hexm      = None
+        ptr.raw.fmted     = False
 
-    #     ptr.payload.data  = bytearray()
-    #     ptr.payload.hexd  = None
-    #     ptr.payload.hexm  = None
-    #     ptr.payload.fmted = False
+        ptr.payload.data  = bytearray()
+        ptr.payload.hexd  = None
+        ptr.payload.hexm  = None
+        ptr.payload.fmted = False
 
 
     def _internaLogger(self, package=None):
@@ -340,10 +340,14 @@ class LnRs485_Instrument():
 
     #######################################################################
     # - Lettura dati fino a:
-    # - Ritorna: una bytearray di integer
+    # - Ritorna: una bytearray di integer ed gli stessi formattati HEX
+    # -    raw_data:  bytearray di integer  oppure vuoto
+    # -    hex_data:  dati in Hex oppure None
     #######################################################################
     def _serialRead(self, timeoutValue=1000, fDEBUG=False):
         logger = self._setLogger(package=__package__)
+        self._cleanData(self._Rx)
+        Rx = self._Rx.raw
 
         if self._close_port_after_each_call:
             logger.debug('opening port...')
@@ -390,7 +394,15 @@ class LnRs485_Instrument():
             logger.debug('closing port...')
             self.serial.close()
 
-        return _dataBuffer
+        if _dataBuffer:
+            Rx.data  = _dataBuffer
+            Rx.hexd  = ' '.join('{0:02x}'.format(x) for x in Rx.data)
+            Rx.hexm  = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=Rx.hexd)
+            return True
+
+        else:
+            logger.debug('NO data to be returned...')
+            return False
 
 
 
@@ -609,69 +621,50 @@ class LnRs485_Instrument():
     # - se compare l'utput di __repr__ vuol dire che
     # - è stato omesso @property
     ######################################################
+    @property
+    def rawData(self):
+        return self._RxDataRaw
+
+    def rx_verifyRs485Data(self):
+        raw     = self._Rx.raw
+        payload = self._Rx.payload
+        return self._verifyRs485Data(raw, payload)
+
+    def tx_verifyRs485Data(self):
+        raw     = self._Tx.raw
+        payload = self._Tx.payload
+        return self._verifyRs485Data(raw, payload)
 
 
-    def VerifyRs485Data(self, rawData):
-        '''
-            Prende in input un bytearray dei dati letti da seriale
-            li valida per il protocollo RS485
-            Se validi... formatta sia il payload che il formato raw
-            ritornando un dictionary con due rami
-        '''
-        assert type(rawData) == bytearray
-        _myData              = self._myDict()
-        _myData.raw          = self._myDict()
-        _myData.payload      = self._myDict()
-            # default value
-        _myData.raw.data     = bytearray()
-        _myData.payload.data = bytearray()
+    def _verifyRs485Data(self, raw, payload):
+        assert type(raw)     == self._myDict
+        assert type(payload) == self._myDict
 
-            # ritorna payload bytearray
-        if rawData:
-            rs485data = self._extractPayload(rawData)
+        if raw.data:
+            if not raw.fmted:
+                data = self.formatter._fmtData(self, raw.data)
+                raw.hexd = data['HEXD']
+                raw.hexm = data['HEXM']
+                raw.text = data['TEXT']
+                raw.char = data['CHAR']
+                raw.fmted = True
 
-            if rs485data:
-                _myData.raw.data     = rawData
-                _myData.payload.data = rs485data
+                # ritorna payload bytearray
+            payload.data = self._extractPayload(raw.data)
 
-                _formattedData = self.formatter._fmtData(self, rs485data)
-                _myData.payload.hexd = _formattedData['HEXD']
-                _myData.payload.hexm = _formattedData['HEXM']
-                _myData.payload.text = _formattedData['TEXT']
-                _myData.payload.char = _formattedData['CHAR']
-
-                _formattedData = self.formatter._fmtData(self, rawData)
-                _myData.raw.hexd = _formattedData['HEXD']
-                _myData.raw.hexm = _formattedData['HEXM']
-                _myData.raw.text = _formattedData['TEXT']
-                _myData.raw.char = _formattedData['CHAR']
+                # formatting della parte PayLoad
+            if not payload.fmted:
+                data = self.formatter._fmtData(self, payload.data)
+                payload.hexd = data['HEXD']
+                payload.hexm = data['HEXM']
+                payload.text = data['TEXT']
+                payload.char = data['CHAR']
+                payload.fmted = True
+                payload.dict  = self.formatter._payloadToDict(self, payload.data)
 
 
 
-        return _myData
-
-    def FormatRawData(self, rawData):
-        '''
-            Prende in input un bytearray dei dati letti da seriale
-            li formatta ritornando un dictionary con i diversi formati
-        '''
-        assert type(rawData) == bytearray
-        _myData              = self._myDict()
-
-            # default value
-        _myData.data     = bytearray()
-
-            # ritorna payload bytearray
-        if rawData:
-            _myData.data = rawData
-
-            _formattedData = self.formatter._fmtData(self, rawData)
-            _myData.hexd = _formattedData['HEXD']
-            _myData.hexm = _formattedData['HEXM']
-            _myData.text = _formattedData['TEXT']
-            _myData.char = _formattedData['CHAR']
-
-        return _myData
+        return raw, payload
 
 
     # @property
@@ -734,12 +727,12 @@ class LnRs485_Instrument():
     #     return myDict
 
 
-    # @property
-    def PayloadToDict(self, payload):
+    @property
+    def rx_PayloadToDict(self):
         # self.formatter._verifyData(self)
-        return self.formatter._payloadToDict(self, payload)
+        # myDict = self.formatter._payloadToDict(self)
         # return myDict
-        # return 'ciao'
+        return 'ciao'
 
     # @property
     # def toRs485(self, payload):

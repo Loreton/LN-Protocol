@@ -34,18 +34,20 @@ def monitorRS485(LnRs485):
         # LnRs485.cleanRxData
         try:
                 # return bytearray
-            data = LnRs485._serialRead(timeoutValue=2000)
-            if data:
-                raw, payload = LnRs485.rx_verifyRs485Data()
-                # print (payload.data)
-                # print (payload.hexd)
-                print (payload.hexm)
-                # print (payload.char)
-                print (payload.text)
-                # print(LnRs485.rx_PayloadToDict)
-                # xx = LnRs485.payloadToDict
-                # xx.printTree()
-                print ('\n'*2)
+            rawData = LnRs485._serialRead(timeoutValue=2000)
+            if rawData:
+                fullData = LnRs485.VerifyRs485Data(rawData)
+                payload = fullData.payload
+                raw     = fullData.raw
+                if payload.data:
+                    # print (payload.data)
+                    # print (payload.hexd)
+                    # print (payload.hexm)
+                    # print (payload.char)
+                    # print (payload.text)
+                    xx = LnRs485.PayloadToDict(payload.data)
+                    xx.printTree(header='ricezione dati dallo slave: {}'.format(payload.data[LnRs485._fld.SRC_ADDR]))
+                    print ('\n'*2)
 
 
 
@@ -67,22 +69,22 @@ def monitorRaw(LnRs485, inpArgs):
         # = RS-485 sendMessage
         # ===================================================
     C.printColored (color=C.yellowH, text=__name__ + '... press ctrl-c to stop the process.', tab=8)
-    # from string import Template
+
     while True:
-        LnRs485.cleanRxData
         try:
                 # return bytearray
             rawData = LnRs485._serialRead(timeoutValue=2000)
             if rawData:
-                print (LnRs485.RxRaw(text=True))
-                # print (LnRs485.rawHex)
-                # print (LnRs485.rawChr)
-                # print(LnRs485.payload)
-                # print(LnRs485.payloadHex)
-                # print (xx)
-                # xx = LnRs485.payloadToDict
-                # xx.printTree()
-                print ('\n'*2)
+                fmtData = LnRs485.FormatRawData(rawData)
+                if fmtData.data:
+                    # print (fmtData.data)
+                    # print (fmtData.hexd)
+                    # print (fmtData.hexm)
+                    # print (fmtData.char)
+                    print (fmtData.text)
+                    print ('\n'*2)
+
+
 
 
 

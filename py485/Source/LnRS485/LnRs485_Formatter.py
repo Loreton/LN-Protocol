@@ -52,6 +52,11 @@ class Formatter485:
     ######################################################
     @staticmethod
     def _fmtData(obj485, data):
+        '''
+            Prende in input un bytearray di dati
+            li formatta di diversi formati
+            e li ritorna.
+        '''
         assert type(data) == bytearray
         logger = obj485._setLogger(package=__package__)
 
@@ -76,7 +81,7 @@ class Formatter485:
                 _lineToPrint.append(" ")
 
 
-        chrMsg  = '{DESCR:^10}:  <data> {DATA}</data>'.format(DESCR="chr", DATA='  '.join(_lineToPrint))
+        chrMsg  = '{DESCR:^10}:  <data> {DATA}</data>'.format(DESCR="char", DATA='  '.join(_lineToPrint))
         logger.debug(chrMsg)
         textMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="text", DATA=''.join(_lineToPrint))
         logger.debug(textMsg)
@@ -189,16 +194,16 @@ class Formatter485:
         myDict = obj485._myDict()
         if not data: return myDict
 
-        data1 = ['DA', 'SA', 'seqNOHigh', 'seqNOLow', 'CMD', 'SUBCMD', '', '', '', '', '', ]
+        fld = obj485._fld
+        # fld.printTree(fPAUSE=True)
 
-        myDict = obj485._myDict()
-        myDict.s01_sourceAddr  = "x'{:02X}'".format(data[0])
-        myDict.s02_destAddr    = "x'{:02X}'".format(data[1])
-        myDict.s03_seqNo       = '{:05}'.format(data[2]*256+data[3])
-        myDict.s05_RCODE       = data[4]
-        myDict.s04_CMD         = "x'{:02X}'".format(data[5])
-        myDict.s06_subCMD      = "x'{:02X}'".format(data[6])
-        myDict.s07_dataCommand = data[7:]
+        myDict.s01_sourceAddr  = "x'{:02X}'".format(data[fld.SRC_ADDR])
+        myDict.s02_destAddr    = "x'{:02X}'".format(data[fld.DEST_ADDR])
+        myDict.s03_seqNo       = '{:05}'.format(data[fld.SEQNO_H]*256 + data[fld.SEQNO_L])
+        myDict.s05_RCODE       = data[fld.RCODE]
+        myDict.s04_CMD         = "x'{:02X}'".format(data[fld.CMD])
+        myDict.s06_subCMD      = "x'{:02X}'".format(data[fld.SUB_CMD])
+        myDict.s07_commandData = data[fld.COMMAND_DATA:]
 
         return myDict
 
