@@ -402,7 +402,6 @@ class LnRs485_Instrument():
     #######################################################################
     def _serialWrite(self, txData):
         assert type(txData)==bytearray
-        Tx = self._TxRaw; self.cleanData(Tx)
 
         logger = self._setLogger(package=__package__)
 
@@ -410,11 +409,11 @@ class LnRs485_Instrument():
             self.serial.open()
 
             # INVIO dati
-        Tx.raw = txData
-        Tx.hexd = ' '.join('{0:02x}'.format(x) for x in Tx.raw)
-        Tx.hexm = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=Tx.hexd)
-        logger.info('xmitting data on serial port')
-        self.serial.write(Tx.raw)
+        _HexData = ' '.join('{0:02x}'.format(x) for x in txData)
+        _HexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=_HexData)
+        logger.info('xmitting data on serial port: ')
+        logger.info(_HexMsg)
+        self.serial.write(txData)
 
         if self._close_port_after_each_call:
             self.serial.close()
@@ -425,9 +424,9 @@ class LnRs485_Instrument():
     # - Scrittura dati sulla seriale
     #######################################################################
     def _rs485Write(self, payload):
-        assert type(txData)==bytearray
+        assert type(payload)==bytearray
 
-            # - preparaiamo il bytearray con i dati da inviare
+            # - prepariamo il bytearray per i dati da inviare
         dataToSend=bytearray()
 
             # - STX nell'array
@@ -441,7 +440,7 @@ class LnRs485_Instrument():
 
             # - CRC nell'array
         if self._CRC:
-            CRC_value    = self._getCRC8(txData)
+            CRC_value    = self._getCRC8(payload)
             byte1, byte2 = self._splitComplementedByte(CRC_value)
             dataToSend.append(byte1)
             dataToSend.append(byte2)
@@ -450,7 +449,7 @@ class LnRs485_Instrument():
         dataToSend.append(self._ETX)
 
             # INVIO dati
-        self._serialWrite(txData)
+        self._serialWrite(dataToSend)
 
 
 
@@ -544,6 +543,7 @@ class LnRs485_Instrument():
 
     def getSeqCounter(self):
         self._sendCounter += 1
+        print('.............', self._sendCounter)
         yy = self._sendCounter.to_bytes(2, byteorder='big')
         return yy
 

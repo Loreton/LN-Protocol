@@ -67,13 +67,7 @@ void Relay_Main(unsigned long RxTimeout) {
         // --------------------------------------
     if (rCode == LN_OK) {
         if (destAddr == myEEpromAddress)  { // facciamo echo del comando....
-            // copyRxMessageToTx(pData);
-            // Tx[fld_DESTINATION_ADDR] = Rx[fld_SENDER_ADDR];
-            // Tx[fld_SENDER_ADDR]      = myEEpromAddress;
-            // char respMSG[] = "Echo Relay response!";
-            // setDataCommand(Tx, respMSG, sizeof(respMSG));
-            // Tx[fld_CMD_RCODE] = LN_OK;
-            // Relay_fwdToRaspBerry(pData, LN_OK);
+            processRequest(pData); // esegue come fosse uno slave.
         }
 
         else {

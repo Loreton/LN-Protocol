@@ -13,7 +13,7 @@
     RXTX_DATA   RxTx, *pData;             // struttura dati
     unsigned char *Rx;                  //    unsigned char *Rx = pData->rx;
     unsigned char *Tx;                  //    unsigned char *Tx = pData->tx;
-    bool returnRs485ToMaster = false;
+    bool returnRs485ToMaster = true;
 
 
     #if defined (I_AM_MAIN_)

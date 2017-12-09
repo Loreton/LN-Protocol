@@ -32,7 +32,7 @@ void loop_MasterSimulator() {
         Simulator(pData);
 
         // proviamo ad intercettare una richiesta da RaspBerry per massimo
-        Relay_Main(RX_TIMEOUT);
+        Relay_Main(10000);
 
     #else
         returnRs485ToMaster         = false;
