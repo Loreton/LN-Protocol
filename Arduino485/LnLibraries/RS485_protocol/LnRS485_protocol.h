@@ -57,6 +57,7 @@
                         LN_TIMEOUT,
                         LN_PAYLOAD,
                         LN_DEBUG,
+                        LN_UNKNOWN_CMD,
                     };
 
         #define MAX_DATA_SIZE     60

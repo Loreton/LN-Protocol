@@ -152,7 +152,7 @@ void processRequest(RXTX_DATA *pData) {
                     break;
             }
             setDataCommand(Tx, returnDATA, counter);
-            Tx[fld_CMD_RCODE] = OK;
+            Tx[fld_CMD_RCODE] = LN_OK;
             break;
 
 
@@ -184,7 +184,7 @@ void processRequest(RXTX_DATA *pData) {
             }
             returnDATA[0] = (char) analogValue;
             setDataCommand(Tx, returnDATA, 1);
-            Tx[fld_CMD_RCODE] = OK;
+            Tx[fld_CMD_RCODE] = LN_OK;
             break;
 
         case PWM_CMD:
@@ -203,7 +203,7 @@ void processRequest(RXTX_DATA *pData) {
                     Serial.print("\n");Serial.print(TAB4);Serial.println(F("preparing response message... "));
 
                     setDataCommand(Tx, descr_PollingAnswer, sizeof(descr_PollingAnswer));
-                    Tx[fld_CMD_RCODE] = OK;
+                    Tx[fld_CMD_RCODE] = LN_OK;
                 }
                 break;
             break;
@@ -215,7 +215,7 @@ void processRequest(RXTX_DATA *pData) {
 
         default:
             setDataCommand(Tx, descr_UnknownCommand    , sizeof(descr_UnknownCommand ));
-            Tx[fld_CMD_RCODE] = UNKNOWN_CMD;
+            Tx[fld_CMD_RCODE] = LN_UNKNOWN_CMD;
             break;
     }
 

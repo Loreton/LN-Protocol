@@ -73,10 +73,12 @@ void Relay_Main(unsigned long RxTimeout) {
     byte rCode = recvMsg232(pData);
     Rx = pData->rx;
     Tx = pData->tx;
-    // byte senderAddr = Rx[fld_SENDER_ADDR];
-    // byte destAddr = Rx[fld_DESTINATION_ADDR];
 
 
+        // - comunque torniamo indietro il coamndo appena ricevuto
+    copyRxMessageToTx(pData);
+    sendMsg232(pData);
+        // - comunque torniamo indietro il coamndo appena ricevuto
 
         // --------------------------------------
         // - se corretto:

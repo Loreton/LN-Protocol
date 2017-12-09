@@ -120,8 +120,8 @@ void loop() {
                 setMyID("Relay", myEEpromAddress);
                 pData->myID             = myID;
             }
-            Relay_Main_DEBUG(RX_TIMEOUT);
-            // Relay_Main(RX_TIMEOUT);
+            // Relay_Main_DEBUG(RX_TIMEOUT);
+            Relay_Main(RX_TIMEOUT);
         #endif
     }
     else {

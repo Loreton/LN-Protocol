@@ -53,12 +53,12 @@
                         };
 
 
-    enum rs485_ERRORs {
-                            OK            = 0x00,    // ERRORE nel ricevere dati da rs485
-                            RS485_ERROR   = 0x01,    // ERRORE nel ricevere dati da rs485
-                            TIMEOUT_ERROR = 0x02,    // TIMEOUT nel ricevere dati da rs485
-                            UNKNOWN_CMD   = 0x03,    // TIMEOUT nel ricevere dati da rs485
-                        };
+    // enum rs485_ERRORs {
+    //                         OK            = 0x00,    // ERRORE nel ricevere dati da rs485
+    //                         RS485_ERROR   = 0x01,    // ERRORE nel ricevere dati da rs485
+    //                         TIMEOUT_ERROR = 0x02,    // TIMEOUT nel ricevere dati da rs485
+    //                         UNKNOWN_CMD   = 0x03,    // TIMEOUT nel ricevere dati da rs485
+    //                     };
 
     // ##########################################
     // # definizione delle seriali
