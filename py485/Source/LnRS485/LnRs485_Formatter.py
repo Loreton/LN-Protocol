@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 07-12-2017 13.37.38
+# Version ......: 09-12-2017 15.01.28
 
 
 
@@ -30,21 +30,6 @@ class Formatter485:
         hexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=hexData)
         return hexData, hexMsg
 
-    ######################################################
-    # -
-    ######################################################
-    @staticmethod
-    def _toHex2(obj485, payload=False):
-        logger = obj485._setLogger(package=__package__)
-
-        data = obj485._rs485RxPayLoad if payload else obj485._rs485RxRawData
-        assert type(data) == bytearray
-        if not data: return None
-
-
-        hexData = ' '.join('{0:02x}'.format(x) for x in data)
-        hexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=hexData)
-        return hexData, hexMsg
 
 
     ######################################################
@@ -204,6 +189,7 @@ class Formatter485:
         myDict.s04_CMD         = "x'{:02X}'".format(data[fld.CMD])
         myDict.s06_subCMD      = "x'{:02X}'".format(data[fld.SUB_CMD])
         myDict.s07_commandData = data[fld.COMMAND_DATA:]
+        myDict.s07_commandData = Formatter485._toHex(data[fld.COMMAND_DATA:])[0]
 
         return myDict
 

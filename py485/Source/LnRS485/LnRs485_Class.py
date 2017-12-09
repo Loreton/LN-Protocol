@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 07-12-2017 13.36.11
+# Version ......: 09-12-2017 18.18.56
 
 import LnLib as Ln
 import os
@@ -401,9 +401,9 @@ class LnRs485_Instrument():
     # - Scrittura dati sulla seriale
     #######################################################################
     def _serialWrite(self, txData):
+        logger = self._setLogger(package=__package__)
         assert type(txData)==bytearray
 
-        logger = self._setLogger(package=__package__)
 
         if self._close_port_after_each_call:
             self.serial.open()
@@ -423,8 +423,10 @@ class LnRs485_Instrument():
     #######################################################################
     # - Scrittura dati sulla seriale
     #######################################################################
-    def _rs485Write(self, payload):
+    def _rs485Write(self, payload, fDEBUG=False):
+        logger = self._setLogger(package=__package__)
         assert type(payload)==bytearray
+        logger.info('payload: {}'.format(Formatter485._toHex(payload)[0]))
 
             # - prepariamo il bytearray per i dati da inviare
         dataToSend=bytearray()
@@ -448,8 +450,24 @@ class LnRs485_Instrument():
             # - ETX
         dataToSend.append(self._ETX)
 
-            # INVIO dati
+        logger.info('dataToSend: {}'.format(Formatter485._toHex(dataToSend)[0]))
+        if fDEBUG:
+            fullData = self.VerifyRs485Data(dataToSend)
+            payload = fullData.payload
+            raw     = fullData.raw
+            if payload.data:
+                # print (payload.data)
+                # print (payload.hexd)
+                print (payload.hexm)
+                # print (payload.char)
+                # print (payload.text)
+                xx = self.PayloadToDict(payload.data)
+                xx.printTree(header='invio dati al dispositivo ADDR: {}'.format(payload.data[self._fld.DEST_ADDR]))
+                print ('\n'*2)
+
+        # INVIO dati
         self._serialWrite(dataToSend)
+        return dataToSend
 
 
 
@@ -461,29 +479,31 @@ class LnRs485_Instrument():
     # -    2. verifica la correttezza del pacchetto CRC
     # -    3. ricostruisce i byte originali (2bytes --> 1 byte)
     # -    4. estrae il payload
-    # -    5. mette i dati un un dictionnary
+    # -    5. ritorna payload in un bytearray
     ######################################################
     def _extractPayload(self, rawData):
         assert type(rawData) == bytearray
         logger = self._setLogger(package=__package__)
 
+        logger.error('analizing rawData: {}'.format(' '.join('{0:02x}'.format(x) for x in rawData)))
             # cerchiamo STX
         for index, byte in enumerate(rawData):
             if byte == self._STX:
                 rawData = rawData[index:]
+                logger.info('STX has been found')
                 break
 
             # cerchiamo ETX
         for index, byte in enumerate(rawData):
             if byte == self._ETX:
                 rawData = rawData[:index+1]
+                logger.info('ETX has been found')
                 break
 
 
         if not rawData or not rawData[0] == self._STX or not rawData[-1] == self._ETX:
             errMsg = 'STX or ETX missed'
             logger.error(errMsg)
-            logger.error(rawData)
             return bytearray()
 
 
@@ -525,10 +545,11 @@ class LnRs485_Instrument():
             # ---------------------------------
         if not _CRC_calculated == _CRC_received:
             errMsg = 'Il valore di CRC non coincide'
-            logger.error ()
-            logger.error ("    CRC received  : x{0:02X}".format(CRC_received))
-            logger.error ("    CRC calculated: x{0:02X}".format(CRC_calculated))
-            logger.error ()
+            logger.error ('-')
+            logger.error ("    CRC received  : x{0:02X}".format(_CRC_received))
+            logger.error ("    CRC calculated: x{0:02X}".format(_CRC_calculated))
+            logger.error ('-')
+            Ln.Exit(9999)
             return bytearray()
 
         return _payloadData[:-1] # drop CRC
@@ -618,6 +639,7 @@ class LnRs485_Instrument():
             Se validi... formatta sia il payload che il formato raw
             ritornando un dictionary con due rami
         '''
+        logger = self._setLogger(package=__package__)
         assert type(rawData) == bytearray
         _myData              = self._myDict()
         _myData.raw          = self._myDict()
@@ -626,9 +648,11 @@ class LnRs485_Instrument():
         _myData.raw.data     = bytearray()
         _myData.payload.data = bytearray()
 
+        logger.debug('rawData: {}'.format(' '.join('{0:02x}'.format(x) for x in rawData)))
             # ritorna payload bytearray
         if rawData:
             rs485data = self._extractPayload(rawData)
+            logger.debug('payload: {}'.format(' '.join('{0:02x}'.format(x) for x in rs485data)))
 
             if rs485data:
                 _myData.raw.data     = rawData

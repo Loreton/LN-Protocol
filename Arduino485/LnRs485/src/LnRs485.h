@@ -8,12 +8,12 @@
 
     #define MASTER_ADDRESS      1
 
-    #define MASTER_SIMULATOR
+    #define MASTER_SIMULATOR_XXXX
 
     RXTX_DATA   RxTx, *pData;             // struttura dati
     unsigned char *Rx;                  //    unsigned char *Rx = pData->rx;
     unsigned char *Tx;                  //    unsigned char *Tx = pData->tx;
-    bool returnRs485ToMaster = true;
+    bool returnRs485ToMaster = false;
 
 
     #if defined (I_AM_MAIN_)

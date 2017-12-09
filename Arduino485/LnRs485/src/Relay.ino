@@ -10,12 +10,45 @@ Scope:      Funzione di relay.
 
 */
 
-// #ifdef RETURN_TEXT_DATA_TO_MASTER
-// if  == 1 return data in TEXT mode (for debugging)
-// byte ReturnTextDataToMaster;
-// #else
-    // byte ReturnTextDataToMaster = 0;
-// #endif
+
+
+
+
+
+// ################################################################
+// # - M A I N     Loop_Relay
+// #    - riceviamo i dati da RaspBerry
+// #    - facciamo il forward verso rs485
+// #    - torniamo indietro la risposta
+// ################################################################
+void Relay_Main_DEBUG(unsigned long RxTimeout) {
+
+
+    if (firstRun) {     // Il relay on deve scrivere sulla seriale in chiaro
+        Serial.print(pData->myID);
+        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayRawData      = false;                // display raw data
+    }
+
+    pData->Rx_Timeout      = 10000;         // set timeout
+    pData->rx[fld_DATALEN] = 0;
+
+        // --------------------------------------
+        // - ricezione messaggio da RaspBerry
+        // --------------------------------------
+    byte rCode = recvMsg232(pData);
+    Rx = pData->rx;
+    Tx = pData->tx;
+    copyRxMessageToTx(pData);
+        // send to RS-485 bus
+    sendMsg232(pData);
+    // displayMyData("RX-xxxx", rCode, pData);
+    // Serial.print("rCode: ");Serial.print(rCode);
+
+}
+
 // ################################################################
 // # - M A I N     Loop_Relay
 // #    - riceviamo i dati da RaspBerry
@@ -23,8 +56,6 @@ Scope:      Funzione di relay.
 // #    - torniamo indietro la risposta
 // ################################################################
 void Relay_Main(unsigned long RxTimeout) {
-    // unsigned char *Rx = pData->rx;
-    // unsigned char *Tx = pData->tx;
 
     if (firstRun) {     // Il relay on deve scrivere sulla seriale in chiaro
         pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
@@ -43,11 +74,7 @@ void Relay_Main(unsigned long RxTimeout) {
     Rx = pData->rx;
     Tx = pData->tx;
     // byte senderAddr = Rx[fld_SENDER_ADDR];
-    byte destAddr   = Rx[fld_DESTINATION_ADDR];
-
-    // if Rx[fld_CMD_RCODE] == 1 return data in TEXT mode (for debugging)
-    // Save value
-    // ReturnTextDataToMaster = Rx[fld_CMD_RCODE];
+    // byte destAddr = Rx[fld_DESTINATION_ADDR];
 
 
 
@@ -65,8 +92,9 @@ void Relay_Main(unsigned long RxTimeout) {
         // - altrimenti:
         // -    1. ignora
         // --------------------------------------
+
     if (rCode == LN_OK) {
-        if (destAddr == myEEpromAddress)  { // facciamo echo del comando....
+        if (Rx[fld_DESTINATION_ADDR] == myEEpromAddress)  { // facciamo echo del comando....
             processRequest(pData); // esegue come fosse uno slave.
         }
 
@@ -74,7 +102,7 @@ void Relay_Main(unsigned long RxTimeout) {
             Relay_fwdToRs485(pData);
                 // qualsiasi esito il msg è pronto da inviare sulla rs232
             byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-            Relay_fwdToRaspBerry(pData, rcvdRCode, returnRs485ToMaster);
+            Relay_fwdToRaspBerry(pData, rcvdRCode, false);
         }
     }
 
@@ -104,17 +132,8 @@ void Relay_fwdToRaspBerry(RXTX_DATA *pData, byte rcvdRCode, bool RS485) {
     if (RS485 == true)
         sendMsg232(pData);
     else
-        displayMyData("RX-poll", rcvdRCode, pData);
+        displayMyData("RX-xxxx", rcvdRCode, pData);
 
-    /*
-    #ifdef RETURN_TEXT_DATA_TO_MASTER
-            // inviamo sulla 232 in formato ascii
-        displayMyData("RX-poll", rcvdRCode, pData);
-    #else
-        // ... oppure lo inviamo in formato rs485
-        sendMsg232(pData);
-    #endif
-    */
 }
 
 
