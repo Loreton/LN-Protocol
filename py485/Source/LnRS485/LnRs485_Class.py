@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 09-12-2017 18.18.56
+# Version ......: 10-12-2017 21.24.41
 
 import LnLib as Ln
 import os
@@ -339,10 +339,10 @@ class LnRs485_Instrument():
 
 
     #######################################################################
-    # - Lettura dati fino a:
-    # - Ritorna: una bytearray di integer
+    # - Lettura dati dalla seriale
+    # - Ritorna: una bytearray di integer con i dati ricevuti oppure vuoto
     #######################################################################
-    def _serialRead(self, timeoutValue=1000, fDEBUG=False):
+    def _serialRead(self, timeoutValue=1000):
         logger = self._setLogger(package=__package__)
 
         if self._close_port_after_each_call:
@@ -383,13 +383,14 @@ class LnRs485_Instrument():
 
             chInt = int.from_bytes(ch, 'little')
             _dataBuffer.append(chInt)
-            logLine = "Received byte: {0:02x}".format(chInt)
+            logger.debug("Received byte: {0:02x}".format(chInt))
 
 
         if self._close_port_after_each_call:
             logger.debug('closing port...')
             self.serial.close()
 
+        logger.debug("data received: {}".format(' '.join('{0:02x}'.format(x) for x in _dataBuffer)))
         return _dataBuffer
 
 
@@ -418,6 +419,42 @@ class LnRs485_Instrument():
         if self._close_port_after_each_call:
             self.serial.close()
 
+
+
+
+
+
+    #######################################################################
+    # - Scrittura dati sulla seriale
+    #######################################################################
+    def _rs485Read(self, timeoutValue=2000, FORMAT=False):
+        logger = self._setLogger(package=__package__)
+
+        rawDict = self._myDict()
+        plDict  = self._myDict()
+        rawData = self._serialRead(timeoutValue=timeoutValue) # return bytearray
+        rawDict.data = rawData
+        plDict.data = None
+
+        if rawData:
+            if FORMAT:
+                _rawDataFMTed = self.formatter._fmtData(self, rawData)
+                rawDict.hexd = _rawDataFMTed['HEXD']
+                rawDict.hexm = _rawDataFMTed['HEXM']
+                rawDict.text = _rawDataFMTed['TEXT']
+                rawDict.char = _rawDataFMTed['CHAR']
+
+            payload = self._extractPayload(rawData)
+            plDict.data = payload
+            if payload and FORMAT:
+                _payloadFMTed = self.formatter._fmtData(self, payload)
+                plDict.hexd = _payloadFMTed['HEXD']
+                plDict.hexm = _payloadFMTed['HEXM']
+                plDict.text = _payloadFMTed['TEXT']
+                plDict.char = _payloadFMTed['CHAR']
+                plDict.dict = self.formatter._payloadToDict(self, payload)
+
+        return rawDict, plDict
 
 
     #######################################################################
@@ -451,19 +488,6 @@ class LnRs485_Instrument():
         dataToSend.append(self._ETX)
 
         logger.info('dataToSend: {}'.format(Formatter485._toHex(dataToSend)[0]))
-        if fDEBUG:
-            fullData = self.VerifyRs485Data(dataToSend)
-            payload = fullData.payload
-            raw     = fullData.raw
-            if payload.data:
-                # print (payload.data)
-                # print (payload.hexd)
-                print (payload.hexm)
-                # print (payload.char)
-                # print (payload.text)
-                xx = self.PayloadToDict(payload.data)
-                xx.printTree(header='invio dati al dispositivo ADDR: {}'.format(payload.data[self._fld.DEST_ADDR]))
-                print ('\n'*2)
 
         # INVIO dati
         self._serialWrite(dataToSend)
@@ -564,7 +588,6 @@ class LnRs485_Instrument():
 
     def getSeqCounter(self):
         self._sendCounter += 1
-        print('.............', self._sendCounter)
         yy = self._sendCounter.to_bytes(2, byteorder='big')
         return yy
 
@@ -623,6 +646,12 @@ class LnRs485_Instrument():
             self.serial.close()
 
 
+    # def formatData(self, rawData):
+    #     _formattedData = self.formatter._fmtData(self, rs485data)
+    #     _myData.payload.hexd = _formattedData['HEXD']
+    #     _myData.payload.hexm = _formattedData['HEXM']
+    #     _myData.payload.text = _formattedData['TEXT']
+    #     _myData.payload.char = _formattedData['CHAR']
 
     ######################################################
     # - @property
@@ -630,6 +659,9 @@ class LnRs485_Instrument():
     # - se compare l'utput di __repr__ vuol dire che
     # - è stato omesso @property
     ######################################################
+
+
+
 
 
     def VerifyRs485Data(self, rawData):

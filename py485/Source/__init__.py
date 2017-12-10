@@ -1,7 +1,7 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 06-12-2017 15.29.20
+# Version ......: 10-12-2017 21.14.05
 #
 # -----------------------------------------------
 
@@ -40,4 +40,5 @@ from . Monitor.MonitorRs485              import monitorRaw
 # - Process
 from . Process.DigitalPin                import digitalRead
 from . Process.DigitalPin                import digitalToggle
+from . Process.SendToRelay               import SendToRelay
 # from . Process.DigitalPin                import digitalWrite

@@ -14,41 +14,6 @@ Scope:      Funzione di relay.
 
 
 
-
-// ################################################################
-// # - M A I N     Loop_Relay
-// #    - riceviamo i dati da RaspBerry
-// #    - facciamo il forward verso rs485
-// #    - torniamo indietro la risposta
-// ################################################################
-void Relay_Main_DEBUG(unsigned long RxTimeout) {
-
-
-    if (firstRun) {     // Il relay on deve scrivere sulla seriale in chiaro
-        Serial.print(pData->myID);
-        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData      = false;                // display raw data
-    }
-
-    pData->Rx_Timeout      = 10000;         // set timeout
-    pData->rx[fld_DATALEN] = 0;
-
-        // --------------------------------------
-        // - ricezione messaggio da RaspBerry
-        // --------------------------------------
-    byte rCode = recvMsg232(pData);
-    Rx = pData->rx;
-    Tx = pData->tx;
-    copyRxMessageToTx(pData);
-        // send to RS-485 bus
-    sendMsg232(pData);
-    // displayMyData("RX-xxxx", rCode, pData);
-    // Serial.print("rCode: ");Serial.print(rCode);
-
-}
-
 // ################################################################
 // # - M A I N     Loop_Relay
 // #    - riceviamo i dati da RaspBerry
@@ -75,11 +40,6 @@ void Relay_Main(unsigned long RxTimeout) {
     Tx = pData->tx;
 
 
-        // - comunque torniamo indietro il coamndo appena ricevuto
-    copyRxMessageToTx(pData);
-    sendMsg232(pData);
-        // - comunque torniamo indietro il coamndo appena ricevuto
-
         // --------------------------------------
         // - se corretto:
         // -    1. inoltra to rs485 bus
@@ -95,7 +55,17 @@ void Relay_Main(unsigned long RxTimeout) {
         // -    1. ignora
         // --------------------------------------
 
+    if (rCode == LN_TIMEOUT) {
+        return;
+    }
+
+        // - echo del comando appena ricevuto
+        // - anche se in errore....
+    copyRxMessageToTx(pData);
+    sendMsg232(pData);
+
     if (rCode == LN_OK) {
+
         if (Rx[fld_DESTINATION_ADDR] == myEEpromAddress)  { // facciamo echo del comando....
             processRequest(pData); // esegue come fosse uno slave.
         }
@@ -104,7 +74,12 @@ void Relay_Main(unsigned long RxTimeout) {
             Relay_fwdToRs485(pData);
                 // qualsiasi esito il msg è pronto da inviare sulla rs232
             byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-            Relay_fwdToRaspBerry(pData, rcvdRCode, false);
+
+            // Serial.print(pData->myID);
+            //     Serial.print(F(" - 0x"));       printHex(Rx[fld_SENDER_ADDR]);
+            //     Serial.print(F("-->0x"));       printHex(Rx[fld_DESTINATION_ADDR]);
+
+            Relay_fwdToRaspBerry(pData, rcvdRCode, true);
         }
     }
 

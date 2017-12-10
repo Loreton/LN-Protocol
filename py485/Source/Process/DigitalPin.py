@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 09-12-2017 18.28.22
+# Version ......: 10-12-2017 21.30.07
 #
 # ######################################################################################
 
@@ -43,53 +43,36 @@ def digitalToggle(gv, LnRs485, payload):
         # ===================================================
         # = RS-485 preparazione del comando
         # ===================================================
+    payload[_fld.SEQNO_H], payload[_fld.SEQNO_L] = LnRs485.getSeqCounter()
+    payload[_fld.RCODE]                          = 0 # 0 per la TX
+
     payload[_fld.DEST_ADDR]                      = int(gv.args.slave_address)
     payload[_fld.CMD]                            = int(_mainCmd.DIGITAL_CMD, 16)     # COMMAND
     payload[_fld.SUB_CMD]                        = int(_subCmd.TOGGLE_PIN,   16)     # SubCOMMAND
-    payload[_fld.SEQNO_H], payload[_fld.SEQNO_L] = LnRs485.getSeqCounter()
-    payload[_fld.RCODE]                          = 0 # 0 per la TX
     payload[_fld.PIN_NO]                         = gv.args.pin_number     # pinNO
 
 
 
+        # ---------------------------------------------------------------------
+        # - invio del messaggio al Relay ed attesa dello stesso come echo
+        # - Se non lo riceviamo vuol diche che c'è un problema
+        # ---------------------------------------------------------------------
+    Prj.SendToRelay(LnRs485, payload)
 
-    # xx.printTree(header='invio dati allo slave: {}'.format(payload[LnRs485._fld.DEST_ADDR]))
-    # print ('\n'*2)
-
-    # tohex = lambda data: ' '.join('{0:02x}'.format(x) for x in data)
-
-
+        # ---------------------------------------------------------------------
+        # - Attesa risposta...
+        # ---------------------------------------------------------------------
+    fDEBUG = False
     while True:
         try:
-
-            # xx = LnRs485.PayloadToDict(payload)
-            dataSent = LnRs485._rs485Write(payload, fDEBUG=True)
-            tohex = ' '.join('{0:02x}'.format(x) for x in dataSent)
-            print ('dataSent: {}'.format(tohex))
-
-            time.sleep(2)
-            rawData = LnRs485._serialRead(timeoutValue=2000) # return bytearray
-            tohex = ' '.join('{0:02x}'.format(x) for x in rawData)
-            print ('echo    : {}'.format(tohex))
-            if rawData == dataSent:
-                print ('data has been received...')
-            # if rawData:
-            #     print (rawData)
-                # fullData = LnRs485.VerifyRs485Data(rawData)
-                # payload = fullData.payload
-                # raw     = fullData.raw
-                # if payload.data:
-                #     # print (payload.data)
-                #     print (payload.hexd)
-                #     # print (payload.hexm)
-                #     # print (payload.char)
-                #     # print (payload.text)
-                #     xx = LnRs485.PayloadToDict(payload.data)
-                #     xx.printTree(header='ricezione dati dallo slave: {}'.format(payload.data[LnRs485._fld.SRC_ADDR]))
-                #     print ('\n'*2)
-                # break
-
-
+            raw, payload = LnRs485._rs485Read(timeoutValue=2000, FORMAT=True) # return bytearray
+            if raw.data:
+                if fDEBUG: print (raw.hexm)
+            if payload.data:
+                if fDEBUG: print (payload.hexm)
+                print (payload.dict.printTree(fPAUSE=True, header='ricezione dati dallo slave: {}'.format(payload.data[LnRs485._fld.SRC_ADDR]), whatPrint='KV')) # whatPrint='LTKV'
+                print ('\n'*2)
+                break
 
 
         except (KeyboardInterrupt) as key:
