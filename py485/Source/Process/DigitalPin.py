@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 11-12-2017 07.44.48
+# Version ......: 11-12-2017 17.27.49
 #
 # ######################################################################################
 
@@ -65,7 +65,7 @@ def digitalToggle(gv, LnRs485, payload):
     fDEBUG = False
     while True:
         try:
-            raw, payload = LnRs485._rs485Read(timeoutValue=2000, FORMAT=True) # return bytearray
+            raw, payload = LnRs485.read485(timeoutValue=2000, FORMAT=True) # return bytearray
             if raw.data:
                 if fDEBUG: print (raw.hexm)
             if payload.data:

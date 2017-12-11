@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 10-12-2017 21.22.22
+# Version ......: 11-12-2017 17.26.35
 #
 # ######################################################################################
 
@@ -29,9 +29,10 @@ def SendToRelay(LnRs485, payload):
     while LOOP:
         try:
                 # - invio messaggio
-            dataSent = LnRs485._rs485Write(payload, fDEBUG=False)
+            dataSent = LnRs485.write485(payload, fDEBUG=False)
                 # - attesa echo
-            rawData = LnRs485._serialRead(timeoutValue=2000) # return bytearray
+            rawData = LnRs485.read232(timeoutValue=2000) # return bytearray
+            # rawData = LnRs485._serialRead(timeoutValue=2000) # return bytearray
             if rawData == dataSent:
                 print ('    echo has been received from Arduino Relay...')
                 break

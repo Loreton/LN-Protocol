@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 11-12-2017 08.32.44
+# Version ......: 11-12-2017 17.10.44
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -16,7 +16,7 @@ from pathlib import Path
 # - Le path per LnLib vanno impostate
 # - prima di fare gli import
 # ----------------------------------------------
-LnLibPath = Path(sys.argv[0]).resolve().parent / 'bin' / 'LnLib_2017-12-11.zip'
+LnLibPath = Path(sys.argv[0]).resolve().parent / 'bin' / 'LnLib_2017-12-11.zipx'
 sys.path.insert(0, str(LnLibPath))
 
 

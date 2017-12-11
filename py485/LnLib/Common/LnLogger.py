@@ -245,6 +245,7 @@ def _GetCaller(deepLevel=0, funcName=None):
     return data
 
 
+'''
 
 # http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
 class _ContextFilter(logging.Filter):
@@ -270,34 +271,80 @@ class _ContextFilter(logging.Filter):
         return True
 
 
-'''
-    def findCaller(self, stack_info=False):
-        """
-        Find the stack frame of the caller so that we can note the source
-        file name, line number and function name.
-        """
-        f = currentframe()
-        #On some versions of IronPython, currentframe() returns None if
-        #IronPython isn't run with -X:Frames.
-        if f is not None:
-            f = f.f_back
-        rv = "(unknown file)", 0, "(unknown function)", None
-        while hasattr(f, "f_code"):
-            co = f.f_code
-            filename = os.path.normcase(co.co_filename)
-            if filename == _srcfile:
-                f = f.f_back
-                continue
-            sinfo = None
-            if stack_info:
-                sio = io.StringIO()
-                sio.write('Stack (most recent call last):\n')
-                traceback.print_stack(f, file=sio)
-                sinfo = sio.getvalue()
-                if sinfo[-1] == '\n':
-                    sinfo = sinfo[:-1]
-                sio.close()
-            rv = (co.co_filename, f.f_lineno, co.co_name, sinfo)
-            break
-        return rv
+
+
+# http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
+class _ContextFilter(logging.Filter):
+    """
+    This is a filter which injects contextual information into the log.
+    """
+    def __init__(self):
+        self._line  = None
+        self._stack = 5    # default
+        self._myFuncname = funcName    # nome della funzione personalizzato
+
+    def setLineNO(self, number):
+        self._line = number
+
+    def setFuncName(self, name):
+        self._myFuncname = name
+
+    def setStack(self, number):
+        self._stack = number
+
+
+    def filter(self, record):
+        record.LnFuncName = self._myFuncname
+        if self._line:
+            record.lineno = self._line
+        else:
+            # record.name   = getframe(stack).f_code.co_name
+            record.lineno = getframe(self._stack).f_lineno
+        return True
+
+
+
+
+
+def setFilters(logger, stackLevel):
+    funcLineNO      = getframe(stackLevel).f_lineno
+    funcName_prev   = getframe(stackLevel).f_code.co_name
+
+        # -----------------------------------------------------------------------------------------
+        # - Per quanto riguarda il setLogger, devo intervenire sul numero di riga della funzione
+        # - altrimenti scriverebbe quello della presente funzione.
+        # - Per fare questo utilizzo l'aggiunta di un filtro passandogli il lineNO corretto
+        # - per poi ripristinarlo al default
+        # -----------------------------------------------------------------------------------------
+
+
+
+
+        # - creiamo il contextFilter
+    LnFilter    = _ContextFilter('Loreto.Func')
+
+        # - aggiungiamolo al logger attuale
+    logger.addFilter(LnFilter)
+
+        # - modifichiamo la riga della funzione chiamante
+    LnFilter.setLineNO(funcLineNO)
+
+        # ----------------------------------------------------------------------------------
+        # - inseriamo la riga con riferimento al chiamante di questa fuznione
+        # - nel "...called by" inseriamo il caller-1
+        # ----------------------------------------------------------------------------------
+    # scriviamo la riga
+    logger.info('\n')
+    # logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=funcName_prev, CALLER=_GetCaller(stackNum+2)))
+
+    logger.debug('......called by:{CALLER}'.format(CALLER=_GetCaller(stackLevel+2)))
+
+        # --------------------------------------------------------------------------
+        # - azzeriamo il lineNO in modo che le prossime chiamate al logger, che
+        # - non passano da questa funzione, prendano il lineNO corretto.
+        # --------------------------------------------------------------------------
+    LnFilter.setLineNO(None)
+    LnFilter.setStack(5)            # ho verificato che con 5 sembra andare bene
+
+    return logger
 '''

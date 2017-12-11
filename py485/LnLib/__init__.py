@@ -73,4 +73,7 @@ from . String.LnEnum                   import LnEnum         as Enum
 
 
 # ---------- RS485 functions ------
-from . LnRS485.LnRs485_Class             import LnRs485 as Rs485 # import di un membro
+# from . LnRS485.LnRs485_Class             import LnRs485 as Rs485 # import di un membro
+
+from . LnSerial.LnRs232_Class             import LnRs232 as Rs232 # import di un membro
+from . LnSerial.LnRs485_Class             import LnRs485 as Rs485 # import di un membro
