@@ -1,7 +1,7 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 10-12-2017 21.14.05
+# Version ......: 11-12-2017 07.41.15
 #
 # -----------------------------------------------
 
@@ -24,7 +24,7 @@ from . Setup.ParseInput.Program_Options        import programOptions
 
 
 
-from . LnRS485.LnRs485_Class             import LnRs485_Instrument as Rs485 # import di un membro
+# from . LnRS485.LnRs485_Class             import LnRs485_Instrument as Rs485 # import di un membro
 # from . LnRS485.LnRs485_Class             import Formatter485
 # from . LnRS485.LnRs485_Formatter             import Formatter485
 

@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 10-12-2017 21.24.41
+# Version ......: 11-12-2017 07.42.02
 
 import LnLib as Ln
 import os
@@ -76,7 +76,7 @@ from . LnRs485_Formatter import Formatter485
 #####################################################################
 # - MAIN LnRS485 CLASS
 #####################################################################
-class LnRs485_Instrument():
+class LnRs485():
     def __init__(self, port, mode='ascii', baudrate=9600, logger=None, myDict=LnClass):
 
         if logger:

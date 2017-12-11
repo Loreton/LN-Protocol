@@ -70,3 +70,7 @@ from . Process.RunProgram              import OutOnFile        as runGetOnfile
 
 
 from . String.LnEnum                   import LnEnum         as Enum
+
+
+# ---------- RS485 functions ------
+from . LnRS485.LnRs485_Class             import LnRs485 as Rs485 # import di un membro

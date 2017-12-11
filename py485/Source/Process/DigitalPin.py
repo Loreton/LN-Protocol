@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 10-12-2017 21.30.07
+# Version ......: 11-12-2017 07.44.48
 #
 # ######################################################################################
 
@@ -70,7 +70,7 @@ def digitalToggle(gv, LnRs485, payload):
                 if fDEBUG: print (raw.hexm)
             if payload.data:
                 if fDEBUG: print (payload.hexm)
-                print (payload.dict.printTree(fPAUSE=True, header='ricezione dati dallo slave: {}'.format(payload.data[LnRs485._fld.SRC_ADDR]), whatPrint='KV')) # whatPrint='LTKV'
+                print (payload.dict.printTree(header='ricezione dati dallo slave: {}'.format(payload.data[LnRs485._fld.SRC_ADDR]), whatPrint='KV')) # whatPrint='LTKV'
                 print ('\n'*2)
                 break
 
