@@ -1,13 +1,13 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 11-12-2017 07.41.15
+# Version ......: 11-12-2017 08.20.15
 #
 # -----------------------------------------------
 
 
 
-from . Main.Main                         import Main
+from . Main.Main                            import Main
 
 # ------ SETUP -----
 from . Setup                                import GlobalVars_Module as projectGlobalVars

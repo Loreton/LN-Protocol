@@ -3,24 +3,25 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 06-12-2017 15.35.55
+# Version ......: 11-12-2017 08.32.44
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
 import os
+from pathlib import Path
 
-# current:  03-12-2017
-#               attualmente in simulator con ritorno in RS485
-#               leggere la porta del Relay in RS485
 
-#@TODO: impostare il monitoring leggendo una porta specifica di un Arduino.
-#       La lettura potrà avvenire come TEXT oppure come Rs485
+# ----------------------------------------------
+# - Inserimento del path corretto della LnLib
+# - Le path per LnLib vanno impostate
+# - prima di fare gli import
+# ----------------------------------------------
+LnLibPath = Path(sys.argv[0]).resolve().parent / 'bin' / 'LnLib_2017-12-11.zip'
+sys.path.insert(0, str(LnLibPath))
 
+
+import  LnLib as Ln
 import  Source as Prj
-# Inserimento del path corretto per il caricamneto della LnLib
-Prj.projectGlobalVars.LibPath('LnLib_20171123', libType='zipx')
-
-import  LnLib  as Ln
 
 ################################################################################
 # - M A I N

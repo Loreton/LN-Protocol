@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 11-12-2017 07.42.02
+# Version ......: 11-12-2017 08.51.07
 
 import LnLib as Ln
 import os
@@ -622,8 +622,14 @@ class LnRs485():
         logger.info('setting ETX to {}'.format(self._ETX))
 
     def SetCRC(self, bFlag):
+        # assert type(bFlag) == bool or type(bFlag) == str
         logger = self._setLogger(package=__package__)
-        self._CRC = eval(bFlag)
+        if isinstance(bFlag, bool):
+            self._CRC = bFlag
+        elif isinstance(bFlag, str):
+            self._CRC = eval(bFlag)
+        else:
+            self._CRC = True
         logger.info('setting CRC to {}'.format(self._CRC))
 
     def ClosePortAfterEachCall(self, bFlag):
