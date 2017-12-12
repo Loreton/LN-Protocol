@@ -12,6 +12,41 @@ myLOGGER    = None
 fDEBUG    = False
 modulesToLog = []
 
+USE_CONTEXT_FILTER = True
+GLOBAL_MYVAR = 'LnFunction'
+
+##############################################
+# - http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
+# - https://opensource.com/article/17/9/python-logging
+##############################################
+class ContextFilter(logging.Filter):
+    """
+    This is a filter which injects contextual information into the log.
+    """
+    # def __init__(self):
+    #     self._line  = None
+    #     self._stack = 5    # default
+
+    # def setLineNO(self, number):
+    #     self._line = number
+
+    # def setStack(self, number):
+    #     self._stack = number
+
+    def filter(self, record):
+        # global GLOBAL_MYVAR
+        # if self._line:
+        #     record.lineno = self._line
+        # else:
+        #     # record.name   = getframe(stack).f_code.co_name
+        #     record.lineno = getframe(self._stack).f_lineno
+
+        record.MYVAR = GLOBAL_MYVAR
+
+        return True
+
+
+
 
 # =============================================
 # = Logging
@@ -69,32 +104,53 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
         # ------------------
     # logFormatter = logging.Formatter('[%(asctime)s] [%(name)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
     # logFormatter = logging.Formatter('[%(asctime)s] [%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+
     logFormatter = logging.Formatter('[%(asctime)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
-    logger       = logging.getLogger()
+
+
+    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
+
+
+
+
         # log to file
     if toFILE:
-        LOG_FILE_NAME = logfilename
         LOG_DIR = Path(logfilename).parent
-        # LOG_DIR.mkdir(parents=True, exist_ok=True) # se esiste non dare errore dalla versione 3.5
         try:
             LOG_DIR.mkdir(parents=True) # se esiste non dare errore dalla versione 3.5
         except (FileExistsError):
             pass
 
-        if fDEBUG: print ('using log file:', LOG_FILE_NAME)
+        if fDEBUG: print ('using log file:', logfilename)
 
-        fileHandler = logging.FileHandler('{0}'.format(LOG_FILE_NAME))
+
+        fileHandler = logging.FileHandler('{0}'.format(logfilename))
+
+        if USE_CONTEXT_FILTER:
+            logFormatter = logging.Formatter('[%(asctime)s] [%(GLOBAL_MYVAR)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+            # fileHandler.addFilter(LnFilter)              # - aggiungiamolo al logger attuale
+        else:
+            consoleFormatter = logging.Formatter('[%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+
         fileHandler.setFormatter(logFormatter)
         logger.addHandler(fileHandler)
 
+
+
         # log to the console
     if toCONSOLE:
-        # consoleFormatter = logFormatter
-        consoleFormatter = logging.Formatter('[%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
-        consoleHandler   = logging.StreamHandler()
+        consoleHandler = logging.StreamHandler()
+
+        if USE_CONTEXT_FILTER:
+            consoleFormatter = logging.Formatter('[%(GLOBAL_MYVAR)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+            # consoleHandler.addFilter(LnFilter)              # - aggiungiamolo al logger attuale
+        else:
+            consoleFormatter = logging.Formatter('[%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+
         consoleHandler.setFormatter(consoleFormatter)
         logger.addHandler(consoleHandler)
+
 
 
 
@@ -117,11 +173,14 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
 # - è tra quelli da fare il log.
 # - Il package mi server per verficare se devo loggare il modulo o meno
 # ====================================================================================
+
 def SetLogger(package, stackNum=0):
+    global GLOBAL_MYVAR
     if not myLOGGER:
         return _setNullLogger()
 
     funcName        = getframe(stackNum + 1).f_code.co_name
+    funcLineNO      = getframe(stackNum).f_lineno
     funcName_prev    = getframe(stackNum).f_code.co_name
 
     if funcName == '<module>': funcName = '__main__'
@@ -148,16 +207,26 @@ def SetLogger(package, stackNum=0):
         print()
 
 
-    if LOG_LEVEL:
-        logger = logging.getLogger(package)
-        logger.setLevel(LOG_LEVEL)
-        # caller = inspect.stack()[stackNum]
-        # dummy, programFile, lineNumber, funcName, lineCode, rest = caller
-        logger.info('\n')
-        logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=funcName_prev, CALLER=_GetCaller(stackNum+2)))
+    GLOBAL_MYVAR = funcName + '_ciao'
 
-    else:
+    if not LOG_LEVEL:
         logger = _setNullLogger()
+        return logger
+
+
+    logger = logging.getLogger(package)
+    logger.setLevel(LOG_LEVEL)
+
+    if USE_CONTEXT_FILTER:
+        LnFilter = ContextFilter()           # - creiamo il contextFilter
+        logger.addFilter(LnFilter)              # - aggiungiamolo al logger attuale
+
+    # else:
+    # caller = inspect.stack()[stackNum]
+    # dummy, programFile, lineNumber, funcName, lineCode, rest = caller
+    logger.info('\n')
+    logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=funcName_prev, CALLER=_GetCaller(stackNum+2)))
+
 
     return logger
 
@@ -245,32 +314,9 @@ def _GetCaller(deepLevel=0, funcName=None):
     return data
 
 
+
+
 '''
-
-# http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
-class _ContextFilter(logging.Filter):
-    """
-    This is a filter which injects contextual information into the log.
-    """
-    def __init__(self):
-        self._line  = None
-        self._stack = 5    # default
-
-    def setLineNO(self, number):
-        self._line = number
-
-    def setStack(self, number):
-        self._stack = number
-
-    def filter(self, record):
-        if self._line:
-            record.lineno = self._line
-        else:
-            # record.name   = getframe(stack).f_code.co_name
-            record.lineno = getframe(self._stack).f_lineno
-        return True
-
-
 
 
 # http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
