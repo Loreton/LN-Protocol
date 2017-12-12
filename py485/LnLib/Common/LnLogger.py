@@ -12,6 +12,7 @@ myLOGGER    = None
 fDEBUG    = False
 modulesToLog = []
 
+USE_CONTEXT_FILTER = False
 
 # =============================================
 # = Logging
@@ -69,7 +70,10 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
         # ------------------
     # logFormatter = logging.Formatter('[%(asctime)s] [%(name)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
     # logFormatter = logging.Formatter('[%(asctime)s] [%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+
     logFormatter = logging.Formatter('[%(asctime)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+    # logFormatter = logging.Formatter('[%(asctime)s] [%(LNFUNC)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+
     logger       = logging.getLogger()
     logger.setLevel(logging.DEBUG)
         # log to file
@@ -92,6 +96,8 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
     if toCONSOLE:
         # consoleFormatter = logFormatter
         consoleFormatter = logging.Formatter('[%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+        # consoleFormatter = logging.Formatter('[%(LNFUNC)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
+
         consoleHandler   = logging.StreamHandler()
         consoleHandler.setFormatter(consoleFormatter)
         logger.addHandler(consoleHandler)
@@ -117,6 +123,7 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
 # - è tra quelli da fare il log.
 # - Il package mi server per verficare se devo loggare il modulo o meno
 # ====================================================================================
+
 def SetLogger(package, stackNum=0):
     if not myLOGGER:
         return _setNullLogger()
@@ -148,16 +155,29 @@ def SetLogger(package, stackNum=0):
         print()
 
 
-    if LOG_LEVEL:
-        logger = logging.getLogger(package)
-        logger.setLevel(LOG_LEVEL)
-        # caller = inspect.stack()[stackNum]
-        # dummy, programFile, lineNumber, funcName, lineCode, rest = caller
-        logger.info('\n')
-        logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=funcName_prev, CALLER=_GetCaller(stackNum+2)))
 
-    else:
+    if not LOG_LEVEL:
         logger = _setNullLogger()
+        return logger
+
+
+
+        # ----------------
+        # - http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
+        # - Metodo per inserire una variabile nel formato del logger
+        # - ... ma da errori ...
+        # ----------------
+    # logger = logging.LoggerAdapter(logging.getLogger(package), {'LNFUNC': package})
+    logger = logging.getLogger(package)
+
+
+    logger.setLevel(LOG_LEVEL)
+    # caller = inspect.stack()[stackNum]
+    # dummy, programFile, lineNumber, funcName, lineCode, rest = caller
+    logger.info('\n')
+    logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=funcName_prev, CALLER=_GetCaller(stackNum+2)))
+
+
 
     return logger
 
@@ -245,10 +265,10 @@ def _GetCaller(deepLevel=0, funcName=None):
     return data
 
 
-'''
 
+'''
 # http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
-class _ContextFilter(logging.Filter):
+class ContextFilter(logging.Filter):
     """
     This is a filter which injects contextual information into the log.
     """
