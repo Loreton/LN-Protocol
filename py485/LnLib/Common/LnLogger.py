@@ -10,15 +10,8 @@ import  inspect
 
 myLOGGER    = None
 fDEBUG    = False
-modulesToLog = []
+# modulesToLog = []
 
-
-COUNT = 1
-gFMT = """----CHUNK %(lognum)s----
-LEVEL: %(levelname)s
-NAME:%(name)s
-MESSAGE:%(message)s
-----CHUNK %(lognum)s----"""
 
 
 ###########################################################
@@ -35,33 +28,20 @@ def setMyLogRecord(myName, lineNO=0):
 
 
 
-# def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None)
-
-
-
-# =============================================
-# = Logging
-#   %(pathname)s    Full pathname of the source file where the logging call was issued(if available).
-#   %(filename)s    Filename portion of pathname.
-#   %(module)s      Module (name portion of filename).
-#   %(funcName)s    Name of function containing the logging call.
-#   %(lineno)d      Source line number where the logging call was issued (if available).
-# =============================================
-def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
+def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
+        ''' ----------------------------------------------------------------
+         impostazione relativamente complessa ai moduli...
+         toCONSOLE & toFILE  non dovrebbero mai essere contemporanei
+         perché bloccati dal ParseInput
+         toCONSOLE==[] significa log di tutti i moduli
+         toFILE==[]    significa log di tutti i moduli
+        ---------------------------------------------------------------- '''
     global myLOGGER, modulesToLog, fDEBUG
-
 
     if ARGS:
         if 'debug' in ARGS:
             fDEBUG = ARGS['debug']
 
-
-        # ----------------------------------------------------------------
-        # - impostazione relativamente complessa ai moduli...
-        # - toCONSOLE & toFILE  non dovrebbero mai essere contemporanei
-        # - perché bloccati dal ParseInput
-        # - toCONSOLE==[] significa tutti i moduli
-        # ----------------------------------------------------------------
     if toCONSOLE==[]:
         modulesToLog = ['!ALL!']
         toCONSOLE = True
@@ -79,13 +59,27 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
         toFILE = True
 
     else:
-        # modulesToLog = []
+        modulesToLog = []
         myLOGGER = None
         if fDEBUG: print(__name__, 'no logger has been activated')
         return _setNullLogger()
 
     if fDEBUG: print(__name__, 'modulesToLog..................', modulesToLog)
 
+    return toCONSOLE, toFILE
+
+
+# =============================================
+# = Logging
+#   %(pathname)s    Full pathname of the source file where the logging call was issued(if available).
+#   %(filename)s    Filename portion of pathname.
+#   %(module)s      Module (name portion of filename).
+#   %(funcName)s    Name of function containing the logging call.
+#   %(lineno)d      Source line number where the logging call was issued (if available).
+# =============================================
+def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
+
+    toCONSOLE, toFILE =prepareLogEnv(toFILE=toFILE, toCONSOLE=toCONSOLE, logfilename=logfilename, ARGS=ARGS)
 
         # ------------------
         # set up Logger
@@ -93,12 +87,7 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
         # logFormatter = logging.Formatter("%(asctime)s - [%(name)-20.20s:%(lineno)4d] - %(levelname)-5.5s - %(message)s", datefmt='%H:%M:%S')
         # logFormatter = logging.Formatter('[%(asctime)s] [%(module)s:%(funcName)s:%(lineno)d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
         # ------------------
-    # logFormatter = logging.Formatter('[%(asctime)s] [%(name)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
-    # logFormatter = logging.Formatter('[%(asctime)s] [%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
-    fileFMT    = '[%(asctime)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
-    consoleFMT = '[%(asctime)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
-    consoleFMT = gFMT
-    consoleFMT = '[%(LnFuncName)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
+    fileFMT    = '[%(asctime)s] [%(LnFuncName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
     consoleFMT = '[%(LnFuncName)-20s:%(LnLineNO)4d] %(levelname)-5.5s - %(message)s'
 
 
