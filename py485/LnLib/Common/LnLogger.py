@@ -15,6 +15,19 @@ modulesToLog = []
 USE_CONTEXT_FILTER = True
 GLOBAL_MYVAR = 'LnFunction'
 
+
+
+https://docs.python.org/3/library/logging.html#logging.setLogRecordFactory
+old_factory = logging.getLogRecordFactory()
+
+def record_factory(*args, **kwargs):
+    record = old_factory(*args, **kwargs)
+    record.custom_attribute = 0xdecafbad
+    return record
+
+logging.setLogRecordFactory(record_factory)
+
+
 ##############################################
 # - http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
 # - https://opensource.com/article/17/9/python-logging
