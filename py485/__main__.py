@@ -3,14 +3,12 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 13-12-2017 12.03.15
+# Version ......: 13-12-2017 16.02.37
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
 import os
 from pathlib import Path
-
-ciao
 # ----------------------------------------------
 # - Inserimento del path corretto della LnLib
 # - Le path per LnLib vanno impostate
@@ -33,7 +31,6 @@ if __name__ == "__main__":
     gv.args   = Ln.Dict(args)
     gv.fDEBUG = gv.args.debug
     if gv.fDEBUG: gv.args.printTree(fPAUSE=True)
-    gv.printTree(fEXIT=True)
     logger    = Ln.InitLogger(toFILE=gv.args.log, logfilename=gv.args.log_filename, toCONSOLE=gv.args.log_console, ARGS=args)
 
         # ------------------------
@@ -43,7 +40,7 @@ if __name__ == "__main__":
     iniFile.read(resolveEnvVars=False)
     iniFile.setDebug(gv.fDEBUG)
     gv.iniFile = Ln.Dict(iniFile.dict)
-    if gv.fDEBUG: gv.iniFile.printTree(header="INI File", fPAUSE=True)
+    if gv.fDEBUG: gv.iniFile.printTree(header="INI File", fEXIT=True)
 
         # ===================================================
         # - Inizio applicazione
