@@ -2,33 +2,33 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 10-12-2017 21.29.17
+# Version ......: 13-12-2017 08.13.03
 #
 # ######################################################################################
 
+import io
 import  collections
 import  inspect, os
 from    sys import exit as sysExit, _getframe as getFrame
 from    pathlib import WindowsPath, PosixPath
 from    LnLib.Common.LnColor  import LnColor
+import LnLib as Ln
 C=LnColor()
+
+outBuffer = io.StringIO()
+
+# printLine = C.printColored
+def printLine(**args):
+    for k,v in args.items():
+        print ('{:<12}:{}'.format(k,v))
+    data = C.getColored(**args)
+    print (data)
+    # outBuffer.write(C.getColored(**args))
 
 
 #@TODO: vorrei ritornare una lista delle righe per mandarle su logger ma non riesco...
-printLine = C.printColored
-'''
-LINEDATA_LIST=[]
-def printLine(color=None, text='', tab=0, end='\n'):
-    C.printColored(color=color, text=text, tab=tab, end=end)
-    return
+# Writing to a buffer
 
-    myText      = '{} {}'.format(' '*tab, text)
-    lastLine    = len(LINEDATA_LIST)-1
-    if lastLine >= 0 and end == '':
-        LINEDATA_LIST[lastLine] = '{}{}'.format(LINEDATA_LIST[lastLine], myText)
-    else:
-        LINEDATA_LIST.append(' '*tab + myText)
-'''
 
 # #######################################################
 # #  ''' RECURSIVE '''
@@ -36,7 +36,7 @@ def printLine(color=None, text='', tab=0, end='\n'):
 # # l'alberatura delle key di un dictionary
 # #    [level - keyName ]
 # #######################################################
-def PrintDictionary(myDict, myDictTYPES=[], keyList=[], level=0, whatPrint='LTKV', fPRINT=False, fEXIT=False, fPAUSE=False, maxDepth=10, header=None, stackLevel=2):
+def PrintDictionary(myDict, outBuffer=None, myDictTYPES=[], keyList=[], level=0, whatPrint='LTKV', fPRINT=False, fEXIT=False, fPAUSE=False, maxDepth=10, header=None, stackLevel=2):
     if level == 0:
         PrintHeader('START - ', header, stackLevel=stackLevel+1)
 
@@ -67,6 +67,7 @@ def PrintDictionary(myDict, myDictTYPES=[], keyList=[], level=0, whatPrint='LTKV
             if 'T' in whatPrint: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=thisTYPE)
             if 'K' in whatPrint: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
             printLine(color=C.cyanH, text=line0, tab=4)
+
 
             # ---- recursive iteration
             PrintDictionary(val, myDictTYPES=myDictTYPES, keyList=keyList, level=level+1, whatPrint=whatPrint, fPRINT=fPRINT, maxDepth=maxDepth)    # in questo caso il return value non mi interessa
