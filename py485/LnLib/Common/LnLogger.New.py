@@ -3,7 +3,7 @@
 # Scope:  Programma per ...........
 # updated by Loreto: 24-10-2017 09.10.33
 # -----------------------------------------------
-import  sys
+from    sys import exit as sysExit, _getframe as getframe
 import  logging, time
 from    pathlib import Path
 import  inspect
@@ -12,30 +12,8 @@ myLOGGER    = None
 fDEBUG    = False
 modulesToLog = []
 
+USE_CONTEXT_FILTER = False
 
-COUNT = 1
-gFMT = """----CHUNK %(lognum)s----
-LEVEL: %(levelname)s
-NAME:%(name)s
-MESSAGE:%(message)s
-----CHUNK %(lognum)s----"""
-
-
-###########################################################
-# permette di iniettare campi custom
-###########################################################
-def setMyLogRecord(myName, lineNO=0):
-    old_factory = logging.getLogRecordFactory()
-    def record_factory(*args, **kwargs):
-        record = old_factory(*args, **kwargs)
-        record.LnFuncName = myName
-        record.LnLineNO = lineNO
-        return record
-    logging.setLogRecordFactory(record_factory)
-
-
-
-# def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None)
 
 
 
@@ -95,45 +73,80 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
         # ------------------
     # logFormatter = logging.Formatter('[%(asctime)s] [%(name)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
     # logFormatter = logging.Formatter('[%(asctime)s] [%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
-    fileFMT    = '[%(asctime)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
-    consoleFMT = '[%(asctime)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
-    consoleFMT = gFMT
-    consoleFMT = '[%(LnFuncName)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
-    consoleFMT = '[%(LnFuncName)-20s:%(LnLineNO)4d] %(levelname)-5.5s - %(message)s'
+
+    FMT = """----CHUNK %(lognum)s----
+            LEVEL: %(levelname)s
+            NAME:%(name)s
+            MESSAGE:%(message)s
+            ----CHUNK %(lognum)s----"""
+
+    FMT = """
+        [%(asctime)s]
+        [%(funcName)-20s:%(lineno)4d]
+        %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S'"""
+
+    # logFormatter = logging.Formatter('[%(asctime)s] [%(funcName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S')
 
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    setMyLogRecord('Loreto01')
 
+
+    # https://docs.python.org/3/library/logging.html#logging.setLogRecordFactory
+    # https://stackoverflow.com/questions/47245446/run-function-after-logging-using-the-logging-module-in-python
+
+    if USE_CONTEXT_FILTER:
+        # def record_factory(*args, **kwargs):
+        #     record = old_factory(*args, **kwargs)
+        #     record.custom_attribute = 0xdecafbad
+        #     return record
+
+        old_factory = logging.getLogRecordFactory()
+
+        def record_factory(*args, **kwargs):
+            global COUNT
+            record = old_factory(*args, **kwargs)
+            record.lognum = COUNT
+            COUNT += 1
+            return record
+
+        logging.setLogRecordFactory(record_factory)
+
+        fileFMT    = '[%(asctime)s] [%(GLOBAL_MYVAR)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S'
+        consoleFMT = '[%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S'
+        consoleFMT = """----CHUNK %(lognum)s----
+                LEVEL: %(levelname)s
+                NAME:%(name)s
+                MESSAGE:%(message)s
+                ----CHUNK %(lognum)s----"""
+    else:
+        fileFMT     = '[%(asctime)s] [%(GLOBAL_MYVAR)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S'
+        consoleFMT = '[%(module)-25s:%(lineno)4d] %(levelname)-5.5s - %(message)s','%m-%d %H:%M:%S'
 
         # log to file
     if toFILE:
-        LOG_FILE_NAME = logfilename
         LOG_DIR = Path(logfilename).parent
-        # LOG_DIR.mkdir(parents=True, exist_ok=True) # se esiste non dare errore dalla versione 3.5
         try:
             LOG_DIR.mkdir(parents=True) # se esiste non dare errore dalla versione 3.5
         except (FileExistsError):
             pass
 
-        if fDEBUG: print ('using log file:', LOG_FILE_NAME)
+        if fDEBUG: print ('using log file:', logfilename)
 
-        fileHandler     = logging.FileHandler('{0}'.format(LOG_FILE_NAME))
-        fileFormatter   = logging.Formatter(fmt=fileFMT, datefmt='%m-%d %H:%M:%S')
+
+        fileHandler   = logging.FileHandler('{0}'.format(logfilename))
+        fileFormatter = logging.Formatter(fileFMT)
         fileHandler.setFormatter(fileFormatter)
         logger.addHandler(fileHandler)
 
+
+
         # log to the console
     if toCONSOLE:
-        consoleHandler  = logging.StreamHandler(stream=sys.stdout)
-        consoleFormatter= logging.Formatter(fmt=consoleFMT, datefmt='%m-%d %H:%M:%S')
+        consoleHandler   = logging.StreamHandler()
+        consoleFormatter = logging.Formatter(consoleFMT)
         consoleHandler.setFormatter(consoleFormatter)
         logger.addHandler(consoleHandler)
-
-
-
-
 
 
 
@@ -149,20 +162,22 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
 
     myLOGGER = logger
     return logger
-# InitLogger = init
+
 
 # ====================================================================================
 # - dal package passato come parametro cerchiamo di individuare se la fuzione/modulo
 # - è tra quelli da fare il log.
 # - Il package mi server per verficare se devo loggare il modulo o meno
 # ====================================================================================
+
 def SetLogger(package, stackNum=0):
+    global GLOBAL_MYVAR
     if not myLOGGER:
         return _setNullLogger()
 
-    funcName        = sys._getframe(stackNum+1).f_code.co_name
-    funcLineNO      = sys._getframe(stackNum+1).f_lineno
-    funcName_prev    = sys._getframe(stackNum).f_code.co_name
+    funcName        = getframe(stackNum + 1).f_code.co_name
+    funcLineNO      = getframe(stackNum).f_lineno
+    funcName_prev    = getframe(stackNum).f_code.co_name
 
     if funcName == '<module>': funcName = '__main__'
 
@@ -188,18 +203,22 @@ def SetLogger(package, stackNum=0):
         print()
 
 
-    if LOG_LEVEL:
-        logger = logging.getLogger(package)
-        logger.setLevel(LOG_LEVEL)
-        setMyLogRecord(package, funcLineNO)
+    GLOBAL_MYVAR = funcName + '_ciao'
 
-        # caller = inspect.stack()[stackNum]
-        # dummy, programFile, lineNumber, funcName, lineCode, rest = caller
-        logger.info('\n')
-        logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=funcName_prev, CALLER=_GetCaller(stackNum+2)))
-
-    else:
+    if not LOG_LEVEL:
         logger = _setNullLogger()
+        return logger
+
+
+    logger = logging.getLogger(package)
+    logger.setLevel(LOG_LEVEL)
+
+    # else:
+    # caller = inspect.stack()[stackNum]
+    # dummy, programFile, lineNumber, funcName, lineCode, rest = caller
+    logger.info('\n')
+    logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=funcName_prev, CALLER=_GetCaller(stackNum+2)))
+
 
     return logger
 
@@ -285,108 +304,3 @@ def _GetCaller(deepLevel=0, funcName=None):
 
 
     return data
-
-
-'''
-
-# http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
-class _ContextFilter(logging.Filter):
-    """
-    This is a filter which injects contextual information into the log.
-    """
-    def __init__(self):
-        self._line  = None
-        self._stack = 5    # default
-
-    def setLineNO(self, number):
-        self._line = number
-
-    def setStack(self, number):
-        self._stack = number
-
-    def filter(self, record):
-        if self._line:
-            record.lineno = self._line
-        else:
-            # record.name   = sys._getframe(stack).f_code.co_name
-            record.lineno = sys._getframe(self._stack).f_lineno
-        return True
-
-
-
-
-# http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
-class _ContextFilter(logging.Filter):
-    """
-    This is a filter which injects contextual information into the log.
-    """
-    def __init__(self):
-        self._line  = None
-        self._stack = 5    # default
-        self._myFuncname = funcName    # nome della funzione personalizzato
-
-    def setLineNO(self, number):
-        self._line = number
-
-    def setFuncName(self, name):
-        self._myFuncname = name
-
-    def setStack(self, number):
-        self._stack = number
-
-
-    def filter(self, record):
-        record.LnFuncName = self._myFuncname
-        if self._line:
-            record.lineno = self._line
-        else:
-            # record.name   = sys._getframe(stack).f_code.co_name
-            record.lineno = sys._getframe(self._stack).f_lineno
-        return True
-
-
-
-
-
-def setFilters(logger, stackLevel):
-    funcLineNO      = sys._getframe(stackLevel).f_lineno
-    funcName_prev   = sys._getframe(stackLevel).f_code.co_name
-
-        # -----------------------------------------------------------------------------------------
-        # - Per quanto riguarda il setLogger, devo intervenire sul numero di riga della funzione
-        # - altrimenti scriverebbe quello della presente funzione.
-        # - Per fare questo utilizzo l'aggiunta di un filtro passandogli il lineNO corretto
-        # - per poi ripristinarlo al default
-        # -----------------------------------------------------------------------------------------
-
-
-
-
-        # - creiamo il contextFilter
-    LnFilter    = _ContextFilter('Loreto.Func')
-
-        # - aggiungiamolo al logger attuale
-    logger.addFilter(LnFilter)
-
-        # - modifichiamo la riga della funzione chiamante
-    LnFilter.setLineNO(funcLineNO)
-
-        # ----------------------------------------------------------------------------------
-        # - inseriamo la riga con riferimento al chiamante di questa fuznione
-        # - nel "...called by" inseriamo il caller-1
-        # ----------------------------------------------------------------------------------
-    # scriviamo la riga
-    logger.info('\n')
-    # logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=funcName_prev, CALLER=_GetCaller(stackNum+2)))
-
-    logger.debug('......called by:{CALLER}'.format(CALLER=_GetCaller(stackLevel+2)))
-
-        # --------------------------------------------------------------------------
-        # - azzeriamo il lineNO in modo che le prossime chiamate al logger, che
-        # - non passano da questa funzione, prendano il lineNO corretto.
-        # --------------------------------------------------------------------------
-    LnFilter.setLineNO(None)
-    LnFilter.setStack(5)            # ho verificato che con 5 sembra andare bene
-
-    return logger
-'''
