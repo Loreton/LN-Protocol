@@ -2,28 +2,14 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 13-12-2017 16.13.48
+# Version ......: 13-12-2017 16.29.40
 #
 # ######################################################################################
-import io
+import  sys
 import  collections
 import  inspect, os
-from    sys import exit as sysExit, _getframe as getFrame
 from    pathlib import WindowsPath, PosixPath
-from    LnLib.Common.LnColor  import LnColor
-C=LnColor()
-
-# Writing to a buffer
-# output = io.BytesIO()
-# output.write('This goes into the buffer. '.encode('utf-8'))
-# output.write('ÁÇÊ'.encode('utf-8'))
-
-myLIST = []
-myLIST2 = []
-myLIST3 = []
-myLIST3_LINE = ''
-
-output = io.StringIO()
+from    LnLib.Common.LnColor  import LnColor; C=LnColor()
 
 class myPrint():
     def __init__(self):
@@ -54,47 +40,6 @@ class myPrint():
             print (line)
 
 
-# myLIST4 = myPrint()
-
-
-def printLine33(color='', tab=0, text='', end='\n'):
-    return
-    global myLIST3_LINE
-    thisTAB = ' '*tab
-    if color:
-        endColor = C.RESET
-        outText = '{0}{1}{2}{3}'.format(thisTAB, color, text, endColor)
-    else:
-        outText = thisTAB + text
-
-    if end == '\n':
-        myLIST3.append(myLIST3_LINE + outText)
-        myLIST3_LINE = ''
-    else:
-        myLIST3_LINE += outText
-
-# def miaLISTA(xtab=0, text1='', text2='', color=''):
-#     thisTAB = ' '*xtab
-#     line = text1 + text2
-#     if color:
-#         endColor = C.RESET
-#         outText = '{0}{1}{2}{3}'.format(thisTAB, color, line, endColor)
-#     else:
-#         outText = thisTAB + line
-#     myLIST2.append(outText)
-
-
-# printLine = C.printColored
-
-
-
-# def ritorna():
-    # for line in myLIST3:
-    #     print (line)
-    # for line in myLIST4.get():
-        # print (line)
-
-
 # #######################################################
 # #  ''' RECURSIVE '''
 # # Ritorna una lista che contiene
@@ -102,9 +47,9 @@ def printLine33(color='', tab=0, text='', end='\n'):
 # #    [level - keyName ]
 # #######################################################
 def PrintDictionary(myDict, myDictTYPES=[], level=0, whatPrint='LTKV', fPRINT=False, fEXIT=False, fPAUSE=False, maxDepth=10, header=None, stackLevel=2):
-    global myLIST4
+    global myPRINT
     if level == 0:
-        myLIST4 = myPrint()
+        myPRINT = myPrint()
         PrintHeader('START - ', header, stackLevel=stackLevel+1)
 
     if level > maxDepth:
@@ -114,7 +59,7 @@ def PrintDictionary(myDict, myDictTYPES=[], level=0, whatPrint='LTKV', fPRINT=Fa
     # per evitare LOOP
     if level > 100:
         print('MAXLevel 100 reached.....')
-        sysExit()
+        sys.exit()
 
     myTAB=' '*4*level   # Indent del dictionary
     for key, val in sorted(myDict.items()):                  # per tutte le chiavi del dict
@@ -133,14 +78,7 @@ def PrintDictionary(myDict, myDictTYPES=[], level=0, whatPrint='LTKV', fPRINT=Fa
             if 'L' in whatPrint: line0 = '[{LVL:2}]'.format(LVL=level)
             if 'T' in whatPrint: line0 = '{LINE0} {TYPE:<8}'.format(LINE0=line0, TYPE=thisTYPE)
             if 'K' in whatPrint: line0 = '{LINE0} {TAB}{KEY}'.format(LINE0=line0, TAB=myTAB, KEY=key)
-            # printLine(color=C.cyanH, text=line0, tab=4)
-            printLine33(color=C.cyanH, text=line0, tab=4)
-            myLIST4.add(color=C.cyanH, text=line0, tab=4)
-            # miaLISTA(xtab=4, text1=line0, color=C.cyanH)
-
-
-
-
+            myPRINT.add(color=C.cyanH, text=line0, tab=4)
 
             # ---- recursive iteration
             PrintDictionary(val, myDictTYPES=myDictTYPES, level=level+1, whatPrint=whatPrint, fPRINT=fPRINT, maxDepth=maxDepth)    # in questo caso il return value non mi interessa
@@ -153,14 +91,13 @@ def PrintDictionary(myDict, myDictTYPES=[], level=0, whatPrint='LTKV', fPRINT=Fa
     if level == 0:
         if fEXIT:
             PrintHeader('END - ', header, stackLevel=stackLevel+1)
-            myLIST4.Print
-            # ritorna()
-            sysExit()
+            myPRINT.Print
+            sys.exit()
 
 
         elif fPAUSE:
             PrintHeader('END - ', header, stackLevel=stackLevel+1)
-            myLIST4.Print
+            myPRINT.Print
             print()
             exitKeyLIST = ["x", "q"]
             msg = "...press: [{0}] to continue - {1} to exit ==> ".format("ENTER", exitKeyLIST)
@@ -170,7 +107,7 @@ def PrintDictionary(myDict, myDictTYPES=[], level=0, whatPrint='LTKV', fPRINT=Fa
                     break
 
                 elif choice.lower() in exitKeyLIST:
-                    sysExit()
+                    sys.exit()
 
                 else:
                     C.printColored(color=C.cyan, text='\n... try again\n')
@@ -178,12 +115,11 @@ def PrintDictionary(myDict, myDictTYPES=[], level=0, whatPrint='LTKV', fPRINT=Fa
             return
 
         else:
-            myLIST4.Print
+            myPRINT.Print
             return
 
-        myLIST4.Print
+        myPRINT.Print
     else:
-        # ritorna()
         print()
         return
 
@@ -203,9 +139,9 @@ def PrintHeader(prefix, header, stackLevel=3):
         # --------------------------------------------------------------
 
     except:
-        fileName    = getFrame(stackLevel).f_code.co_filename
-        funcLineNO  = getFrame(stackLevel).f_lineno
-        funcName    = getFrame(stackLevel).f_code.co_name
+        fileName    = sys._getFrame(stackLevel).f_code.co_filename
+        funcLineNO  = sys._getFrame(stackLevel).f_lineno
+        funcName    = sys._getFrame(stackLevel).f_code.co_name
         lineCode    = ['']
 
     finally:
@@ -233,26 +169,14 @@ def PrintHeader(prefix, header, stackLevel=3):
 
 
     # print()
-    # printLine(color=C.cyan, text="*"*60, tab=8)
-    printLine33(color=C.cyan, text="*"*60, tab=8)
-    myLIST4.add(color=C.cyan, text="*"*60, tab=8)
-    # miaLISTA(xtab=8, text1="*"*60)
+    myPRINT.add(color=C.cyan, text="*"*60, tab=8)
 
-    # printLine(color=C.cyan, text="*     {0}{1}".format(prefix, caller), tab=8)
-    printLine33(color=C.cyan, text="*     {0}{1}".format(prefix, caller), tab=8)
-    myLIST4.add(color=C.cyan, text="*     {0}{1}".format(prefix, caller), tab=8)
-    # miaLISTA(xtab=8, text1="*     {0}{1}".format(prefix, caller))
+    myPRINT.add(color=C.cyan, text="*     {0}{1}".format(prefix, caller), tab=8)
 
     if header:
-        # printLine(color=C.cyan, text="*     {0}".format(header), tab=8)
-        printLine33(color=C.cyan, text="*     {0}".format(header), tab=8)
-        myLIST4.add(color=C.cyan, text="*     {0}".format(header), tab=8)
-        # miaLISTA(xtab=8, text1="*     {0}".format(header))
+        myPRINT.add(color=C.cyan, text="*     {0}".format(header), tab=8)
 
-    # printLine(color=C.cyan, text="*"*60, tab=8)
-    printLine33(color=C.cyan, text="*"*60, tab=8)
-    myLIST4.add(color=C.cyan, text="*"*60, tab=8)
-    # miaLISTA(xtab=8, text1="*"*60)
+    myPRINT.add(color=C.cyan, text="*"*60, tab=8)
 
 
 
@@ -326,48 +250,31 @@ def getDictValue(key, value, level, myDictTYPES, whatPrint='LT', fPRINT=True):
 
     line0 = line0.ljust(baseStartValue)
     if not 'V' in whatPrint:
-        # printLine(color=C.cyan, text=line0, tab=4)
-        printLine33(color=C.cyan, text=line0, tab=4)
-        myLIST4.add(color=C.cyan, text=line0, tab=4)
-        # miaLISTA(xtab=4, text1=line0)
+        myPRINT.add(color=C.cyan, text=line0, tab=4)
         return
 
 
-    # printLine(color=C.cyan, text=line0, tab=4, end='')
-    printLine33(color=C.cyan, text=line0, tab=4, end='')
-    myLIST4.add(color=C.cyan, text=line0, tab=4, end='')
+    myPRINT.add(color=C.cyan, text=line0, tab=4, end='')
     myLISTline = '{}{}'.format(' '*4, line0)
 
-    # printLine(color=C.greenH, text=': ', end='')
-    printLine33(color=C.greenH, text=': ', end='')
-    myLIST4.add(color=C.greenH, text=': ', end='')
+    myPRINT.add(color=C.greenH, text=': ', end='')
     myLISTline += ': '
-    # miaLISTA(text1=myLISTline)
 
 
         # - print del valore della prima entry della lista
     if len(listOfValue) == 0:
         line  = ''
-        # printLine(color=C.greenH, text=line)
-        printLine33(color=C.greenH, text=line)
-        myLIST4.add(color=C.greenH, text=line)
-        # miaLISTA(text1=myLISTline, text2=line)
+        myPRINT.add(color=C.greenH, text=line)
 
     else:
         line  = '{VAL}'.format(VAL=listOfValue[0])
-        # printLine(color=C.greenH, text=line)
-        printLine33(color=C.greenH, text=line)
-        myLIST4.add(color=C.greenH, text=line)
-        # miaLISTA(text1=myLISTline, text2=line)
+        myPRINT.add(color=C.greenH, text=line)
 
 
             # - print delle altre righe se presenti
         for line in listOfValue[1:]:
             line  = '{LINE:<{LUN}}  {VAL}'.format(LINE=' ', LUN=baseStartValue, VAL=line)
-            # printLine(color=C.greenH, text=line, tab=4)
-            printLine33(color=C.greenH, text=line, tab=4)
-            myLIST4.add(color=C.greenH, text=line, tab=4)
-            # miaLISTA(xtab=4, text1=line)
+            myPRINT.add(color=C.greenH, text=line, tab=4)
         else:
             retValue[key] = value
 

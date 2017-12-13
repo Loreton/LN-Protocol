@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 13-12-2017 16.02.37
+# Version ......: 13-12-2017 16.25.13
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     iniFile.read(resolveEnvVars=False)
     iniFile.setDebug(gv.fDEBUG)
     gv.iniFile = Ln.Dict(iniFile.dict)
-    if gv.fDEBUG: gv.iniFile.printTree(header="INI File", fEXIT=True)
+    if gv.fDEBUG: gv.iniFile.printTree(header="INI File", fPAUSE=True)
 
         # ===================================================
         # - Inizio applicazione
