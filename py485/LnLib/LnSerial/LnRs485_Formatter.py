@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 10-12-2017 20.52.32
+# Version ......: 14-12-2017 09.44.14
 
 
 
@@ -43,7 +43,7 @@ class Formatter485:
             e li ritorna.
         '''
         assert type(data) == bytearray
-        logger = obj485._setLogger(package=__package__)
+        logger = obj485._setLogger(package=__name__)
 
 
         _validChars = obj485._printableChars
@@ -87,7 +87,7 @@ class Formatter485:
     ######################################################
     @staticmethod
     def _verifyData(obj485):
-        logger = obj485._setLogger(package=__package__)
+        logger = obj485._setLogger(package=__name__)
 
         if not obj485._rs485RxRawData: return bytearray()
 
@@ -174,7 +174,7 @@ class Formatter485:
     @staticmethod
     def _payloadToDict(obj485, data):
         assert type(data) == bytearray
-        logger = obj485._setLogger(package=__package__)
+        logger = obj485._setLogger(package=__name__)
 
         myDict = obj485._myDict()
         if not data: return myDict
