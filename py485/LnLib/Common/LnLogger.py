@@ -26,7 +26,6 @@ def setMyLogRecord(myFuncName='nameNotPassed', lineNO=0):
         return record
     logging.setLogRecordFactory(record_factory)
 
-USE_CONTEXT_FILTER = False
 
 
 def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
@@ -122,7 +121,6 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
         logger.addHandler(fileHandler)
 
         # log to the console
-
     if _fCONSOLE:
         consoleHandler  = logging.StreamHandler(stream=sys.stdout)
         consoleFormatter= logging.Formatter(fmt=consoleFMT, datefmt='%m-%d %H:%M:%S')
@@ -148,7 +146,6 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
 # - è tra quelli da fare il log.
 # - Il package mi server per verficare se devo loggare il modulo o meno
 # ====================================================================================
-
 def SetLogger(package, stackNum=0):
     if not myLOGGER:
         return _setNullLogger()
@@ -168,7 +165,7 @@ def SetLogger(package, stackNum=0):
     _LnFuncName = '{FIRST}.{LAST}.{FUNC}'.format(FIRST=_token[0], LAST=_token[-1], FUNC=funcName)
 
     if len(_LnFuncName) > 19:
-        _LnFuncName = '{LAST}.{FUNC}'.format(LAST=_token[-1], FUNC=funcName)
+        # _LnFuncName = '{LAST}.{FUNC}'.format(LAST=_token[-1], FUNC=funcName)
         _LnFuncName = '{FUNC}'.format(FUNC=funcName)
 
 
@@ -218,26 +215,6 @@ def SetLogger(package, stackNum=0):
         setMyLogRecord(myFuncName=_LnFuncName)
     else:
         logger = _setNullLogger()
-        return logger
-
-
-
-        # ----------------
-        # - http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
-        # - Metodo per inserire una variabile nel formato del logger
-        # - ... ma da errori ...
-        # ----------------
-    # logger = logging.LoggerAdapter(logging.getLogger(package), {'LNFUNC': package})
-    logger = logging.getLogger(package)
-
-
-    logger.setLevel(LOG_LEVEL)
-    # caller = inspect.stack()[stackNum]
-    # dummy, programFile, lineNumber, funcName, lineCode, rest = caller
-    logger.info('\n')
-    logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=funcName_prev, CALLER=_GetCaller(stackNum+2)))
-
-
 
     return logger
 
@@ -290,142 +267,3 @@ def _setNullLogger(package=None):
             print (str)
 
     return nullLogger()
-
-
-
-
-'''
-
-###############################################
-# Ho scoperto che potrei anche usare la call seguente
-# ma non avrei il controllo sullo stackNO.
-#   fn, lno, func, sinfo = myLOGGER.findCaller(stack_info=False)
-#   print (fn, lno, func, sinfo)
-###############################################
-def _GetCaller(deepLevel=0, funcName=None):
-    try:
-        caller  = inspect.stack()[deepLevel]
-    except Exception as why:
-        return '{0}'.format(why)   # potrebbe essere out of stack ma ritorniamo comunque la stringa
-
-    # print ('..........caller', caller)
-    programFile = caller[1]
-    lineNumber  = caller[2]
-    if not funcName: funcName = caller[3]
-    lineCode    = caller[4]
-    fname       = (Path(programFile).name).split('.')[0]
-
-    if funcName == '<module>':
-        data = "[{0}:{1}]".format(fname, lineNumber)
-    else:
-        # data = "[{0}:{1}]".format(fname, lineNumber)
-        # data = "[{0}:{1}]".format(funcName, lineNumber)
-        data = "[{0}.{1}:{2}]".format(fname, funcName, lineNumber)
-
-
-    return data
-
-
-
-'''
-# http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
-class ContextFilter(logging.Filter):
-    """
-    This is a filter which injects contextual information into the log.
-    """
-    def __init__(self):
-        self._line  = None
-        self._stack = 5    # default
-
-    def setLineNO(self, number):
-        self._line = number
-
-    def setStack(self, number):
-        self._stack = number
-
-    def filter(self, record):
-        if self._line:
-            record.lineno = self._line
-        else:
-            # record.name   = sys._getframe(stack).f_code.co_name
-            record.lineno = sys._getframe(self._stack).f_lineno
-        return True
-
-
-
-
-# http://stackoverflow.com/questions/16203908/how-to-input-variables-in-logger-formatter
-class _ContextFilter(logging.Filter):
-    """
-    This is a filter which injects contextual information into the log.
-    """
-    def __init__(self):
-        self._line  = None
-        self._stack = 5    # default
-        self._myFuncname = funcName    # nome della funzione personalizzato
-
-    def setLineNO(self, number):
-        self._line = number
-
-    def setFuncName(self, name):
-        self._myFuncname = name
-
-    def setStack(self, number):
-        self._stack = number
-
-
-    def filter(self, record):
-        record.LnFuncName = self._myFuncname
-        if self._line:
-            record.lineno = self._line
-        else:
-            # record.name   = sys._getframe(stack).f_code.co_name
-            record.lineno = sys._getframe(self._stack).f_lineno
-        return True
-
-
-
-
-
-def setFilters(logger, stackLevel):
-    funcLineNO      = sys._getframe(stackLevel).f_lineno
-    thisFuncName   = sys._getframe(stackLevel).f_code.co_name
-
-        # -----------------------------------------------------------------------------------------
-        # - Per quanto riguarda il setLogger, devo intervenire sul numero di riga della funzione
-        # - altrimenti scriverebbe quello della presente funzione.
-        # - Per fare questo utilizzo l'aggiunta di un filtro passandogli il lineNO corretto
-        # - per poi ripristinarlo al default
-        # -----------------------------------------------------------------------------------------
-
-
-
-
-        # - creiamo il contextFilter
-    LnFilter    = _ContextFilter('Loreto.Func')
-
-        # - aggiungiamolo al logger attuale
-    logger.addFilter(LnFilter)
-
-        # - modifichiamo la riga della funzione chiamante
-    LnFilter.setLineNO(funcLineNO)
-
-        # ----------------------------------------------------------------------------------
-        # - inseriamo la riga con riferimento al chiamante di questa fuznione
-        # - nel "...called by" inseriamo il caller-1
-        # ----------------------------------------------------------------------------------
-    # scriviamo la riga
-    logger.info('\n')
-    # logger.info('{TARGET}......called by:{CALLER}'.format(TARGET=thisFuncName, CALLER=_GetCaller(stackNum+2)))
-
-    logger.debug('......called by:{CALLER}'.format(CALLER=_GetCaller(stackLevel+2)))
-
-        # --------------------------------------------------------------------------
-        # - azzeriamo il lineNO in modo che le prossime chiamate al logger, che
-        # - non passano da questa funzione, prendano il lineNO corretto.
-        # --------------------------------------------------------------------------
-    LnFilter.setLineNO(None)
-    LnFilter.setStack(5)            # ho verificato che con 5 sembra andare bene
-
-    return logger
-'''
