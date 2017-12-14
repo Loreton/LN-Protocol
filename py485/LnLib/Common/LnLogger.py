@@ -9,7 +9,8 @@ from    pathlib import Path
 import  inspect
 
 myLOGGER   = None
-fDEBUG    = False
+myLogLevel = logging.INFO
+fDEBUG     = False
 # modulesToLog = []
 
 
@@ -28,7 +29,7 @@ def setMyLogRecord(myFuncName='nameNotPassed', lineNO=0):
 
 
 
-def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
+def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None, loglevel='info', ARGS=None):
     ''' ----------------------------------------------------------------
          impostazione relativamente complessa ai moduli...
          toCONSOLE & toFILE  non dovrebbero mai essere contemporanei
@@ -36,7 +37,17 @@ def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
          toCONSOLE==[] significa log di tutti i moduli
          toFILE==[]    significa log di tutti i moduli
         ---------------------------------------------------------------- '''
-    global modulesToLog, fDEBUG
+    global modulesToLog, fDEBUG, myLogLevel
+
+    # - SETting LOGLEVEL
+    assert type(loglevel) == str
+    if loglevel.lower() == 'debug':
+        myLogLevel = logging.DEBUG
+    elif loglevel.lower() == 'warning':
+        myLogLevel = logging.WARNING
+    else:
+        myLogLevel = logging.INFO
+
 
     _fLOG, _fCONSOLE, _fFILE = True, False, False
 
@@ -44,6 +55,7 @@ def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
     if ARGS:
         if 'debug' in ARGS:
             fDEBUG = ARGS['debug']
+
 
     if toCONSOLE==[]:
         modulesToLog = ['!ALL!']
@@ -66,7 +78,8 @@ def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
         _fLOG = False
         if fDEBUG: print(__name__, 'no logger has been activated')
 
-    if fDEBUG: print(__name__, 'modulesToLog..................', modulesToLog)
+    if fDEBUG:
+        print(__name__, 'modulesToLog..................', modulesToLog)
 
     return _fLOG, _fCONSOLE, _fFILE
 
@@ -79,10 +92,10 @@ def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
 #   %(funcName)s    Name of function containing the logging call.
 #   %(lineno)d      Source line number where the logging call was issued (if available).
 # =============================================
-def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
+def init(toFILE=False, toCONSOLE=False, logfilename=None, loglevel='info', ARGS=None):
     global myLOGGER
 
-    _fLOG, _fCONSOLE, _fFILE = prepareLogEnv(toFILE=toFILE, toCONSOLE=toCONSOLE, logfilename=logfilename, ARGS=ARGS)
+    _fLOG, _fCONSOLE, _fFILE = prepareLogEnv(toFILE=toFILE, toCONSOLE=toCONSOLE, logfilename=logfilename, ARGS=ARGS, loglevel=loglevel )
     if not _fLOG:
         myLOGGER = None
         return _setNullLogger()
@@ -98,7 +111,8 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, ARGS=None):
 
 
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(myLogLevel)
+    print (myLogLevel)
     setMyLogRecord('Ln-Initialize')
 
 
@@ -190,14 +204,14 @@ def SetLogger(package, stackNum=0):
         # - da tracciare o meno
         # ---------------------------------
     if '!ALL!' in modulesToLog:
-        LOG_LEVEL = logging.DEBUG
+        LOG_LEVEL = myLogLevel
 
     else:
         LOG_LEVEL = None
         fullPkg = (package + funcName).lower()
         for moduleStr in modulesToLog:
             if moduleStr.lower() in fullPkg:
-                LOG_LEVEL = logging.DEBUG
+                LOG_LEVEL = myLogLevel
 
 
 

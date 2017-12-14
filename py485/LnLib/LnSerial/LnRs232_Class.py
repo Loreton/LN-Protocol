@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 14-12-2017 09.42.56
+# Version ......: 14-12-2017 16.51.21
 
 import serial       # sudo pip3.4 install pyserial
 import sys
@@ -26,7 +26,7 @@ read_TIMEOUT  = 0.05
 """Default value for the timeout value in seconds (float)."""
 
 
-from . LnRs232_Formatter import Formatter232
+from . Data_Formatter import Formatter
 
 #####################################################################
 # - MAIN LnRS485 CLASS
@@ -77,7 +77,7 @@ class LnRs232():
         New in version 0.6.
         """
             # classe per formattare i dati
-        self.formatter = Formatter232
+        self._formatter = Formatter
 
         self._printableChars = list(range(31,126))
 
@@ -135,7 +135,7 @@ class LnRs232():
         logger = self._setLogger(package=__name__)
 
         if self._close_port_after_each_call:
-            logger.debug('opening port...')
+            logger.info('opening port...')
             self._serial.open()
 
 
@@ -143,7 +143,7 @@ class LnRs232():
         timeStart = time.time()*1000
         timeEnd   = timeStart+timeoutValue
         TIMEOUT = True      # flag per indicare se siamo andati in timeout o meno
-        logger.debug( "starting timer... for {} mSec".format(timeoutValue))
+        logger.info( "starting timer... for {} mSec".format(timeoutValue))
 
 
         # loop fino a che non abbiamo ricevuto dati
@@ -153,34 +153,27 @@ class LnRs232():
                 # - in attesa di un byte
             ch    = self._serial.read(1)       # ch e' un type->bytes
 
-                # ------------------------------------------
-                # - se riceviamo un NULL:
-                # -     - se non abbiamo nulla:
-                # -         - se scaduto timeOut... usciamo
-                # -         - else continue
-                # - quindi usciamo solo per timeOut oppure
-                # - dopo un NULL dopo avere ricevuto qualcosa
-                # ------------------------------------------
             if ch == b'':
-                if _dataBuffer:
+                if _dataBuffer: # something has been received ... exit
                     break
                 elif elapsed >= timeoutValue:
-                    logger.debug( "elapsed {0}/{1}".format(elapsed, timeoutValue))
+                    logger.info( "elapsed {0}/{1}".format(elapsed, timeoutValue))
                     break
                 else:
-                    continue
+                    continue    # nothing has been received ... continue
 
             chInt = int.from_bytes(ch, 'little')
             _dataBuffer.append(chInt)
-            logger.debug("Received byte: {0:02x}".format(chInt))
+            logger.debug("Received byte: x'{0:02x}'".format(chInt))
 
 
         if self._close_port_after_each_call:
-            logger.debug('closing port...')
+            logger.info('closing port...')
             self._serial.close()
 
-        logger.debug("data received: {}".format(' '.join('{0:02x}'.format(x) for x in _dataBuffer)))
-        return _dataBuffer
+        fmtedDict = self._formatter._fmtData(self, _dataBuffer, self._myDict)
+        return fmtedDict
+
 
 
 
@@ -207,20 +200,3 @@ class LnRs232():
 
         if self._close_port_after_each_call:
             self._serial.close()
-
-
-    def formatRawData(self, rawData):
-        '''
-            Prende in input un bytearray dei dati letti da seriale
-            li formatta ritornando un dictionary con i diversi formati
-        '''
-        assert type(rawData) == bytearray
-        rawDict      = self._myDict()
-        rawDict.data = rawData
-        if rawData:
-            _rawDataFMTed = self.formatter._fmtData(self, rawData)
-            rawDict.hexd = _rawDataFMTed['HEXD']
-            rawDict.hexm = _rawDataFMTed['HEXM']
-            rawDict.text = _rawDataFMTed['TEXT']
-            rawDict.char = _rawDataFMTed['CHAR']
-

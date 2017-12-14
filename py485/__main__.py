@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 13-12-2017 16.25.13
+# Version ......: 14-12-2017 16.25.53
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -31,7 +31,13 @@ if __name__ == "__main__":
     gv.args   = Ln.Dict(args)
     gv.fDEBUG = gv.args.debug
     if gv.fDEBUG: gv.args.printTree(fPAUSE=True)
-    logger    = Ln.InitLogger(toFILE=gv.args.log, logfilename=gv.args.log_filename, toCONSOLE=gv.args.log_console, ARGS=args)
+
+    logger    = Ln.InitLogger(  toFILE=gv.args.log,
+                                logfilename=gv.args.log_filename,
+                                toCONSOLE=gv.args.log_console,
+                                loglevel=gv.args.loglevel,
+                                ARGS=args)
+
 
         # ------------------------
         # - Lettura del file.ini

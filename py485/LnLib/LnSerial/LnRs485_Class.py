@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 14-12-2017 09.44.00
+# Version ......: 14-12-2017 16.46.35
 
 
 
@@ -13,7 +13,7 @@ import time
 
 from . LnRs232_Class import LnRs232
 from . LnRs232_Class import LnClass
-from . LnRs485_Formatter import Formatter485
+# from . LnRs485_Formatter import Formatter485
 
 # -----------------------------------------------------------------------
 # - con il gioco del complementedByte, gli unici byte che dovrebbero
@@ -58,7 +58,7 @@ class LnRs485(LnRs232):
         self._CRC = True
 
             # classe per formattare i dati
-        self.formatter = Formatter485
+        # self.formatter = Formatter485
 
         # self._rs485RxPayLoad    = bytearray()    # contiene i dati letti ripuliti da STX, CRC, ETX
         self._fld               =  None            # dict che contiene i nomi dei campi del payload e la loro posizione nel pacchetto
@@ -88,6 +88,76 @@ class LnRs485(LnRs232):
                         ETX=self._ETX
             )
                         # ADDRESS=self.address,
+
+
+
+    #######################################################################
+    # # PUBLIC methods
+    #######################################################################
+    @property
+    def _seqCounter(self):
+        self._sendCounter += 1
+        yy = self._sendCounter.to_bytes(2, byteorder='big')
+        return yy
+
+    def SetPayloadFieldName(self, mydict):
+        logger = self._setLogger(package=__name__)
+        assert type(mydict) == self._myDict
+
+            # ---- solo per logging ------------
+            # - per fare il logging ordinato per value
+            # - trasformiamo il dict in una LIST di tuple
+            # ---- solo per logging ------------
+        xx = sorted(mydict.items(), key=lambda x:x[1])
+        logger.debug('Payload fields name:')
+        for k, v in xx:
+            logger.debug('  {:<15}:{}'.format(k,v))
+        self._fld = mydict
+
+    def SetSTX(self, value):
+        logger = self._setLogger(package=__name__)
+        if isinstance(value, str):
+            value = int(value, 16)
+        self._STX = value
+        logger.info('setting STX to {}'.format(self._STX))
+
+    def SetETX(self, value):
+        logger = self._setLogger(package=__name__)
+        if isinstance(value, str):
+            value = int(value, 16)
+        self._ETX = value
+        logger.info('setting ETX to {}'.format(self._ETX))
+
+    def SetCRC(self, bFlag):
+        logger = self._setLogger(package=__name__)
+        if isinstance(bFlag, bool):
+            self._CRC = bFlag
+        elif isinstance(bFlag, str):
+            self._CRC = eval(bFlag)
+        else:
+            self._CRC = True
+        logger.info('setting CRC to {}'.format(self._CRC))
+
+    def ClosePortAfterEachCall(self, bFlag):
+        logger = self._setLogger(package=__name__)
+        self._close_port_after_each_call = bFlag
+
+        if bFlag:
+            if self._serial.isOpen():
+                logger.info('closing port...')
+                self._serial.close()
+        else:
+            if not self._serial.isOpen():
+                logger.info('opening port...')
+                self._serial.open()
+
+    def Close(self):
+        logger = self._setLogger(package=__name__)
+        if self._serial.isOpen():
+            logger.info('closing port...')
+            self._serial.close()
+
+
 
 
 
@@ -150,43 +220,28 @@ class LnRs485(LnRs232):
     #######################################################################
     # - Scrittura dati sulla seriale
     #######################################################################
-    def read485(self, timeoutValue=2000, FORMAT=False):
+    def read485(self, timeoutValue=2000):
         logger = self._setLogger(package=__name__)
 
-        rawDict      = self._myDict()
-        plDict       = self._myDict()
-        rawData      = self.read232(timeoutValue = timeoutValue) # return bytearray
-        rawDict.data = rawData
-        plDict.data  = None
+            # - return dict.raw dict.hexd dict.hexm dict.text dict.char
+        data232  = self.read232(timeoutValue = timeoutValue)
+        if data232.raw:
+            payloadArray = self._extractPayload(data232.raw)    # extract payload
+            data485      = self._formatter._fmtData(self, payloadArray, self._myDict) # format payload
+            data485.dict = self._formatter._payloadFields(self, payloadArray) # create a dictionary with fields
 
-        if rawData:
-            if FORMAT:
-                _rawDataFMTed = self.formatter._fmtData(self, rawData)
-                rawDict.hexd = _rawDataFMTed['HEXD']
-                rawDict.hexm = _rawDataFMTed['HEXM']
-                rawDict.text = _rawDataFMTed['TEXT']
-                rawDict.char = _rawDataFMTed['CHAR']
+        return data232, data485
 
-            payload = self._extractPayload(rawData)
-            plDict.data = payload
-            if payload and FORMAT:
-                _payloadFMTed = self.formatter._fmtData(self, payload)
-                plDict.hexd = _payloadFMTed['HEXD']
-                plDict.hexm = _payloadFMTed['HEXM']
-                plDict.text = _payloadFMTed['TEXT']
-                plDict.char = _payloadFMTed['CHAR']
-                plDict.dict = self.formatter._payloadToDict(self, payload)
-
-        return rawDict, plDict
 
 
     #######################################################################
     # - Scrittura dati sulla seriale
     #######################################################################
-    def write485(self, payload, fDEBUG=False):
-        logger = self._setLogger(package=__name__)
+    def write485(self, payload):
         assert type(payload)==bytearray
-        logger.info('payload: {}'.format(Formatter485._toHex(payload)[0]))
+
+        logger = self._setLogger(package=__name__)
+        logger.info('payload: {}'.format(self._formatter._toHex(payload)[0]))
 
             # - prepariamo il bytearray per i dati da inviare
         dataToSend=bytearray()
@@ -210,11 +265,12 @@ class LnRs485(LnRs232):
             # - ETX
         dataToSend.append(self._ETX)
 
-        logger.info('dataToSend: {}'.format(Formatter485._toHex(dataToSend)[0]))
+        logger.info('dataToSend: {}'.format(self._formatter._toHex(dataToSend)[0]))
 
         # INVIO dati
         self.write232(dataToSend)
-        return dataToSend
+        data232 = self._formatter._fmtData(self, dataToSend, self._myDict)
+        return data232
 
 
 
@@ -301,162 +357,4 @@ class LnRs485(LnRs232):
 
         return _payloadData[:-1] # drop CRC
 
-
-
-    #######################################################################
-    # # PUBLIC methods
-    #######################################################################
-
-
-
-    def getSeqCounter(self):
-        self._sendCounter += 1
-        yy = self._sendCounter.to_bytes(2, byteorder='big')
-        return yy
-
-    def SetPayloadFieldName(self, mydict):
-        logger = self._setLogger(package=__name__)
-        assert type(mydict) == self._myDict
-
-            # ---- solo per logging ------------
-            # - per fare il logging ordinato per value
-            # - trasformiamo il dict in una LIST di tuple
-            # ---- solo per logging ------------
-        xx = sorted(mydict.items(), key=lambda x:x[1])
-        logger.debug('Payload fields name:')
-        for k, v in xx:
-            logger.debug('  {:<15}:{}'.format(k,v))
-        self._fld = mydict
-
-
-
-    def SetSTX(self, value):
-        logger = self._setLogger(package=__name__)
-        if isinstance(value, str):
-            value = int(value, 16)
-        self._STX = value
-        logger.info('setting STX to {}'.format(self._STX))
-
-    def SetETX(self, value):
-        logger = self._setLogger(package=__name__)
-        if isinstance(value, str):
-            value = int(value, 16)
-        self._ETX = value
-        logger.info('setting ETX to {}'.format(self._ETX))
-
-    def SetCRC(self, bFlag):
-        # assert type(bFlag) == bool or type(bFlag) == str
-        logger = self._setLogger(package=__name__)
-        if isinstance(bFlag, bool):
-            self._CRC = bFlag
-        elif isinstance(bFlag, str):
-            self._CRC = eval(bFlag)
-        else:
-            self._CRC = True
-        logger.info('setting CRC to {}'.format(self._CRC))
-
-    def ClosePortAfterEachCall(self, bFlag):
-        logger = self._setLogger(package=__name__)
-        self._close_port_after_each_call = bFlag
-
-        if bFlag:
-            if self._serial.isOpen():
-                logger.info('closing port...')
-                self._serial.close()
-        else:
-            if not self._serial.isOpen():
-                logger.info('opening port...')
-                self._serial.open()
-
-    def Close(self):
-        logger = self._setLogger(package=__name__)
-        if self._serial.isOpen():
-            logger.info('closing port...')
-            self._serial.close()
-
-
-    ######################################################
-    # - @property
-    # - Utilizzo i metodi come fossero attributi
-    # - se compare l'utput di __repr__ vuol dire che
-    # - è stato omesso @property
-    ######################################################
-
-
-
-
-
-    def VerifyRs485Data(self, rawData):
-        '''
-            Prende in input un bytearray dei dati letti da seriale
-            li valida per il protocollo RS485
-            Se validi... formatta sia il payload che il formato raw
-            ritornando un dictionary con due rami
-        '''
-        logger = self._setLogger(package=__name__)
-        assert type(rawData) == bytearray
-        _myData              = self._myDict()
-        _myData.raw          = self._myDict()
-        _myData.payload      = self._myDict()
-            # default value
-        _myData.raw.data     = bytearray()
-        _myData.payload.data = bytearray()
-
-        logger.debug('rawData: {}'.format(' '.join('{0:02x}'.format(x) for x in rawData)))
-            # ritorna payload bytearray
-        if rawData:
-            rs485data = self._extractPayload(rawData)
-            logger.debug('payload: {}'.format(' '.join('{0:02x}'.format(x) for x in rs485data)))
-
-            if rs485data:
-                _myData.raw.data     = rawData
-                _myData.payload.data = rs485data
-
-                _formattedData = self.formatter._fmtData(self, rs485data)
-                _myData.payload.hexd = _formattedData['HEXD']
-                _myData.payload.hexm = _formattedData['HEXM']
-                _myData.payload.text = _formattedData['TEXT']
-                _myData.payload.char = _formattedData['CHAR']
-
-                _formattedData = self.formatter._fmtData(self, rawData)
-                _myData.raw.hexd = _formattedData['HEXD']
-                _myData.raw.hexm = _formattedData['HEXM']
-                _myData.raw.text = _formattedData['TEXT']
-                _myData.raw.char = _formattedData['CHAR']
-
-
-
-        return _myData
-
-    def FormatRawData(self, rawData):
-        '''
-            Prende in input un bytearray dei dati letti da seriale
-            li formatta ritornando un dictionary con i diversi formati
-        '''
-        assert type(rawData) == bytearray
-        _myData              = self._myDict()
-
-            # default value
-        _myData.data     = bytearray()
-
-            # ritorna payload bytearray
-        if rawData:
-            _myData.data = rawData
-
-            _formattedData = self.formatter._fmtData(self, rawData)
-            _myData.hexd = _formattedData['HEXD']
-            _myData.hexm = _formattedData['HEXM']
-            _myData.text = _formattedData['TEXT']
-            _myData.char = _formattedData['CHAR']
-
-        return _myData
-
-
-
-    # @property
-    def PayloadToDict(self, payload):
-        # self.formatter._verifyData(self)
-        return self.formatter._payloadToDict(self, payload)
-        # return myDict
-        # return 'ciao'
 

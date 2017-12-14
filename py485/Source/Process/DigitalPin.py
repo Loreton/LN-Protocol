@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 11-12-2017 17.27.49
+# Version ......: 14-12-2017 16.27.11
 #
 # ######################################################################################
 
@@ -43,7 +43,7 @@ def digitalToggle(gv, LnRs485, payload):
         # ===================================================
         # = RS-485 preparazione del comando
         # ===================================================
-    payload[_fld.SEQNO_H], payload[_fld.SEQNO_L] = LnRs485.getSeqCounter()
+    payload[_fld.SEQNO_H], payload[_fld.SEQNO_L] = LnRs485._seqCounter
     payload[_fld.RCODE]                          = 0 # 0 per la TX
 
     payload[_fld.DEST_ADDR]                      = int(gv.args.slave_address)
@@ -65,12 +65,13 @@ def digitalToggle(gv, LnRs485, payload):
     fDEBUG = False
     while True:
         try:
-            raw, payload = LnRs485.read485(timeoutValue=2000, FORMAT=True) # return bytearray
-            if raw.data:
-                if fDEBUG: print (raw.hexm)
-            if payload.data:
+            data232, payload = LnRs485.read485(timeoutValue=2000) # return bytearray
+            if data232.raw:
+                if fDEBUG: print (data232.hexm)
+
+            if payload.raw:
                 if fDEBUG: print (payload.hexm)
-                print (payload.dict.printTree(header='ricezione dati dallo slave: {}'.format(payload.data[LnRs485._fld.SRC_ADDR]), whatPrint='KV')) # whatPrint='LTKV'
+                print (payload.dict.printTree(header='ricezione dati dallo slave: {}'.format(payload.raw[LnRs485._fld.SRC_ADDR]), whatPrint='KV')) # whatPrint='LTKV'
                 print ('\n'*2)
                 break
 

@@ -1,5 +1,5 @@
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-11-2017 16.15.59
+# Version ......: 14-12-2017 16.25.37
 
 from    pathlib import Path
 
@@ -10,7 +10,6 @@ import  LnLib as Ln; C=Ln.Color()
 #######################################################
 def logOptions(myParser, defaultLogFile):
 
-    logGroup = myParser.add_mutually_exclusive_group(required=False)  # True indica obbligatorietà di uno del gruppo
 
         # ---------------------------------------
         # - devo mettere un carattere prima
@@ -23,6 +22,8 @@ def logOptions(myParser, defaultLogFile):
                                 action='store_true',
                                 help=Ln.coloredHelp('', default=None))
 
+
+    logGroup = myParser.add_mutually_exclusive_group(required=False)  # True indica obbligatorietà di uno del gruppo
         # log debug su console
     logGroup.add_argument( "--log-console",
                                 metavar='',
@@ -55,5 +56,12 @@ def logOptions(myParser, defaultLogFile):
                                 help=Ln.coloredHelp('log fileName... (valid only with --log option specified)', default=defaultLogFile))
 
 
+
+    myParser.add_argument( "--loglevel",
+                                metavar='',
+                                required=False,
+                                default='info',
+                                choices=['info', 'warn', 'debug'],
+                                help=Ln.coloredHelp("log level", default='info'))
 
 
