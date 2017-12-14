@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 11-12-2017 16.35.38
+# Version ......: 14-12-2017 09.43.36
 
 
 ######################################################
@@ -22,7 +22,7 @@ class Formatter232:
             e li ritorna.
         '''
         assert type(data) == bytearray
-        logger = obj232._setLogger(package=__package__)
+        logger = obj232._setLogger(package=__name__)
 
 
         _validChars = obj232._printableChars

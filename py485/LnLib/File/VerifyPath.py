@@ -14,7 +14,7 @@ from LnLib.Common.LnLogger      import SetLogger
 
 
 def VerifyPath(path, exitOnError=True):
-    logger = SetLogger(__package__, stackNum=1) # log the caller
+    logger = SetLogger(__name__, stackNum=1) # log the caller
 
     logger.info('verifying path: {0} [{1}]'.format(path, type(path)))
 

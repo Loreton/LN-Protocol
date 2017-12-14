@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 11-12-2017 17.44.35
+# Version ......: 14-12-2017 09.42.56
 
 import serial       # sudo pip3.4 install pyserial
 import sys
@@ -39,7 +39,7 @@ class LnRs232():
         else:
             self._setLogger = self._internaLogger
 
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         self._myDict = myDict
 
 
@@ -132,7 +132,7 @@ class LnRs232():
     # - Ritorna: una bytearray di integer con i dati ricevuti oppure vuoto
     #######################################################################
     def read232(self, timeoutValue=1000):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
 
         if self._close_port_after_each_call:
             logger.debug('opening port...')
@@ -191,7 +191,7 @@ class LnRs232():
     # - Scrittura dati sulla seriale
     #######################################################################
     def write232(self, txData):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         assert type(txData)==bytearray
 
 

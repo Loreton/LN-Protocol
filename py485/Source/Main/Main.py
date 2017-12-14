@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 11-12-2017 08.25.25
+# Version ......: 14-12-2017 10.46.09
 #
 # ######################################################################################
 
@@ -21,7 +21,7 @@ import LnLib as Ln
 # -  5 - Chiamata al programma principale del progetto
 ################################################################################
 def Main(gv):
-    logger      = Ln.SetLogger(package = __package__)
+    logger      = Ln.SetLogger(package = __name__)
 
     iniMain     = gv.iniFile.MAIN
     relay       = gv.iniFile.ARDUINO_RELAY_PORT
@@ -39,7 +39,6 @@ def Main(gv):
 
     for key, val in myCMD.items():      logger.debug('command     {0:<15}: {1}'.format(key, val))
     for key, val in mySubCMD.items():   logger.debug('sub_command {0:<15}: {1}'.format(key, val))
-
 
         # ==========================================
         # = Preparazione del PAYLOAD

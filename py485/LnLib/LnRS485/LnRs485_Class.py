@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 11-12-2017 08.51.07
+# Version ......: 14-12-2017 09.42.29
 
 import LnLib as Ln
 import os
@@ -84,7 +84,7 @@ class LnRs485():
         else:
             self._setLogger = self._internaLogger
 
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         self._myDict = myDict
 
 
@@ -216,7 +216,7 @@ class LnRs485():
     # - _getCRC8
     # =====================================================
     def _getCRC8(self, byteArray_data):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         crcValue = 0
         for byte in byteArray_data:
             # if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
@@ -247,7 +247,7 @@ class LnRs485():
     #######################################################################
     def _prepareRs485Packet(self, payload):
         assert type(payload)==bytearray
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
 
              # - preparaiamo il bytearray con i dati da inviare
         dataToSend=bytearray()
@@ -281,7 +281,7 @@ class LnRs485():
     # -     byte = byte1_HNibble * 16 + byte2_HNibble
     # ---------------------------------------------
     def _combineComplementedByte(self, byte1, byte2):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
 
         logger.debug("complementedData: x{0:02X} + x{1:02X}".format(byte1, byte2))
 
@@ -314,7 +314,7 @@ class LnRs485():
     # -     byte = byte1_HNibble * 16 + byte2_HNibble
     # ---------------------------------------------
     def _splitComplementedByte(self, byte):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         logger.debug ("byte to be converted: {0} - type: {1}".format(byte, type(byte)))
 
             # first nibble
@@ -343,7 +343,7 @@ class LnRs485():
     # - Ritorna: una bytearray di integer con i dati ricevuti oppure vuoto
     #######################################################################
     def _serialRead(self, timeoutValue=1000):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
 
         if self._close_port_after_each_call:
             logger.debug('opening port...')
@@ -402,7 +402,7 @@ class LnRs485():
     # - Scrittura dati sulla seriale
     #######################################################################
     def _serialWrite(self, txData):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         assert type(txData)==bytearray
 
 
@@ -428,7 +428,7 @@ class LnRs485():
     # - Scrittura dati sulla seriale
     #######################################################################
     def _rs485Read(self, timeoutValue=2000, FORMAT=False):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
 
         rawDict = self._myDict()
         plDict  = self._myDict()
@@ -461,7 +461,7 @@ class LnRs485():
     # - Scrittura dati sulla seriale
     #######################################################################
     def _rs485Write(self, payload, fDEBUG=False):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         assert type(payload)==bytearray
         logger.info('payload: {}'.format(Formatter485._toHex(payload)[0]))
 
@@ -507,7 +507,7 @@ class LnRs485():
     ######################################################
     def _extractPayload(self, rawData):
         assert type(rawData) == bytearray
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
 
         logger.error('analizing rawData: {}'.format(' '.join('{0:02x}'.format(x) for x in rawData)))
             # cerchiamo STX
@@ -592,7 +592,7 @@ class LnRs485():
         return yy
 
     def SetPayloadFieldName(self, mydict):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         assert type(mydict) == self._myDict
 
             # ---- solo per logging ------------
@@ -608,14 +608,14 @@ class LnRs485():
 
 
     def SetSTX(self, value):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         if isinstance(value, str):
             value = int(value, 16)
         self._STX = value
         logger.info('setting STX to {}'.format(self._STX))
 
     def SetETX(self, value):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         if isinstance(value, str):
             value = int(value, 16)
         self._ETX = value
@@ -623,7 +623,7 @@ class LnRs485():
 
     def SetCRC(self, bFlag):
         # assert type(bFlag) == bool or type(bFlag) == str
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         if isinstance(bFlag, bool):
             self._CRC = bFlag
         elif isinstance(bFlag, str):
@@ -633,7 +633,7 @@ class LnRs485():
         logger.info('setting CRC to {}'.format(self._CRC))
 
     def ClosePortAfterEachCall(self, bFlag):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         self._close_port_after_each_call = bFlag
 
         if bFlag:
@@ -646,7 +646,7 @@ class LnRs485():
                 self.serial.open()
 
     def Close(self):
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         if self.serial.isOpen():
             logger.info('closing port...')
             self.serial.close()
@@ -677,7 +677,7 @@ class LnRs485():
             Se validi... formatta sia il payload che il formato raw
             ritornando un dictionary con due rami
         '''
-        logger = self._setLogger(package=__package__)
+        logger = self._setLogger(package=__name__)
         assert type(rawData) == bytearray
         _myData              = self._myDict()
         _myData.raw          = self._myDict()
