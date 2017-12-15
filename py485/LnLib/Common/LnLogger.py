@@ -5,6 +5,7 @@
 # -----------------------------------------------
 import  sys
 import  logging, time
+# from logging.handlers import RotatingFileHandler
 from    pathlib import Path
 import  inspect
 
@@ -26,6 +27,21 @@ def setMyLogRecord(myFuncName='nameNotPassed', lineNO=0):
         # record.LnLineNO   = lineNO   # non posso altrimenti rimane sempre lo stesso
         return record
     logging.setLogRecordFactory(record_factory)
+
+
+from logging.handlers import RotatingFileHandler
+
+#----------------------------------------------------------------------
+def create_rotating_log(path):
+    """
+    Creates a rotating log
+    """
+    logger = logging.getLogger("Rotating Log")
+    logger.setLevel(logging.INFO)
+
+    # add a rotating handler
+    handler = RotatingFileHandler(path, maxBytes=20, backupCount=5)
+    logger.addHandler(handler)
 
 
 
@@ -92,7 +108,18 @@ def prepareLogEnv(toFILE=False, toCONSOLE=False, logfilename=None, loglevel='inf
 #   %(funcName)s    Name of function containing the logging call.
 #   %(lineno)d      Source line number where the logging call was issued (if available).
 # =============================================
-def init(toFILE=False, toCONSOLE=False, logfilename=None, loglevel='info', ARGS=None):
+def init(   toFILE=False,
+            toCONSOLE=False,
+            logfilename=None,
+            loglevel='info',
+            ARGS=None,
+            ROTATE='time',
+            backupCount=5,
+            maxBytes=20000,
+            when="m",
+            interval=60,
+            ):
+
     global myLOGGER
 
     _fLOG, _fCONSOLE, _fFILE = prepareLogEnv(toFILE=toFILE, toCONSOLE=toCONSOLE, logfilename=logfilename, ARGS=ARGS, loglevel=loglevel )
@@ -118,7 +145,7 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, loglevel='info', ARGS=
 
         # log to file
     if _fFILE:
-        LOG_FILE_NAME = logfilename
+        # LOG_FILE_NAME = logfilename
         LOG_DIR = Path(logfilename).parent
 
             # se esiste non dare errore
@@ -127,12 +154,27 @@ def init(toFILE=False, toCONSOLE=False, logfilename=None, loglevel='info', ARGS=
         except (FileExistsError):
             pass
 
-        if fDEBUG: print ('using log file:', LOG_FILE_NAME)
 
-        fileHandler     = logging.FileHandler('{0}'.format(LOG_FILE_NAME))
+
+        if ROTATE == 'time':
+            fileHandler = logging.handlers.TimedRotatingFileHandler(str(logfilename),
+                                                                when=when,
+                                                                interval=interval,
+                                                                backupCount=backupCount)
+        elif ROTATE == 'size':
+            fileHandler = logging.handlers.RotatingFileHandler(str(logfilename), maxBytes=maxBytes, backupCount=backupCount)
+        else:
+            # fileHandler = logging.FileHandler('{0}'.format(logfilename))
+            fileHandler = logging.FileHandler(str(logfilename))
+
+            # add a file handler
+        logger.addHandler(fileHandler)
+
         fileFormatter   = logging.Formatter(fmt=fileFMT, datefmt='%m-%d %H:%M:%S')
         fileHandler.setFormatter(fileFormatter)
-        logger.addHandler(fileHandler)
+
+        if fDEBUG: print ('using log file:', logfilename)
+
 
         # log to the console
     if _fCONSOLE:

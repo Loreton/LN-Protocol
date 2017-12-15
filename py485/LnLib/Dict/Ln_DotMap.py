@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-11-2017 11.13.42
+# Version ......: 15-12-2017 15.21.14
 #
 # ######################################################################################
 
@@ -13,8 +13,8 @@ from pprint import pprint
 from sys import version_info
 from inspect import ismethod
 
-from LnLib.Dict.DictToList          import KeyTree as LnKeyTree, KeyList as LnKeyList, getValue as LnGetValue
-from LnLib.Dict.PrintDictionaryTree import PrintDictionary as LnPrintDictionary
+from . DictToList          import KeyTree as LnKeyTree, KeyList as LnKeyList, getValue as LnGetValue
+from . PrintDictionaryTree import PrintDictionary as LnPrintDictionary
 LORETO = True
 
 class DotMap(OrderedDict):

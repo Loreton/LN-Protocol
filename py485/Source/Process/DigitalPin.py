@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 14-12-2017 16.27.11
+# Version ......: 15-12-2017 14.45.15
 #
 # ######################################################################################
 
@@ -39,17 +39,19 @@ def digitalToggle(gv, LnRs485, payload):
 
     C.printColored (color=C.yellowH, text='... press ctrl-c to stop the process.', tab=8)
 
+    PIN_NO      = 7
+    PIN_ACTION  = 8
 
         # ===================================================
         # = RS-485 preparazione del comando
         # ===================================================
     payload[_fld.SEQNO_H], payload[_fld.SEQNO_L] = LnRs485._seqCounter
-    payload[_fld.RCODE]                          = 0 # 0 per la TX
+    payload[_fld.RCODE]     = 0 # 0 per la TX
 
-    payload[_fld.DEST_ADDR]                      = int(gv.args.slave_address)
-    payload[_fld.CMD]                            = int(_mainCmd.DIGITAL_CMD, 16)     # COMMAND
-    payload[_fld.SUB_CMD]                        = int(_subCmd.TOGGLE_PIN,   16)     # SubCOMMAND
-    payload[_fld.PIN_NO]                         = gv.args.pin_number     # pinNO
+    payload[_fld.DEST_ADDR] = int(gv.args.slave_address)
+    payload[_fld.CMD]       = int(_mainCmd.DIGITAL_CMD, 16)     # COMMAND
+    payload[_fld.SUB_CMD]   = int(_subCmd.TOGGLE_PIN,   16)     # SubCOMMAND
+    payload[PIN_NO]         = gv.args.pin_number     # pinNO
 
 
 

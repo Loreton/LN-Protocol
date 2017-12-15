@@ -4,8 +4,7 @@
 # Scope:  ............
 # updated by Loreto: 24-10-2017 09.30.00
 # ######################################################################################
-from sys import exit as sysExit
-from  os import getenv as osGetEnv
+import sys, os
 
 import collections
 import configparser
@@ -30,7 +29,6 @@ class ReadIniFile(object):
         self._extraSections           = []
         self._allow_no_value          = False
         self._resolveEnvVars          = False
-        self._fDEBUG                  = False
         self._subSectionChar          = []   # es ('\\', '/' , '.')
         self._exitOnError             = False
         self._logger                 = logger
@@ -68,14 +66,15 @@ class ReadIniFile(object):
     def resolveEnvVars(self, flag):
         self._resolveEnvVars = flag
 
-    def setDebug(self, flag):
-        self._fDEBUG = flag
-
     def exitOnError(self, flag):
         self._exitOnError = flag
 
     def returnRAW(self, flag):
         self._returnRAW = flag
+
+    @property
+    def dict(self):
+        return self._dict
 
     def setLogger(self, logger):
         self._logger = logger
@@ -105,7 +104,7 @@ class ReadIniFile(object):
 
         except (Exception) as why:
             print("Errore nella lettura del file: {FILE} - {WHY}".format(FILE=self._filename, WHY=str(why)))
-            sysExit(-1)
+            sys.exit(-1)
 
             # ------------------------------------------------------------------
             # - per tutte le sezioni che sono extra facciamo il merge.
@@ -131,9 +130,9 @@ class ReadIniFile(object):
 
             # Parsing del file
         if type(self._configMain) in [configparser.ConfigParser]:
-            self.dict = self._iniConfigAsDict()
+            self._dict = self._iniConfigAsDict()
         else:
-            self.dict = self._configMain
+            self._dict = self._configMain
 
 
 
@@ -177,9 +176,7 @@ class ReadIniFile(object):
                         currSECT[sect] = collections.OrderedDict({}) if self._returnOrderedDict else {}
                     currSECT = currSECT[sect] #  aggiorna pointer
 
-                if self._fDEBUG:
-                    print()
-                    print('[{SECT}]'.format(SECT=section))
+                logger.debug('[{SECT}]'.format(SECT=section))
 
 
                 # for key, val in self._configMain.items(section):
@@ -194,17 +191,16 @@ class ReadIniFile(object):
                         for index, envVarName in enumerate(envVars):
                             if index%2:
                                 # print(envVarName)
-                                envVarValue = osGetEnv(envVarName)
+                                envVarValue = os.getenv(envVarName)
                                 if envVarValue:
                                     val = val.replace('%{}%'.format(envVarName), envVarValue)
                                 else:
                                     msg = 'nome della variabile di ambiente: [{VAR}] non trovato.'.format(VAR=envVarName)
                                     # C.Yellow(msg, tab=4)
                                     logger.warning(msg)
-                                    if self._fDEBUG: C.Yellow(msg, tab=4)
 
                     currSECT[key] = val
-                    if self._fDEBUG: print('    {KEY:<30} : {VAL}'.format(KEY=key, VAL=val))
+                    logger.debug('    {KEY:<30} : {VAL}'.format(KEY=key, VAL=val))
 
         except (configparser.InterpolationMissingOptionError) as why:
             print("\n"*2)
@@ -213,7 +209,7 @@ class ReadIniFile(object):
             print("-"*60)
             print(str(why))
             print("="*60)
-            sysExit(-2)
+            sys.exit(-2)
 
         except (Exception) as why:
             print("\n"*2)
@@ -222,7 +218,7 @@ class ReadIniFile(object):
             print("-"*60)
             print(str(why))
             print("="*60)
-            sysExit(-2)
+            sys.exit(-2)
 
 
         if self._onlySection:

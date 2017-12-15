@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 14-12-2017 10.46.09
+# Version ......: 15-12-2017 14.44.24
 #
 # ######################################################################################
 
@@ -25,7 +25,7 @@ def Main(gv):
 
     iniMain     = gv.iniFile.MAIN
     relay       = gv.iniFile.ARDUINO_RELAY_PORT
-    monitor     = gv.iniFile.OTHER_MONITOR_PORT
+    monitor     = gv.iniFile.RS485_BUS_MONITORING_PORT
     rs485Prot   = gv.iniFile.RS485_PROTOCOL
     myCMD       = gv.iniFile.MAIN_COMMAND
     mySubCMD    = gv.iniFile.SUB_COMMAND

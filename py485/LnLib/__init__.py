@@ -53,6 +53,7 @@ from . ParseInput.IniFile_Options      import iniFileOptions       # get project
 from . ParseInput.MainParseInput       import processInput         # start ParseInput process
 
 # ---------- LnLIB DotMap dictionary ------
+# from . Dict_Prev.LnDict_DotMap         import DotMap           as Dict
 from . Dict.Ln_DotMap              import DotMap           as Dict
 
 
