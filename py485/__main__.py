@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 15-12-2017 15.26.42
+# Version ......: 18-12-2017 08.12.33
 #                                               by Loreto Notarantonio
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -96,7 +96,7 @@ def testLnDict():
 # - M A I N
 ################################################################################
 if __name__ == "__main__":
-    testLnDict()
+    # testLnDict()
     gv        = Ln.Dict()
 
         # -------------------------------
