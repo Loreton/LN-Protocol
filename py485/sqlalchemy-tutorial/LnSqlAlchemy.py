@@ -8,15 +8,17 @@ from sqlalchemy.sql             import table, column, select
 # import csv
 
 # exceptions
-from sqlalchemy                 import exc
+import  sqlalchemy              as sa
+from sqlalchemy                 import exc, exists
+from sqlalchemy                 import Column, Integer, Float, Date, String, VARCHAR, Sequence
+from sqlalchemy                 import create_engine
 
 # sessions
 from sqlalchemy.orm             import sessionmaker
 
 # creation
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy                 import Column, Integer, Float, Date, String, VARCHAR, Sequence
-from sqlalchemy                 import create_engine
+from sqlalchemy.sql.expression  import literal_column, text
 
 # http://sqlalchemy-utils.readthedocs.io/en/latest/data_types.html
 from sqlalchemy_utils import database_exists, create_database
@@ -26,18 +28,17 @@ Base = declarative_base()
 
 class LnClass(): pass
 
+
+
+#############################################################
+# -
+#############################################################
 class LnDB():
     def __init__(self, tableClass, url, myDict=LnClass):
         self._myTable     = tableClass
         self._url       = url
         self._engine    = self._open()
         self._myTableName = tableClass.__table__
-        # for attr in vars(tableClass):
-        #     if not attr.startswith('_'):
-        #         print (name)
-        #         name = '_' + attr
-        #         eval(self.name = attr)
-
 
             # creaiamo la section
         _Session = sessionmaker(bind=self._engine);
@@ -45,6 +46,8 @@ class LnDB():
 
             # individuiamo la/le primaryKey/s in una LIST
         self._pKeys   = [pk.name for pk in self._myTableName.primary_key]
+            # -prepara il comando di query sulla tabella
+        self._query   = self._session.query(self._myTable)
             # salviamo i nomi delle columns
         self._colName =  self._myTableName.columns.keys()
 
@@ -80,157 +83,172 @@ class LnDB():
     ################################
     #
     ################################
-    def _keyExists(self, keyField):
+    def _keyExists2(self, keyField):
         assert type(keyField) == dict
         colPtr = getattr(self._myTable, keyField['name'])
-        _exists = self._session.query(exists().where(colPtr==keyField['value'])).scalar()
+        _exists = self._session.query(sa.exists().where(colPtr==keyField['value'])).scalar()
         return _exists
 
     def _keyExists(self, keyName, keyValue):
         colPtr = getattr(self._myTable, keyName)
-        _exists = self._session.query(exists().where(colPtr==keyValue)).scalar()
+        _exists = self._session.query(sa.exists().where(colPtr==keyValue)).scalar()
         return _exists
 
 
+    #########################################
+    # check if record/priKey already exists
+    # @TODO: gestire il caso di più chiavi primarie
+    #########################################
+    def _recExists(self, rec):
+        '''
+        _exists = False
+        for keyName, keyValue in rec.items():
+            if keyName in self._pKeys:
+                keyFieldName = getattr(self._myTable, keyName)
+                foo_col      = sqlalchemy.sql.column(keyName)
+                print ('...........', keyFieldName.name, keyName, foo_col)
+                _exists = self._session.query(exists().where(keyFieldName==keyValue)).scalar()
+                if _exists:
+                    for server in self._query.filter_by(Name="server01"): # OK
+                         print (server.Name)
+                         print (server.Address)
+                         # ...
+                    print ('{}="{}"'.format(keyFieldName.name, 'server01'))
+                    for server in self._query.filter(text('{}="{}"'.format(keyFieldName.name, keyValue))): # OK
+                         print (server.Name)
+                         print (server.Address)
+
+                    filterText = text('{}="{}"'.format(keyFieldName.name, keyValue))
+                    for server in self._query.filter(filterText): # OK
+                         print (server.Name)
+                         print (server.Address)
+
+                    sys.exit()
+
+        '''
+
+        _exists, record = False, None
+        for keyName in self._pKeys:
+            keyValue = rec[keyName]
+            keyFieldName = getattr(self._myTable, keyName)
+            print ('...........', keyFieldName.name, keyName)
+            _exists = self._session.query(sa.exists().where(keyFieldName==keyValue)).scalar()
+
+                # if exists return record for the spefiic key
+            if _exists:
+                filterText = text('{}="{}"'.format(keyFieldName.name, keyValue))
+                record = self._query.filter(filterText).first()
+                # print (record)
+                # print (record.Name)
+
+                ''' formato con valori diretti delle colonne
+                for server in self._query.filter(filterText): # OK
+                     print (server.Name)
+                     print (server.Address)
+
+                for server in self._query.filter_by(Name="server01"): # OK
+                     print (server.Name)
+                     print (server.Address)
+                     # ...
+                '''
+
+
+
+
+        return _exists, record
+        # return {'exists':_exists, 'record':record}
+
+
+
     ################################
-    #
+    # convert to dictionary
     ################################
-    def _addRec(self, rec, commit=False):
-        from sqlalchemy import exists
+    def _toDict(self, data):
+        assert type(data) == LnClass or type(data) == dict
+
+        dataDict = data
+        if isinstance(data, LnClass):
+            dataDict = {}
+            for item in vars(data):
+                dataDict[item] = getattr(data, item)
+
+        return dataDict
+
+    ################################
+    # update...
+    ################################
+    def _update(self, rec, commit=False):
+        self._insert(rec, commit=commit, replace=True)
+
+
+
+    ################################
+    # insertNewRecord
+    ################################
+    def _insert(self, rec, commit=False, replace=False):
         assert type(rec) == LnClass or type(rec) == dict
 
             # - trasportiamo tutto in dict per gestirlo meglio
-        myRec = rec
-        if isinstance(rec, LnClass):
-            myRec = {}
-            for item in vars(rec):
-                # print (item, getattr(rec,item))
-                myRec[item] = getattr(rec,item)
+        myRec = self._toDict(rec)
 
-        elif isinstance(rec, dict):
-            pass
+            # -------------------------------------------
+            # - searching the primary-key
+            # - skip if its value already exists
+            # -------------------------------------------
+        (_exists, record) = self._recExists(myRec)
 
-
-            # - skip if REC-primary-key already exists
-        _exists = False
-        for colName, colValue in myRec.items():
-            if colName in self._pKeys:
-                # _exists = self._keyExists(colName, colValue)
-                _exists = self._keyExists( keyField={'name':colName, 'value':colValue} )
-
-
-        if not _exists:
-                # unpack dictionary
-            mydata = self._myTable(**myRec)
-            self._session.add(mydata)
-
-                # oppure....
-            connection.execute(self._myTable.insert(), [myRec])
+        if _exists and replace:
+            print ('updating record')
+            for (key, value) in myRec.items():
+                    # - skip primary keys field
+                if key in self._pKeys: continue
+                if hasattr(self._myTable, key):
+                    setattr(record, key, value)
 
             if commit: self._session.commit()
-            # for (key, value) in dynamic_cols.items():
-            #     if hasattr(table, key):
-            #         setattr(col_info, key, value)
 
+        elif not _exists:
+            print ('inserting new record')
+                # -------------------------
+                # unpack dictionary
+                # and add Record
+                # -------------------------
+            mydata = self._myTable(**myRec)
+            self._session.add(mydata)
+            if commit: self._session.commit()
 
-        # connection.execute(table.insert(), [
-        #         {'id':'12','name':'a','lang':'eng'},
-        #         {'id':'13','name':'b','lang':'eng'},
-        #         {'id':'14','name':'c','lang':'eng'},
-        #     ]
-        # )
+        else:
+            print ('record exists bat no action has been taken.')
 
+        '''
+        if not _exists:
+            print ('inserting new record')
+                # -------------------------
+                # unpack dictionary
+                # and add Record
+                # -------------------------
+            mydata = self._myTable(**myRec)
+            self._session.add(mydata)
+                # oppure....
+            # connection.execute(self._myTable.insert(), [myRec])
+            if commit: self._session.commit()
 
-            print (item, myRec[item])
+        else:  # udpate the columns
+            print ('updating record')
+            for (key, value) in myRec.items():
+                    # - skip primary keys field
+                if key in self._pKeys: continue
+                if hasattr(self._myTable, key):
+                    setattr(record, key, value)
 
-    ################################
-    #
-    ################################
-    def _update(self, rec, commit=False):
-        pass
-        # https://stackoverflow.com/questions/23152337/how-to-update-sqlalchemy-orm-object-by-a-python-dict
-
-
-
-
-
-################################
-#
-################################
-def getPriKeys(myTable):
-    tblName = myTable.__table__
-    METODO = 3
-
-    if METODO == 1:
-        pKeys = list(tblName.primary_key)
-        for key in pKeys:
-            print ('primary Key: {}'.format(key.name))
-        print()
-
-    elif METODO == 2:
-        pKeys = [pk.name for pk in tblName.primary_key]
-        for key in pKeys:
-            print ('primary Key: {}'.format(key))
-        print()
-
-    else:
-        from sqlalchemy import Table, MetaData
-        # METODO3
-        # https://stackoverflow.com/questions/44089396/get-primary-key-column-name-from-table-in-sqlalchemy-core
-        meta  = MetaData()
-        tablePtr = Table(tblName, meta, autoload=True, autoload_with=engine)
-        # pKeys    = tablePtr.primary_key.columns.values()
-        pKeys = [pk.name for pk in tablePtr.primary_key.columns.values()]
-        for key in pKeys:
-            print ('primary Key: {}'.format(key))
-        print()
-
-    return pKeys
+            if commit: self._session.commit()
+        '''
 
 
 
 
 
 
-################################
-#
-################################
-def addRec(session, table, commit=False):
-    priKey = getPriKeys(table)
-    from sqlalchemy import exists
-
-    ed_user = User(name='ed', fullname='Ed Jones', password='edspassword')
-    session.add(ed_user)
-
-    # verify the record whith the same key is present
-    # https://stackoverflow.com/questions/12748926/sqlalchemy-check-if-object-is-already-present-in-table
-    pKeyExists1 = session.query(exists().where(table.Name=='server01')).scalar()
-    # for key in priKey:
-    #     q = session.query(table[key]).filter(table[key]=='server01')
-    #     pKeyExists1 = session.query(q.exists()).scalar()    # returns True or False
-
-    # pKeyExists2 = session.query(Device).filter_by(x=Device.Name).count() == 0
-    # pKeyExists = session.query(Devices).filter_by(x=Devices.Name, y=item.y).count() == 0
-
-    # print('{:<12}: {}'.format("q",      q))
-    print('{:<12}: {}'.format("pKeyExists1", pKeyExists1))
-    # print('{:<12}: {}'.format("pKeyExists2", pKeyExists2))
-    if not pKeyExists1:    # returns True or False
-        device = table(Name='server01', Address=0x0C, Pin_Number=5 )
-        session.add(device)
-
-    if commit: Commit(session)
-
-
-################################
-#
-################################
-def addRecs(session):
-    session.add_all([
-                    User(name='wendy', fullname='Wendy Williams', password='foobar'),
-                    User(name='mary', fullname='Mary Contrary', password='xxg527'),
-                    User(name='fred', fullname='Fred Flinstone', password='blah')
-                ])
 
 
 
@@ -253,9 +271,10 @@ if __name__ == '__main__':
 
     myDB = LnDB(Device, 'sqlite:///LnDB_01.db')
     myRec = LnClass()
-    myRec.Name='server01'; myRec.Address=0x0C; myRec.Pin_Number=5
+    myRec.Name='server02'; myRec.Address=0x0D; myRec.Pin_Number=6
     # myRec = {'Name': 'server01', 'Address':0x0C, 'Pin_Number':5}
-    myDB._addRec(myRec, commit=True)
+    myDB._insert(myRec, commit=True)
+    myDB._update(myRec, commit=True)
 
     # Session = sessionmaker(bind=engine);
     # session = Session()
