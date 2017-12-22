@@ -1,38 +1,40 @@
 #!/usr/bin/env python3
 # -*- coding: iso-8859-1 -*-
 
-from  sys import version_info as sysVersion, path as sysPath, exit as sysExit
-import platform
-
-# --------------------------------------------
-# - inserire i path per fare l'import delle funzioni LnLib
-# - ... sembra che non serva in quanto il path del progetto
-# - ... è già inserito... comunque non si sa mai.
-# --------------------------------------------
-# LnLibDir    = Path(__file__).parent
-# ProjectDir  = Path(LnLibDir).parent
-# sysPath.insert(0, LnLibDir)
-# sysPath.insert(0, ProjectDir)
-
-if False:
-    print ()
-    for path in sysPath: print (path)
-    print ()
 
 
+class LnClass():
+    pass
+    def __str__(self):
+        _str_ = []
+        for key,val in self.__dict__.items():
+            _str_.append('{:<15}: {}'.format(key, val))
 
-'''
-    # - sys.version_info(major=3, minor=3, micro=2, releaselevel='final', serial=0)
-    v = sysVersion
-    pyVer = '{0}{1}{2}'.format(v.major, v.minor, v.micro)
-    opSys = platform.system()
-    if opSys.lower() == 'windows':
-        isWindows = True
+        return '\n'.join(_str_)
+
+
+###########################################
+# - converte LnClass o LnDict in dict
+###########################################
+def toDict(data):
+    # print (type(data))
+    _myDict = {}
+    dataType = str(type(data)).lower()
+
+    if 'dotmap' in dataType:
+        print ('dotamp')
+        _myDict = data.toDict()
+
+
+    elif 'lnclass' in dataType:
+        print ('lnclass')
+        for item in vars(data):
+            _myDict[item] = getattr(data, item)
+
     else:
-        isWindows = False
-    isUnix    = not isWindows
+        _myDict = data
 
-'''
+    return _myDict
 
 
 # ---------- LnLIB COMMON Functions ------

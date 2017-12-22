@@ -43,6 +43,7 @@ class LnDB():
             # creaiamo la section
         _Session = sessionmaker(bind=self._engine);
         self._session = _Session()
+        sys.exit()
 
             # individuiamo la/le primaryKey/s in una LIST
         self._pKeys   = [pk.name for pk in self._myTableName.primary_key]
@@ -55,14 +56,31 @@ class LnDB():
     #
     ################################
     def _open(self):
+
+        engine = create_engine('sqlite:///loreto_99.db')
+        print (engine)
+        # engine = create_engine(self._url)
+        # print (engine)
+
+        if not database_exists(engine.url):
+            print ('... creating db')
+            Base.metadata.create_all(engine)
+        else:
+            print ('... db already exists')
+        print(database_exists(engine.url))
+
+        return engine
+
+        '''
         _engine = create_engine(self._url)
         if not database_exists(_engine.url):
             print ('... creating db')
-            Base.metadata.create_all(_engine)
+            Base.metadata.create_all(_engine, echo=True)
         else:
             print ('... db already exists')
         print(database_exists(_engine.url))
         return _engine
+        '''
 
 
 
@@ -86,12 +104,12 @@ class LnDB():
     def _keyExists2(self, keyField):
         assert type(keyField) == dict
         colPtr = getattr(self._myTable, keyField['name'])
-        _exists = self._session.query(sa.exists().where(colPtr==keyField['value'])).scalar()
+        _exists = self._session.query(exists().where(colPtr==keyField['value'])).scalar()
         return _exists
 
     def _keyExists(self, keyName, keyValue):
         colPtr = getattr(self._myTable, keyName)
-        _exists = self._session.query(sa.exists().where(colPtr==keyValue)).scalar()
+        _exists = self._session.query(exists().where(colPtr==keyValue)).scalar()
         return _exists
 
 
@@ -100,13 +118,12 @@ class LnDB():
     # @TODO: gestire il caso di più chiavi primarie
     #########################################
     def _recExists(self, rec):
-        '''
         _exists = False
         for keyName, keyValue in rec.items():
             if keyName in self._pKeys:
                 keyFieldName = getattr(self._myTable, keyName)
-                foo_col      = sqlalchemy.sql.column(keyName)
-                print ('...........', keyFieldName.name, keyName, foo_col)
+                # foo_col      = sqlalchemy.sql.column(keyName)
+                print ('...........', keyFieldName.name, keyName)
                 _exists = self._session.query(exists().where(keyFieldName==keyValue)).scalar()
                 if _exists:
                     for server in self._query.filter_by(Name="server01"): # OK
@@ -126,13 +143,14 @@ class LnDB():
                     sys.exit()
 
         '''
+        '''
 
         _exists, record = False, None
         for keyName in self._pKeys:
             keyValue = rec[keyName]
             keyFieldName = getattr(self._myTable, keyName)
-            print ('...........', keyFieldName.name, keyName)
-            _exists = self._session.query(sa.exists().where(keyFieldName==keyValue)).scalar()
+            # print ('...........', keyFieldName.name, keyName)
+            _exists = self._session.query(exists().where(keyFieldName.name==keyValue)).scalar()
 
                 # if exists return record for the spefiic key
             if _exists:
@@ -220,65 +238,20 @@ class LnDB():
         else:
             print ('record exists bat no action has been taken.')
 
-        '''
-        if not _exists:
-            print ('inserting new record')
-                # -------------------------
-                # unpack dictionary
-                # and add Record
-                # -------------------------
-            mydata = self._myTable(**myRec)
-            self._session.add(mydata)
-                # oppure....
-            # connection.execute(self._myTable.insert(), [myRec])
-            if commit: self._session.commit()
-
-        else:  # udpate the columns
-            print ('updating record')
-            for (key, value) in myRec.items():
-                    # - skip primary keys field
-                if key in self._pKeys: continue
-                if hasattr(self._myTable, key):
-                    setattr(record, key, value)
-
-            if commit: self._session.commit()
-        '''
 
 
-
-
-
-
-
-
-
+#-------------------------------------------------
+# - import della classe contenente la/le tabbelle
+#-------------------------------------------------
 from DeviceTable import Device
 
 if __name__ == '__main__':
-
-    class Device2(Base):
-        __tablename__  = 'devices'
-        Name           = Column('Name'      ,VARCHAR(40), primary_key = True, nullable = False)
-        Address        = Column('Address'   ,Integer)
-        Pin_Number     = Column('Pin_Number',Integer)
-        Status         = Column('Status'    ,VARCHAR)
-
-        # fld_Name           = Column('Name'      ,VARCHAR(40), primary_key = True, nullable = False)
-        # fld_Address        = Column('Address'   ,Integer)
-        # fld_Pin_Number     = Column('Pin_Number',Integer)
-        # fld_Status         = Column('Status'    ,VARCHAR)
-
-
-    myDB = LnDB(Device, 'sqlite:///LnDB_01.db')
+    myDB  = LnDB(Device, 'sqlite:///LnDB_01.db')
     myRec = LnClass()
     myRec.Name='server02'; myRec.Address=0x0D; myRec.Pin_Number=6
     # myRec = {'Name': 'server01', 'Address':0x0C, 'Pin_Number':5}
     myDB._insert(myRec, commit=True)
     myDB._update(myRec, commit=True)
 
-    # Session = sessionmaker(bind=engine);
-    # session = Session()
-    # addRecs(session)
 
-    # http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#creating-a-session
 

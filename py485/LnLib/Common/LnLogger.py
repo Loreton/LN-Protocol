@@ -292,26 +292,18 @@ def SetLogger(package, stackNum=0):
 ##############################################################################
 def _setNullLogger(package=None):
 
-
+    import inspect
         ##############################################################################
         # - classe che mi permette di lavorare nel caso il logger non sia richiesto
         ##############################################################################
     class nullLogger():
-        def __init__(self, package=None, stackNum=1):
-            pass
+        def __init__(self, package=None, stackNum=1): pass
+        def info(self, data):       self._dummy(data)
+        def debug(self, data):      self._dummy(data)
+        def error(self, data):      self._dummy(data)
+        def warning(self, data):    self._dummy(data)
 
-
-        def info(self, data):
-            pass
-            # self._print(data)
-
-        def debug(self, data):
-            pass
-            # self._print(data)
-
-        def error(self, data):  pass
-        def warning(self, data):  pass
-
+        def _dummy(self, data): pass
 
         def _print(self, data, stackNum=2):
             TAB = 4
@@ -319,7 +311,8 @@ def _setNullLogger(package=None):
             caller = inspect.stack()[stackNum]
             dummy, programFile, lineNumber, funcName, lineCode, rest = caller
             if funcName == '<module>': funcName = '__main__'
-            str = "[{FUNC:<20}:{LINENO}] - {DATA}".format(FUNC=funcName, LINENO=lineNumber, DATA=data)
+            pkg = package.split('.', 1)[1] + '.' +funcName
+            str = "[{FUNC:<20}:{LINENO}] - {DATA}".format(FUNC=pkg, LINENO=lineNumber, DATA=data)
             print (str)
 
     return nullLogger()

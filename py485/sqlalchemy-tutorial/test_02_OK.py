@@ -25,7 +25,8 @@ Base = declarative_base()
 ''' http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#declare-a-mapping '''
 
 
-def createDB():
+def createDB(dbFile):
+# def createDB(dbCLASS, dbFile):
     global Device, User
     class Device(Base):
         __tablename__  = 'devices'
@@ -34,20 +35,11 @@ def createDB():
         Pin_Number     = Column(Integer)
         Status         = Column(VARCHAR)
 
+    '''
+    '''
 
-    class User(Base):
-        __tablename__ = 'users'
-        id = Column(Integer, Sequence('user_id_seq'), primary_key=True)
-        ''' comodo se si vogliono inserire più record con gli stessi valori '''
-        name     = Column(String(50))
-        fullname = Column(String(50))
-        password = Column(String(12))
-
-        def __repr__(self):
-            return "<User(name='%s', fullname='%s', password='%s')>" % (
-                                    self.name, self.fullname, self.password)
-
-    engine = create_engine('sqlite:///test_01.db')
+    # engine = create_engine('sqlite:///test_02.db')
+    engine = create_engine(dbFile)
     if not database_exists(engine.url):
         print ('... creating db')
         Base.metadata.create_all(engine)
@@ -151,52 +143,19 @@ def addRecs(session):
 
 
 if __name__ == '__main__':
-    engine = createDB()
+    # class Device(Base):
+    #     __tablename__  = 'devices'
+    #     Name           = Column(VARCHAR(40), primary_key = True, nullable = False)
+    #     Address        = Column(Integer)
+    #     Pin_Number     = Column(Integer)
+    #     Status         = Column(VARCHAR)
+
+    # engine = createDB(Device, 'sqlite:///test_02.db')
+    engine = createDB('sqlite:///test_02.db')
+    sys.exit()
     Session = sessionmaker(bind=engine);
     session = Session()
     addRec(session, table=Device, commit=True)
     # addRecs(session)
 
     # http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#creating-a-session
-
-'''
-
-
-
-# --------------------------------------------------------------
-# - http://docs.sqlalchemy.org/en/latest/core/engines.html
-Base.metadata.create_all(myDB)
-# To use a SQLite :memory: database, specify an empty URL:
-# --------------------------------------------------------------
-# engineMem = create_engine('sqlite://', encoding='latin1', echo=True)
-# engineMem = create_engine('sqlite://',  echo=True, poolclass=QueuePool)
-# Base.metadata.create_all(engineMem)
-
-# t = table('t', column('x'))
-# s = select([t]).where(t.c.x == 5)
-# print s.compile(compile_kwargs={"literal_binds": True})
-
-table='cdb2'
-connection = engineMem.connect()
-table.insert().values([
-                    {"Name": "some name"},
-                    {"Name": "some other name"},
-                    {"Name": "yet another name"},
-                ])
-
-
-result = connection.execute("select Name from cdb2")
-for row in result:
-    print("Name:", row['Name'])
-connection.close()
-'''
-
-# --------------------------------------------------------------
-# - http://docs.sqlalchemy.org/en/latest/core/engines.html
-# engine = create_engine('sqlite:///cdb.db')
-# To use a SQLite :memory: database, specify an empty URL:
-# --------------------------------------------------------------
-# engineMem = create_engine('sqlite://', encoding='latin1', echo=True)
-
-
-
