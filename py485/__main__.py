@@ -3,11 +3,22 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 18-12-2017 08.12.33
+# Version ......: 05-01-2018 16.33.19
 #                                               by Loreto Notarantonio
 # ######################################################################################
+import ptvsd
+ptvsd.enable_attach("my_secret", address = ('0.0.0.0', 3000))
+#Enable the below line only on the remote node of code only if you want the application to wait untill the debugger has attached to it
+ptvsd.wait_for_attach()
+ptvsd.break_into_debugger()
+
+# import time
+# time.sleep(1)
+# print ("Hello, World!")
+
+
 import sys; sys.dont_write_bytecode = True
-import os
+# import os
 from pathlib import Path
 # ----------------------------------------------
 # - Inserimento del path corretto della LnLib
@@ -15,6 +26,8 @@ from pathlib import Path
 # - prima di fare gli import
 # ----------------------------------------------
 LnLibPath = Path(sys.argv[0]).resolve().parent / 'bin' / 'LnLib_2017-12-11.zipx'
+LnLibPath = '/home/pi/GIT-REPO'
+
 sys.path.insert(0, str(LnLibPath))
 
 
