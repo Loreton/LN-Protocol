@@ -1,37 +1,37 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 26-11-2017 18.02.30
+# Version ......: 09-01-2018 07.47.25
 # -----------------------------------------------
 
-import  sys
+
 import  Source as Prj
-import  LnLib as Ln; C = Ln.Color()
 
+# -----------------------------------------------------
+# mi serve per passarlo come puntatore al ParseInput
+# per chiamare la funzione delle command-line options
+# La directory option conterrà i file che verranno
+# richiamati in base ai parametri di input.
+# -----------------------------------------------------
+from . import Options as functionsLibPtr
 
-class LnClass(): pass
 
 #######################################################
 # USER ParseInput
-# identificare il numero di parametri posizionali
-# e creare le funzioni che verranno chiamate automaticamente:
-#    nPosizARGS == 0: programOptions()
-#    nPosizARGS == 1: posizParam.upper()
-#    nPosizARGS == 2: posizParam1.upper()_posizParam2.upper()
-# che dovranno essere tutti raggiungibili tramite:
-#     Prj.function()
 #######################################################
 def ParseInput(description='Ln-RS485 protocol', programVersion='V0.1'):
+    Ln = Prj.LnLib
 
-    nPosizARGS = 2
+    posizARGS = 2
     positionalParametersDict  =  {
     'analog'     : {
             'read':   "read  analog bit",
             'write':  "write analog bit",
             },
     'digital'   : {
-            'read':   "read  digital bit",
-            'write':  "write digital bit",
+            'read':   "read   digital bit",
+            'write':  "write  digital bit",
+            'toggle': "toggle digital bit",
             },
     'monitor'   : {
             'rs485':   "read RS485-bus traffic",
@@ -40,21 +40,16 @@ def ParseInput(description='Ln-RS485 protocol', programVersion='V0.1'):
     }
 
 
-        # ----------------------------------
-        # - dict da passare alle funzioni
-        # ----------------------------------
-    gVar = LnClass()
+    inpArgs = Ln.processInput(
+            nPosArgs=posizARGS,
+            parmDict=positionalParametersDict,
+            funcLibPtr=functionsLibPtr,
+            defFuncToCall='programOptions', # function to call only for posizARGS==0
+            progrVersion=programVersion,
+            prjDescr=description,
+            prjDir=None,
+            prjName=None)
 
-    gVar.projectDir               = None
-    gVar.prjName                  = None
-    gVar.programVersion           = programVersion
-    gVar.description              = description
 
-    gVar.nPosizARGS                = nPosizARGS
-    gVar.positionalParametersDict = positionalParametersDict
-
-    args = Ln.processInput(gVar, prjRoot=Prj)
-
-    return  args
+    return  inpArgs
     Ln.Exit(9999)
-

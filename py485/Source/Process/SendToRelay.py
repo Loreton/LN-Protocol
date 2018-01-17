@@ -6,12 +6,12 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 14-12-2017 16.39.22
+# Version ......: 09-01-2018 12.09.54
 #
 # ######################################################################################
 
 
-import  LnLib as Ln; C = Ln.Color()
+import    Source as Prj
 
 
 ########################################################
@@ -19,7 +19,15 @@ import  LnLib as Ln; C = Ln.Color()
 ########################################################
 def SendToRelay(LnRs485, payload):
     assert type(payload) == bytearray
-    logger  = Ln.SetLogger(package=__package__)
+    # ----- common part into the Prj modules --------
+    # import    Source as Prj
+    # global Ln
+    Ln     = Prj.LnLib
+    # C      = Ln.Color()
+    # logger  = Ln.SetLogger(package=__package__)
+    # -----
+
+
 
         # ---------------------------------------------------------------------
         # - invio del messaggio al Relay ed attesa dello stesso come echo

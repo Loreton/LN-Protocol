@@ -6,28 +6,32 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 07-12-2017 13.33.58
+# Version ......: 17-01-2018 14.58.30
 #
 # ######################################################################################
 
 
 import sys
-import time
-import  LnLib as Ln; C = Ln.Color()
+
 import Source as Prj
 
 ########################################################
 # - monitorRS485()
 ########################################################
 def monitorRS485(LnRs485):
-    logger  = Ln.SetLogger(package=__name__)
+    # ----- common part into the Prj modules --------
+    Ln      = Prj.LnLib
+    # gv      = Prj.gv
+    C       = Ln.Color()
+    # logger  = Ln.SetLogger(package=__name__)
+    # -----------------------------------------------
+
 
 
         # ===================================================
         # = RS-485 sendMessage
         # ===================================================
     C.printColored (color=C.yellowH, text=__name__ + '... press ctrl-c to stop the process.', tab=8)
-
 
 
     while True:
@@ -62,31 +66,31 @@ def monitorRS485(LnRs485):
 # - monitorRaw()
 ########################################################
 def monitorRaw(LnRs485, inpArgs):
+    # ----- common part into the Prj modules --------
+    Ln      = Prj.LnLib
+    C       = Ln.Color()
     logger  = Ln.SetLogger(package=__name__)
+    gv      = Prj.gv
+    # -----------------------------------------------
+
 
 
         # ===================================================
         # = RS-485 sendMessage
         # ===================================================
     C.printColored (color=C.yellowH, text=__name__ + '... press ctrl-c to stop the process.', tab=8)
-
+    # gv.args.printTree(fPAUSE=True)
     while True:
         try:
                 # return bytearray
-            rawData = LnRs485._serialRead(timeoutValue=2000)
-            if rawData:
-                fmtData = LnRs485.FormatRawData(rawData)
-                if fmtData.data:
-                    # print (fmtData.data)
-                    # print (fmtData.hexd)
-                    # print (fmtData.hexm)
-                    # print (fmtData.char)
-                    print (fmtData.text)
-                    print ('\n'*2)
-
-
-
-
+            data = LnRs485._serialRead(timeoutValue=2000)
+            if data:
+                fmtData = LnRs485.format(data, Ln.Dict)
+                logger.debug('received... {}'.format(fmtData.hexm))
+                if gv.args.hex:  print (fmtData.hexm)
+                if gv.args.char: print (fmtData.char)
+                if gv.args.text: print (fmtData.text)
+                print ('\n'*2)
 
 
         except (KeyboardInterrupt) as key:

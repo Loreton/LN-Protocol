@@ -6,18 +6,13 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 15-12-2017 14.45.15
+# Version ......: 09-01-2018 12.09.08
 #
 # ######################################################################################
 
 
 import  sys
-import  time
-import  LnLib as Ln; C = Ln.Color()
 import  Source as Prj
-
-# gV = Prj.gVars
-
 
 def digitalRead(LnRs485, iniData, srcAddress, destAddr, pinNO):
     pass
@@ -27,7 +22,15 @@ def digitalRead(LnRs485, iniData, srcAddress, destAddr, pinNO):
 ########################################################
 def digitalToggle(gv, LnRs485, payload):
     assert type(payload) == bytearray
-    logger  = Ln.SetLogger(package=__package__)
+
+    # ----- common part into the Prj modules --------
+    # import    Source as Prj
+    global Ln
+    Ln     = Prj.LnLib
+    C      = Ln.Color()
+    # logger  = Ln.SetLogger(package=__package__)
+    # -----
+
 
         # puntamento ai fieldNames
     _fld     = LnRs485._fld

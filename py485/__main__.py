@@ -3,119 +3,40 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 05-01-2018 16.33.19
-#                                               by Loreto Notarantonio
+# Version ......: 17-01-2018 18.20.19
+#
 # ######################################################################################
-import ptvsd
-ptvsd.enable_attach("my_secret", address = ('0.0.0.0', 3000))
-#Enable the below line only on the remote node of code only if you want the application to wait untill the debugger has attached to it
-ptvsd.wait_for_attach()
-ptvsd.break_into_debugger()
-
-# import time
-# time.sleep(1)
-# print ("Hello, World!")
-
-
 import sys; sys.dont_write_bytecode = True
-# import os
-from pathlib import Path
-# ----------------------------------------------
-# - Inserimento del path corretto della LnLib
-# - Le path per LnLib vanno impostate
-# - prima di fare gli import
-# ----------------------------------------------
-LnLibPath = Path(sys.argv[0]).resolve().parent / 'bin' / 'LnLib_2017-12-11.zipx'
-LnLibPath = '/home/pi/GIT-REPO'
-
-sys.path.insert(0, str(LnLibPath))
+# from pathlib import Path
 
 
-import  LnLib as Ln
-import  Source as Prj
+import    Source as Prj
 
-def testLnDict():
-    gv      = Ln.Dict() #ss gv oggetto dictionary passabile, serve per la 95
+myLibName = ['LnPyLib', 'xxxLnLib_2018-01-04.zip']
+Prj.LnLib = Prj.SPE.LibPath(myLibName, fDEBUG=False)
 
-        # ==========================================
-        # = Preparazione del PAYLOAD  #ss parte definita dai campi fld
-        # ==========================================
+# -------------------------------------------------------
+# - inseriamo la LnLib e le gVars all'interno della Prj
+# - in modo che ce la ritroviamo in tutti i moduli
+# - facendo il solo import della Prj
+# -------------------------------------------------------
+Prj.gv    = Prj.LnLib.Dict()
 
-    relay      = Ln.Dict()      #ss classe - nuovo oggetto relay
-    relay.port = '/dev/ttyUSB0' #ss attributo
-    relay.mode = 'ascii'        #ss attributo
-    relay.baudrate = 9600       #ss attributo
-
-    # relay.printTree(header="relay object", fEXIT=True)
-
-
-
-    fld                         = Ln.Dict() #ss altro oggetto
-    fld.SRC_ADDR                = 0         #ss attributo
-    fld.DEST_ADDR               = 1
-    fld.SEQNO_H                 = 2
-    fld.SEQNO_L                 = 3
-    fld.RCODE                   = 4
-    fld.CMD                     = 5
-    fld.SUB_CMD                 = 6
-    fld.COMMAND_DATA            = 7
-    fld.PIN_NO                  = 7
-    fld.PIN_ACTION              = 8
-    # fld.printDict(header="fields names", fEXIT=True)
-
-    rs485Prot                   = Ln.Dict() #ss altro oggetto
-    rs485Prot.MasterAddress     = 1
-    rs485Prot.STX               = 0x02
-    rs485Prot.ETX               = 0x03
-    rs485Prot.mode              = 'ascii'
-    rs485Prot.CRC               = True
-    rs485Prot.payloadFieldName  = fld
-    # rs485Prot.printDict(header="rs485", fEXIT=True)
-
-
-    mainCmd = {}    #ss altro modo di creare un dictionary
-    mainCmd['RELAY_ECHO_CMD'] = 0x01
-    mainCmd['SLAVE_ECHO_CMD'] = 0x02
-
-    mainCmd = {"RELAY_ECHO_CMD": 0x01, "SLAVE_ECHO_CMD": 0x02}
-
-        # puntamento ai comandi e sottocomandi
-    mainCmd                         = Ln.Dict() #ss
-    mainCmd.RELAY_ECHO_CMD          = 0x01  #ss RELAY_ECHO_CMD = keys 0x01 = valore
-    mainCmd.SLAVE_ECHO_CMD          = 0x02
-    mainCmd.POLLING_CMD             = 0x03
-    mainCmd.SET_PINMODE_CMD         = 0x21
-    mainCmd.DIGITAL_CMD             = 0x31
-    mainCmd.ANALOG_CMD              = 0x32
-    mainCmd.PWM_CMD                 = 0x33
-
-    subCmd                         = Ln.Dict() #ss
-    subCmd.NO_REPLY                = 0x01     # for echo command
-    subCmd.REPLY                   = 0x02     # for echo command
-    subCmd.READ_PIN                = 0x04     # for analog/digital commands
-    subCmd.WRITE_PIN               = 0x05     # for analog/digital commands
-    subCmd.TOGGLE_PIN              = 0x06     # for digital commands
-    #subCmd.printDict(header="Global vars", fEXIT=True)
-
-
-
-    gv.rs485Prot  = rs485Prot
-    gv.mainCmd = mainCmd
-    gv.subCmd  = subCmd
-    gv.printDict(header="Global vars", fEXIT=True)
 
 
 ################################################################################
 # - M A I N
+#    python.exe __main__.py ....
 ################################################################################
 if __name__ == "__main__":
-    # testLnDict()
-    gv        = Ln.Dict()
-
+    # ----- common part into the Prj modules --------
+    Ln          = Prj.LnLib
+    gv          = Prj.gv
+    # -----------------------------------------------
         # -------------------------------
         # - Lettura parametri di input
         # -------------------------------
-    args      = Prj.ParseInput() # ; print (args)
+    args      = Prj.ParseInput()
     gv.args   = Ln.Dict(args)
     gv.fDEBUG = gv.args.debug
     if gv.fDEBUG: gv.args.printTree(fPAUSE=True)
@@ -123,11 +44,21 @@ if __name__ == "__main__":
         # -------------------------------
         # - Inizializzazione del logger
         # -------------------------------
-    logger    = Ln.InitLogger(  toFILE=gv.args.log,
+    logger    = Ln.InitLogger(  name='LnLoggerClass',
                                 logfilename=gv.args.log_filename,
+                                toFILE=gv.args.log,
                                 toCONSOLE=gv.args.log_console,
-                                loglevel=gv.args.loglevel,
-                                ARGS=args)
+                                defaultLogLevel=gv.args.loglevel,
+                                rotationType='time', when="m", interval=60,
+                                # rotationType='size', maxBytes=500000,
+                                backupCount=5,
+                                filterDefaultStack=5
+                            )
+
+    # logger.setFilterDefaultStack(5)
+    # logger.info('command line parameters...')
+    logger.info(gv.args, dictTitle='command line parameters...')
+
 
 
         # ------------------------

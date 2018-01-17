@@ -26,6 +26,8 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #include    <LnRS485_protocol.h>
 #include    "LnRs485.h"
 
+bool     I_AM_RELAY = false;
+bool     I_AM_SLAVE = false;
 
 /*
     Per i pin di Arduino, facendo riferimento alle istruzioni di Arduino stesso, sono
@@ -122,12 +124,14 @@ void loop() {
             }
             // Relay_Main_DEBUG(RX_TIMEOUT);
             Relay_Main(RX_TIMEOUT);
+            I_AM_RELAY = true;
         #endif
     }
     else {
         if (firstRun) {
             setMyID("Slave", myEEpromAddress);
             pData->myID             = myID;
+            I_AM_SLAVE = true;
         }
         Slave_Main(RX_TIMEOUT);
 

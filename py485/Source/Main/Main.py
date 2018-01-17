@@ -2,14 +2,14 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 15-12-2017 14.44.24
+# Version ......: 09-01-2018 11.41.13
 #
 # ######################################################################################
 
 
 import os, sys
 import Source as Prj
-import LnLib as Ln
+# import LnLib as Ln
 
 # from Source.Setup import GlobalVars_Module as projectGlobalVars
 # gV = projectGlobalVars
@@ -21,7 +21,11 @@ import LnLib as Ln
 # -  5 - Chiamata al programma principale del progetto
 ################################################################################
 def Main(gv):
-    logger      = Ln.SetLogger(package = __name__)
+    # ----- common part into the Prj modules --------
+    global Ln
+    Ln     = Prj.LnLib
+    logger = Ln.SetLogger(__package__)
+    # -----------------------------------------------
 
     iniMain     = gv.iniFile.MAIN
     relay       = gv.iniFile.ARDUINO_RELAY_PORT

@@ -1,6 +1,9 @@
 /*
 Author:     Loreto Notarantonio
-version:    LnVer_2017-11-30_19.07.33
+
+# updated by ...: Loreto Notarantonio
+# Version ......: 17-01-2018 08.50.21
+
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -32,16 +35,19 @@ void Relay_Main(unsigned long RxTimeout) {
     pData->Rx_Timeout      = RxTimeout;         // set timeout
     pData->rx[fld_DATALEN] = 0;
 
-        // --------------------------------------
-        // - ricezione messaggio da RaspBerry
-        // --------------------------------------
+        // -------------------------------------------
+        // - ricezione messaggio da RaspBerry (Rs232)
+        // -------------------------------------------
     byte rCode = recvMsg232(pData);
-    Rx = pData->rx;
-    Tx = pData->tx;
+    if (rCode == LN_TIMEOUT) {return; }
+
+    Rx         = pData->rx;
+    Tx         = pData->tx;
 
 
         // --------------------------------------
         // - se corretto:
+        // -    1. echo del messaggio appena ricevuto verso RaspBerry (come ack)
         // -    1. inoltra to rs485 bus
         // -    2. attendi risposta
         // -    3. copia comunque su Txdata
@@ -55,30 +61,30 @@ void Relay_Main(unsigned long RxTimeout) {
         // -    1. ignora
         // --------------------------------------
 
-    if (rCode == LN_TIMEOUT) {
-        return;
-    }
 
-        // - echo del comando appena ricevuto
-        // - anche se in errore....
+
+
+
+        /*
+            echo del comando appena ricevuto
+            come ack verso RaspBerry
+        */
     copyRxMessageToTx(pData);
     sendMsg232(pData);
 
     if (rCode == LN_OK) {
 
-        if (Rx[fld_DESTINATION_ADDR] == myEEpromAddress)  { // facciamo echo del comando....
-            processRequest(pData); // esegue come fosse uno slave.
+            // processiamo il comando come fossimo uno slave.
+        if (Rx[fld_DESTINATION_ADDR] == myEEpromAddress)  {
+            processRequest(pData);
         }
 
         else {
+                // forward message to Rs485 bus
             Relay_fwdToRs485(pData);
-                // qualsiasi esito il msg è pronto da inviare sulla rs232
+                // wait for response
             byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-
-            // Serial.print(pData->myID);
-            //     Serial.print(F(" - 0x"));       printHex(Rx[fld_SENDER_ADDR]);
-            //     Serial.print(F("-->0x"));       printHex(Rx[fld_DESTINATION_ADDR]);
-
+                // forward message to RaspBerry (rs232)
             Relay_fwdToRaspBerry(pData, rcvdRCode, true);
         }
     }

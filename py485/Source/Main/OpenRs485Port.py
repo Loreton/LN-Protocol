@@ -6,11 +6,18 @@
 #
 # ######################################################################################
 
-import LnLib    as Ln
+import    Source as Prj
 ################################################################################
 # - Open RS485 port
 ################################################################################
 def openRs485Port(portData, rs485):
+    # ----- common part into the Prj modules --------
+    # import    Source as Prj
+    global Ln
+    Ln     = Prj.LnLib
+    # C      = Ln.Color()
+    # logger = Ln.SetLogger(__package__)
+    # -----
     logger = Ln.SetLogger(package = __package__)
 
     for key, val in portData.items():   logger.debug('portData    {0:<15}: {1}'.format(key, val))

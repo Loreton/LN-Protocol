@@ -37,10 +37,9 @@ void Slave_Main(unsigned long RxTimeout) {
     }
 
     else if (pData->rx[fld_DATALEN] == 0) {
-        // Serial.print(myID);
-        // Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
-        // Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));Serial.print(pData->timeout);
-        // Serial.println();
+        Serial.print(myID);
+        Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
+        Serial.println();
 
     }
 
@@ -110,7 +109,10 @@ void processRequest(RXTX_DATA *pData) {
                 // print6Str(); ... il codice qui non viene considerato
 
                 case READ_PIN:
-                    print6Str(TAB4, descr_DigitalCMD, descr_ReadingPin);Serial.print(pinNO);
+                    if (I_AM_SLAVE==true) {
+                        print6Str(TAB4, descr_DigitalCMD, descr_ReadingPin);
+                        Serial.print(pinNO);
+                    }
                     readValue1 = digitalRead(pinNO);
                     returnDATA[counter++] = (char) readValue1;
                     setDataCommand(Tx, descr_ReadingPin, sizeof(descr_ReadingPin));
@@ -119,7 +121,10 @@ void processRequest(RXTX_DATA *pData) {
                     // Write Pin (if level is different from requested value)
                     // return [x,y] - previous and current
                 case WRITE_PIN:
-                    print6Str(TAB4, descr_DigitalCMD, descr_WritingPin);Serial.print(pinNO);
+                    if (I_AM_SLAVE==true) {
+                        print6Str(TAB4, descr_DigitalCMD, descr_WritingPin);
+                        Serial.print(pinNO);
+                    }
 
                     readValue1 = digitalRead(pinNO);
                     if (readValue1 != valueToWrite)
@@ -130,13 +135,18 @@ void processRequest(RXTX_DATA *pData) {
 
                     returnDATA[counter++] = (char) readValue1;
                     returnDATA[counter++] = (char) readValue2;
-                    print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
+                    if (I_AM_SLAVE==true) {
+                        print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
+                    }
                     break;
 
                     // led lampeggiante
                     // return [x,y] - previous and current
                 case TOGGLE_PIN:
-                    print6Str(TAB4, descr_DigitalCMD, descr_TogglePin);Serial.print(pinNO);
+                    if (I_AM_SLAVE==true) {
+                        print6Str(TAB4, descr_DigitalCMD, descr_TogglePin);
+                        Serial.print(pinNO);
+                    }
 
                     readValue1 = digitalRead(pinNO);
                     if (readValue1 == LOW)
@@ -148,7 +158,11 @@ void processRequest(RXTX_DATA *pData) {
 
                     returnDATA[counter++] = (char) readValue1;
                     returnDATA[counter++] = (char) readValue2;
-                    print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
+                    if (I_AM_SLAVE==true) {
+                        print6Str(" before/after ");
+                        printDataToHex(returnDATA, counter, "/");
+                    }
+
                     break;
             }
             setDataCommand(Tx, returnDATA, counter);
