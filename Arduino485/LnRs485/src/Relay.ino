@@ -2,7 +2,7 @@
 Author:     Loreto Notarantonio
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 17-01-2018 08.50.21
+# Version ......: 18-01-2018 16.57.30
 
 
 Scope:      Funzione di relay.
@@ -39,7 +39,13 @@ void Relay_Main(unsigned long RxTimeout) {
         // - ricezione messaggio da RaspBerry (Rs232)
         // -------------------------------------------
     byte rCode = recvMsg232(pData);
-    if (rCode == LN_TIMEOUT) {return; }
+
+    if (rCode == LN_TIMEOUT) {
+        Serial.print(myID);
+        Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
+        Serial.println();
+        return;
+    }
 
     Rx         = pData->rx;
     Tx         = pData->tx;

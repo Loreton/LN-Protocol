@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 17-01-2018 16.31.25
+# Version ......: 18-01-2018 16.33.59
 
 import sys
 
@@ -22,15 +22,18 @@ class Formatter:
         assert type(data) == bytearray
         if not data: return None
         hexData = ' '.join("x'{0:02x}'".format(x) for x in data)
-        hexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=hexData)
+        hexData1 = ' '.join("{0:02x}".format(x) for x in data)
+        hexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=hexData1)
         return hexData, hexMsg
+
+
 
 
     ######################################################
     # -
     ######################################################
     @staticmethod
-    def _fmtData(obj485, data, myDict):
+    def _xxfmtData___(obj485, data, myDict):
         '''
             Prende in input un bytearray di dati
             li formatta di diversi formati
@@ -79,7 +82,7 @@ class Formatter:
     # -
     ######################################################
     @staticmethod
-    def format(obj485, data, myDict):
+    def _fmtData(obj485, data, myDict):
         '''
             Prende in input un bytearray di dati
             li formatta in vari formati
@@ -130,7 +133,7 @@ class Formatter:
     # -    4. mette i dati un un dictionnary
     ######################################################
     @staticmethod
-    def _payloadFields(obj485, data):
+    def _payloadFields___(obj485, data):
         assert type(data) == bytearray
         logger = obj485._setLogger(package=__name__)
 
@@ -147,7 +150,8 @@ class Formatter:
         myDict.s04_CMD         = "x'{:02X}'".format(data[fld.CMD])
         myDict.s06_subCMD      = "x'{:02X}'".format(data[fld.SUB_CMD])
         myDict.s07_commandData = data[fld.COMMAND_DATA:]
-        myDict.s07_commandData = Formatter._toHex(data[fld.COMMAND_DATA:])[0]
+        myDict.s07_commandData = ' '.join("x'{0:02x}'".format(x) for x in data[fld.COMMAND_DATA:])
+        # myDict.s07_commandData = Formatter._toHex(data[fld.COMMAND_DATA:])[0]
 
         return myDict
 

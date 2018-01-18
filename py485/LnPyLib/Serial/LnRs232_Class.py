@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 17-01-2018 14.57.12
+# Version ......: 18-01-2018 16.40.01
 
 import serial       # sudo pip3.4 install pyserial
 import sys
@@ -141,16 +141,17 @@ class LnRs232():
         logger.info( "starting timer... for {} mSec".format(timeoutValue))
 
 
-        # loop fino a che non abbiamo ricevuto dati
+        # loop fino a che non abbiamo ricevuto qualche dato
         _dataBuffer = bytearray()
         while True:
             elapsed = int((time.time()*1000)-timeStart)
-                # - in attesa di un byte
-            ch    = self._serial.read(1)       # ch e' un type->bytes
 
-            if ch == b'':
-                if _dataBuffer: # something has been received ... exit
-                    break
+                # - read serial
+            ch = self._serial.read(1)       # ch e' un type->bytes
+
+            if ch == b'':       # if buffer empty...
+                if _dataBuffer: # ... and something was received ...
+                    break       # ... exit
                 elif elapsed >= timeoutValue:
                     logger.info( "elapsed {0}/{1}".format(elapsed, timeoutValue))
                     break
@@ -166,8 +167,6 @@ class LnRs232():
             logger.info('closing port...')
             self._serial.close()
 
-        # fmtedDict = self._formatter._fmtData(self, _dataBuffer, self._myDict)
-        # return fmtedDict
         logger.info( "received {} bytes".format(len(_dataBuffer)))
         logger = self._setLogger(package=__name__, exiting=True)
         return _dataBuffer

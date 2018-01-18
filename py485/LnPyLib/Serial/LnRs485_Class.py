@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 17-01-2018 14.46.57
+# Version ......: 18-01-2018 16.33.44
 
 
 
@@ -197,21 +197,20 @@ class LnRs485(LnRs232):
     # -     byte = byte1_HNibble * 16 + byte2_HNibble
     # ---------------------------------------------
     def _splitComplementedByte(self, byte):
+        assert type(byte) == int
         logger = self._setLogger(package=__name__)
-        logger.debug ("byte to be converted: {0} - type: {1}".format(byte, type(byte)))
 
             # first nibble
         c = byte >> 4;
         byteValue = (c << 4) | (c ^ 0x0F)
         highNibble = byteValue
-        logger.debug  ("    x{0:02X}".format( highNibble))
 
             # second nibble
         c = byte & 0x0F;
         byteValue = (c << 4) | (c ^ 0x0F)
         lowNibble = byteValue
-        logger.debug  ("    x{0:02X}".format(lowNibble))
 
+        logger.debug ("byte: {B:02X} converted in: lowNibble: {L:02X} - highNibble: {H:02X}".format(B=byte, L=lowNibble, H=highNibble) )
 
             # second two bytes
         return highNibble, lowNibble
@@ -226,10 +225,12 @@ class LnRs485(LnRs232):
     def read485(self, timeoutValue=2000):
         logger = self._setLogger(package=__name__)
 
-            # - return dict.raw dict.hexd dict.hexm dict.text dict.char
-        data232  = self.read232(timeoutValue = timeoutValue)
-        if data232.raw:
-            payloadArray = self._extractPayload(data232.raw)    # extract payload
+        data = self.read232(timeoutValue = timeoutValue)
+        if data:
+            # - return dict.raw dict.hex dict.hexm dict.text dict.char
+            data232      = self.fmtData(data, self._myDict)
+
+            payloadArray = self._extractPayload(data)    # extract payload
             data485      = self._formatter._fmtData(self, payloadArray, self._myDict) # format payload
             data485.dict = self._formatter._payloadFields(self, payloadArray) # create a dictionary with fields
 
@@ -245,6 +246,12 @@ class LnRs485(LnRs232):
 
         logger = self._setLogger(package=__name__)
         logger.info('payload: {}'.format(self._formatter._toHex(payload)[0]))
+
+        ''' log fino al primo byte di command data '''
+        from operator import itemgetter
+        for k, v in sorted(self._fld.items(), key=itemgetter(1)):
+            logger.info('{:<15}: {:02X}'.format(k, payload[v]))
+
 
             # - prepariamo il bytearray per i dati da inviare
         dataToSend=bytearray()
@@ -268,7 +275,8 @@ class LnRs485(LnRs232):
             # - ETX
         dataToSend.append(self._ETX)
 
-        logger.info('dataToSend: {}'.format(self._formatter._toHex(dataToSend)[0]))
+        logger.info('sending data...')
+        logger.info('{}'.format(self._formatter._toHex(dataToSend)[1]))
 
         # INVIO dati
         self.write232(dataToSend)
@@ -362,8 +370,8 @@ class LnRs485(LnRs232):
 
 
 
-    def format(self, data, myDict):
-        data485      = self._formatter.format(self, data, myDict) # format payload
+    def fmtData(self, data, myDict):
+        data485      = self._formatter._fmtData(self, data, myDict) # format payload
         return data485
         # data485      = self._formatter._fmtData(self, payloadArray, self._myDict) # format payload
         # data485.dict = self._formatter._payloadFields(self, payloadArray) # create a dictionary with fields

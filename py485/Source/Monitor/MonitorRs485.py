@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 17-01-2018 14.58.30
+# Version ......: 18-01-2018 15.54.24
 #
 # ######################################################################################
 
@@ -85,7 +85,7 @@ def monitorRaw(LnRs485, inpArgs):
                 # return bytearray
             data = LnRs485._serialRead(timeoutValue=2000)
             if data:
-                fmtData = LnRs485.format(data, Ln.Dict)
+                fmtData = LnRs485.fmtData(data, Ln.Dict)
                 logger.debug('received... {}'.format(fmtData.hexm))
                 if gv.args.hex:  print (fmtData.hexm)
                 if gv.args.char: print (fmtData.char)

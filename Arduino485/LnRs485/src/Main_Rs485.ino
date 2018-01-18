@@ -105,7 +105,7 @@ void setup() {
 // # - M A I N     Loop
 // ################################################################
 void loop() {
-    unsigned long RX_TIMEOUT = 2000;
+    unsigned long RX_TIMEOUT = 5000;
     pData->myEEpromAddress  = myEEpromAddress;
 
     if (myEEpromAddress <= 10) {

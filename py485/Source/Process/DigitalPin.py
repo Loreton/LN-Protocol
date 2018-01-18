@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 09-01-2018 12.09.08
+# Version ......: 18-01-2018 15.52.18
 #
 # ######################################################################################
 
@@ -23,13 +23,10 @@ def digitalRead(LnRs485, iniData, srcAddress, destAddr, pinNO):
 def digitalToggle(gv, LnRs485, payload):
     assert type(payload) == bytearray
 
-    # ----- common part into the Prj modules --------
-    # import    Source as Prj
-    global Ln
     Ln     = Prj.LnLib
     C      = Ln.Color()
-    # logger  = Ln.SetLogger(package=__package__)
-    # -----
+    logger = Ln.SetLogger(package=__name__)
+
 
 
         # puntamento ai fieldNames
@@ -59,14 +56,12 @@ def digitalToggle(gv, LnRs485, payload):
 
 
         # ---------------------------------------------------------------------
-        # - invio del messaggio al Relay ed attesa dello stesso come echo
         # - Se non lo riceviamo vuol diche che c'è un problema
         # ---------------------------------------------------------------------
+        # - invio del messaggio al Relay ....
     Prj.SendToRelay(LnRs485, payload)
 
-        # ---------------------------------------------------------------------
-        # - Attesa risposta...
-        # ---------------------------------------------------------------------
+        # - ... attesa dello stesso come echo
     fDEBUG = False
     while True:
         try:
