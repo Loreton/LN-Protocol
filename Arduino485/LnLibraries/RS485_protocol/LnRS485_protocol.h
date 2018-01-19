@@ -21,6 +21,7 @@
                                 "BAD-CHAR",
                                 "TIMEOUT",
                                 "PAYLOAD",
+                                "WAITING_FOR_DATA",
                                 "DEBUG",
                             };
 
@@ -56,6 +57,7 @@
                         LN_BADCHAR,
                         LN_TIMEOUT,
                         LN_PAYLOAD,
+                        LN_WAITING_FOR_CMD,
                         LN_DEBUG,
                         LN_UNKNOWN_CMD,
                     };

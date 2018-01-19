@@ -36,7 +36,7 @@ void Slave_Main(unsigned long RxTimeout) {
         processRequest(pData);
     }
 
-    else if (pData->rx[fld_DATALEN] == 0) {
+    else if (Rx[fld_DATALEN] == 0) {
         Serial.print(myID);
         Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
         Serial.println();
@@ -57,8 +57,8 @@ void Slave_Main(unsigned long RxTimeout) {
 // #
 // #############################################################
 void processRequest(RXTX_DATA *pData) {
-    unsigned char *Rx = pData->rx;
-    unsigned char *Tx = pData->tx;
+    // unsigned char *Rx = pData->rx;
+    // unsigned char *Tx = pData->tx;
     byte senderAddr = Rx[fld_SENDER_ADDR];
     byte destAddr   = Rx[fld_DESTINATION_ADDR];
 

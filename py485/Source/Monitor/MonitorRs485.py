@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 18-01-2018 15.54.24
+# Version ......: 19-01-2018 16.03.40
 #
 # ######################################################################################
 
@@ -18,15 +18,11 @@ import Source as Prj
 ########################################################
 # - monitorRS485()
 ########################################################
-def monitorRS485(LnRs485):
-    # ----- common part into the Prj modules --------
+def monitorRS485(LnSerial):
     Ln      = Prj.LnLib
-    # gv      = Prj.gv
     C       = Ln.Color()
-    # logger  = Ln.SetLogger(package=__name__)
-    # -----------------------------------------------
-
-
+    logger  = Ln.SetLogger(package=__name__)
+    gv = Prj.gv
 
         # ===================================================
         # = RS-485 sendMessage
@@ -35,23 +31,37 @@ def monitorRS485(LnRs485):
 
 
     while True:
-        # LnRs485.cleanRxData
+        # LnSerial.cleanRxData
         try:
                 # return bytearray
-            rawData = LnRs485._serialRead(timeoutValue=2000)
-            if rawData:
-                fullData = LnRs485.VerifyRs485Data(rawData)
-                payload = fullData.payload
-                raw     = fullData.raw
-                if payload.data:
+            dict232, dict485 = LnSerial.read485(timeoutValue=2000)
+                # - ricevuto il messaggio di waiting for command da parte del Relay
+            if dict485.raw and dict485.fld.f05_RCODE==6:
+                logger.info(dict485.fld, dictTitle='RS485 received data')
+                print ('\n'*2)
+                continue
+
+            # if data:
+            # if data:
+                # fmtData = LnSerial.fmtData(data, Ln.Dict)
+                # if gv.args.hex:  print (fmtData.hexm)
+                # if gv.args.char: print (fmtData.char)
+                # if gv.args.text: print (fmtData.text)
+
+            #     logger.debug('received... {}'.format(fmtData.hexm))
+                # fullData = LnSerial.decodePayload485(data, Ln.Dict)
+                # logger.info(gv.args, dictTitle='command line parameters...')
+                # logger.info(fullData, dictTitle="rs485 payload")
+                # payload = fullData.payload
+                # raw     = fullData.raw
+                # if payload.data:
                     # print (payload.data)
                     # print (payload.hexd)
                     # print (payload.hexm)
                     # print (payload.char)
                     # print (payload.text)
-                    xx = LnRs485.PayloadToDict(payload.data)
-                    xx.printTree(header='ricezione dati dallo slave: {}'.format(payload.data[LnRs485._fld.SRC_ADDR]))
-                    print ('\n'*2)
+                    # xx = LnSerial.PayloadToDict(payload.data)
+                    # xx.printTree(header='ricezione dati dallo slave: {}'.format(payload.data[LnSerial._fld.SRC_ADDR]))
 
 
 
@@ -61,39 +71,4 @@ def monitorRS485(LnRs485):
             sys.exit()
 
 
-
-########################################################
-# - monitorRaw()
-########################################################
-def monitorRaw(LnRs485, inpArgs):
-    # ----- common part into the Prj modules --------
-    Ln      = Prj.LnLib
-    C       = Ln.Color()
-    logger  = Ln.SetLogger(package=__name__)
-    gv      = Prj.gv
-    # -----------------------------------------------
-
-
-
-        # ===================================================
-        # = RS-485 sendMessage
-        # ===================================================
-    C.printColored (color=C.yellowH, text=__name__ + '... press ctrl-c to stop the process.', tab=8)
-    # gv.args.printTree(fPAUSE=True)
-    while True:
-        try:
-                # return bytearray
-            data = LnRs485._serialRead(timeoutValue=2000)
-            if data:
-                fmtData = LnRs485.fmtData(data, Ln.Dict)
-                logger.debug('received... {}'.format(fmtData.hexm))
-                if gv.args.hex:  print (fmtData.hexm)
-                if gv.args.char: print (fmtData.char)
-                if gv.args.text: print (fmtData.text)
-                print ('\n'*2)
-
-
-        except (KeyboardInterrupt) as key:
-            print (__name__, "Keybord interrupt has been pressed")
-            sys.exit()
 

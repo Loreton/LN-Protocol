@@ -1,7 +1,7 @@
 
 import os
 import inspect
-
+import sys, logging
 
 class LnClass(): pass
 
@@ -13,18 +13,25 @@ from . LnLogger_Class import LnLogger
 # - è tra quelli da fare il log.
 # - Il package mi server per verficare se devo loggare il modulo o meno
 # ====================================================================================
-def SetLogger(package, exiting=False):
+def SetLogger(package, exiting=False, offsetSL=0):
 
     pointers = LnLogger.static_getMainPointers()
+    fDEBUG = False
+    if fDEBUG:
+        print('pointers.rootName     = ', pointers.rootName)
+        print('pointers.logger       = ', pointers.logger)
+        print('pointers.LnFilter     = ', pointers.LnFilter)
+        print('pointers.modulesToLog = ', pointers.modulesToLog)
+        print('pointers.logLevel     = ', pointers.logLevel)
+        print('pointers.nullLogger   = ', pointers.nullLogger)
 
-
+    # sys.exit()
     logger        = pointers.logger
     _LnFilter     = pointers.LnFilter
     _modulesToLog = pointers.modulesToLog
     _logLevel     = pointers.logLevel
     _nullLogger   = pointers.nullLogger
 
-    fDEBUG = False
 
 
 
@@ -33,6 +40,7 @@ def SetLogger(package, exiting=False):
     CALLER[1] = GetCaller(1)
     # CALLER[2] = GetCaller(2)
     CALLER[3] = GetCaller(3)
+    CALLER[4] = GetCaller(4)
 
         # ---------------------------------
         # - individuiamo se è un modulo
@@ -60,7 +68,7 @@ def SetLogger(package, exiting=False):
 
     logger.setLevel(LOG_LEVEL)
 
-    _LnFilter.addStack(1)    # cambio lo stackNum
+    _LnFilter.addStack(1+offsetSL)    # cambio lo stackNum
 
     if exiting:
         logger.info('.... exiting\n')
@@ -96,7 +104,7 @@ def GetCaller(stackLevel=0):
     retCaller._lineno     = lineNumber
     retCaller._fullfname  = programFile
 
-    fname                   = os.path.basename(programFile).split('.')[0]
+    fname                 = os.path.basename(programFile).split('.')[0]
     retCaller._fname      = fname
     retCaller._fullcaller = "[{0}.{1}:{2}]".format(fname, funcName, lineNumber)
 

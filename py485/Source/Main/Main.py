@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 09-01-2018 11.41.13
+# Version ......: 19-01-2018 14.19.33
 #
 # ######################################################################################
 
@@ -25,6 +25,7 @@ def Main(gv):
     global Ln
     Ln     = Prj.LnLib
     logger = Ln.SetLogger(__package__)
+    print (logger)
     # -----------------------------------------------
 
     iniMain     = gv.iniFile.MAIN

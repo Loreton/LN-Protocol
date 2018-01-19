@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 18-01-2018 16.33.44
+# Version ......: 19-01-2018 16.24.51
 
 
 
@@ -171,8 +171,8 @@ class LnRs485(LnRs232):
         logger = self._setLogger(package=__name__)
         crcValue = 0
         for byte in byteArray_data:
-            # if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
-            logger.debug('byte: int:{0} hex: {0:02x} - crcValue int:{1} hex: {1:02x}'.format(byte, crcValue))
+
+            # logger.debug('byte: int:{0} hex: {0:02x} - crcValue int:{1} hex: {1:02x}'.format(byte, crcValue))
             b2 = byte
             if (byte < 0):
                 b2 = byte + 256
@@ -183,6 +183,8 @@ class LnRs485(LnRs232):
                 if (odd):
                     crcValue ^= 0x8C # this means crc ^= 140
 
+        logger.info('CRC value: int:{0} hex: {0:02x}'.format(crcValue))
+        logger = self._setLogger(package=__name__, exiting=True)
         return crcValue
 
 
@@ -223,18 +225,43 @@ class LnRs485(LnRs232):
     # - Scrittura dati sulla seriale
     #######################################################################
     def read485(self, timeoutValue=2000):
+        ''' return:
+                dict232.raw
+                dict232.hex
+                dict232.hexm
+                dict232.text
+                dict232.char
+
+            return:
+                dict485.raw
+                dict485.hex
+                dict485.hexm
+                dict485.text
+                dict485.char
+                dict485.fld.f01_xxx
+                dict485.fld.f01_yyy
+        '''
         logger = self._setLogger(package=__name__)
+        rcvdData = self.read232(timeoutValue = timeoutValue)
 
-        data = self.read232(timeoutValue = timeoutValue)
-        if data:
-            # - return dict.raw dict.hex dict.hexm dict.text dict.char
-            data232      = self.fmtData(data, self._myDict)
+        # flds = self._fld
+        if rcvdData:
+            dict232 = self._formatter._fmtData(self, rcvdData, self._myDict)
+            payloadArray = self._extractPayload(rcvdData)    # extract payload
+            dict485      = self._formatter._fmtData(self, payloadArray, self._myDict) # format payload
+            dict485.fld  = self._formatter._payloadFields(self, payloadArray, self._myDict) # create a dictionary with fields
 
-            payloadArray = self._extractPayload(data)    # extract payload
-            data485      = self._formatter._fmtData(self, payloadArray, self._myDict) # format payload
-            data485.dict = self._formatter._payloadFields(self, payloadArray) # create a dictionary with fields
+        else:
+                # default....
+            dict232 = self._myDict()
+            dict485 = self._myDict()
+            dict232.raw = rcvdData
+            dict485.raw = None
+            dict485.fld = self._myDict()
+            # dict485.rcode = dict485[self._fld.f05_RCODE]
 
-        return data232, data485
+
+        return dict232, dict485
 
 
 
@@ -280,22 +307,26 @@ class LnRs485(LnRs232):
 
         # INVIO dati
         self.write232(dataToSend)
-        data232 = self._formatter._fmtData(self, dataToSend, self._myDict)
-        return data232
+        return dataToSend
+        # data232 = self._formatter._fmtData(self, dataToSend, self._myDict)
+        # return data232
 
 
 
 
     ######################################################
-    # - unpack data
-    # - partendo dal rawData:
-    # -    1. riconosce STX ed ETX
-    # -    2. verifica la correttezza del pacchetto CRC
-    # -    3. ricostruisce i byte originali (2bytes --> 1 byte)
-    # -    4. estrae il payload
-    # -    5. ritorna payload in un bytearray
+    #
     ######################################################
     def _extractPayload(self, rawData):
+        '''
+            - unpack data
+            - partendo dal rawData:
+            -    1. riconosce STX ed ETX
+            -    2. verifica la correttezza del pacchetto CRC
+            -    3. ricostruisce i byte originali (2bytes --> 1 byte)
+            -    4. estrae il payload
+            -    5. ritorna payload in un bytearray
+        '''
         assert type(rawData) == bytearray
         logger = self._setLogger(package=__name__)
 
@@ -375,3 +406,12 @@ class LnRs485(LnRs232):
         return data485
         # data485      = self._formatter._fmtData(self, payloadArray, self._myDict) # format payload
         # data485.dict = self._formatter._payloadFields(self, payloadArray) # create a dictionary with fields
+
+
+    def decodePayload485(self, data, myDict):
+        payload485      = self._formatter._payloadFields(self, data, myDict) # format payload
+        return payload485
+
+
+
+

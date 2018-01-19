@@ -106,6 +106,9 @@ void setup() {
 // ################################################################
 void loop() {
     unsigned long RX_TIMEOUT = 5000;
+    // IMPORTANTE ri-assegnarli a questo punto
+    Rx  = pData->rx; // è globale
+    Tx  = pData->tx; // è globale
     pData->myEEpromAddress  = myEEpromAddress;
 
     if (myEEpromAddress <= 10) {

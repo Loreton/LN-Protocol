@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 17-01-2018 18.20.19
+# Version ......: 19-01-2018 16.37.40
 #
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -44,7 +44,8 @@ if __name__ == "__main__":
         # -------------------------------
         # - Inizializzazione del logger
         # -------------------------------
-    logger    = Ln.InitLogger(  name='LnLoggerClass',
+    # logger    = Ln.InitLogger(  name='LnLoggerClass',
+    logger    = Ln.InitLogger(
                                 logfilename=gv.args.log_filename,
                                 toFILE=gv.args.log,
                                 toCONSOLE=gv.args.log_console,
@@ -55,8 +56,6 @@ if __name__ == "__main__":
                                 filterDefaultStack=5
                             )
 
-    # logger.setFilterDefaultStack(5)
-    # logger.info('command line parameters...')
     logger.info(gv.args, dictTitle='command line parameters...')
 
 

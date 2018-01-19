@@ -1,7 +1,7 @@
 #!/usr/bin/python3.5
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 09-01-2018 07.48.09
+# Version ......: 19-01-2018 12.17.44
 #
 # -----------------------------------------------
 
@@ -36,7 +36,7 @@ from . Main.OpenRs485Port                import openRs485Port
 
 # - Monitor
 from . Monitor.MonitorRs485              import monitorRS485
-from . Monitor.MonitorRs485              import monitorRaw
+from . Monitor.MonitorRAW                 import monitorRaw
 
 # - Process
 from . Process.DigitalPin                import digitalRead

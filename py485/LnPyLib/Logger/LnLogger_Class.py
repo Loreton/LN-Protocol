@@ -1,4 +1,4 @@
-import sys
+import sys, os
 # from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 import logging
 from logging import handlers  # se non lo inserisco da errore sull'handlers
@@ -61,20 +61,20 @@ class LnLogger(logging.getLoggerClass()):
         self._when_rotate       = when
         self._rotation_interval = interval
 
-        self._file_format       = '[%(asctime)s] [%(LnFuncName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
-        self._console_format    = '[%(LnFuncName)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
+        self._file_format       = '[%(asctime)s] [%(LnFuncName)-30s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
+        self._console_format    = '[%(LnFuncName)-30s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
         # self._file_format       = '[%(asctime)s] [%(module)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
         # self._console_format    = '[%(module)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
         self._date_time_format  = '%m-%d %H:%M:%S'
 
-        self._myLogger          = logging.getLogger(self._name)
+        self._realLogger        = logging.getLogger(self._name)
         self._nullLogger        = nullLogger()
         self._LnFilter          = ContextFilter(defaultStack=filterDefaultStack, autoReset=True)
 
         if name not in self.loggers:
             self.loggers.add(name)
-            self._myLogger.setLevel(self._level)
-            self._myLogger.addFilter(self._LnFilter)
+            self._realLogger.setLevel(self._level)
+            self._realLogger.addFilter(self._LnFilter)
 
         self._LnFilter.setFuncName('initializing')
 
@@ -94,9 +94,9 @@ class LnLogger(logging.getLoggerClass()):
         ''' prepare logfile if required '''
         if self._to_file or self._to_console:
             self._logEnabled = True
-            self.logger = self._myLogger
+            self._myLogger = self._realLogger
         else:
-            self.logger = self._nullLogger
+            self._myLogger = self._nullLogger
 
 
             # ---------------------------------------------
@@ -105,17 +105,24 @@ class LnLogger(logging.getLoggerClass()):
             # - di logger
             # ---------------------------------------------
         self.Pointers.rootName     = self._name
-        self.Pointers.logger       = self.logger
+        self.Pointers.logger       = self   # <=== save class pointer
+        self.Pointers.nullLogger   = self._nullLogger
         self.Pointers.LnFilter     = self._LnFilter
         self.Pointers.modulesToLog = self._modulesToLog
         self.Pointers.logLevel     = self._level
-        self.Pointers.nullLogger   = self._nullLogger
 
+        if False:
+            print('pointers.rootName     = ', self.Pointers.rootName)
+            print('pointers.logger       = ', self.Pointers.logger)
+            print('pointers.nullLogger   = ', self.Pointers.nullLogger)
+            print('pointers.LnFilter     = ', self.Pointers.LnFilter)
+            print('pointers.modulesToLog = ', self.Pointers.modulesToLog)
+            print('pointers.logLevel     = ', self.Pointers.logLevel)
 
-
-        self._myLogger.setLevel(self._level)
+        self._realLogger.setLevel(self._level)
         self.info('initialised.....')
         # self._LnFilter.setFuncName(None) # reset al nome del modulo chiamante
+
 
 
 
@@ -146,7 +153,7 @@ class LnLogger(logging.getLoggerClass()):
         _consoleFormatter = logging.Formatter(fmt=self._console_format, datefmt=self._date_time_format)
         _consoleHandler   = logging.StreamHandler(stream=sys.stdout)
         _consoleHandler.setFormatter(_consoleFormatter)
-        self._myLogger.addHandler(_consoleHandler)
+        self._realLogger.addHandler(_consoleHandler)
 
 
 
@@ -208,7 +215,7 @@ class LnLogger(logging.getLoggerClass()):
 
         fileFormatter = logging.Formatter(fmt=self._file_format, datefmt=self._date_time_format)
         fileHandler.setFormatter(fileFormatter)
-        self._myLogger.addHandler(fileHandler)
+        self._realLogger.addHandler(fileHandler)
 
 
 
@@ -230,22 +237,22 @@ class LnLogger(logging.getLoggerClass()):
     #
     ##############################################################
     def info(self, msg, extra=None, dictTitle=None):
-        # self.logger.info(msg)
-        # self.logger.info(msg, extra=extra)
-        self.commonLog(self.logger.info, msg, dictTitle=dictTitle)
+        # self._myLogger.info(msg)
+        # self._myLogger.info(msg, extra=extra)
+        self.commonLog(self._myLogger.info, msg, dictTitle=dictTitle)
 
 
     def error(self, msg, extra=None, dictTitle=None):
-        self.commonLog(self.logger.error, msg, dictTitle=dictTitle)
-        # self.logger.error(msg, extra=extra)
+        self.commonLog(self._myLogger.error, msg, dictTitle=dictTitle)
+        # self._myLogger.error(msg, extra=extra)
 
     def debug(self, msg, extra=None, dictTitle=None):
-        self.commonLog(self.logger.debug, msg, dictTitle=dictTitle)
-        # self.logger.debug(msg, extra=extra)
+        self.commonLog(self._myLogger.debug, msg, dictTitle=dictTitle)
+        # self._myLogger.debug(msg, extra=extra)
 
     def warn(self, msg, extra=None, dictTitle=None):
-        self.commonLog(self.logger.warn, msg, dictTitle=dictTitle)
-        # self.logger.warn(msg, extra=extra)
+        self.commonLog(self._myLogger.warn, msg, dictTitle=dictTitle)
+        # self._myLogger.warn(msg, extra=extra)
 
 
     def commonLog(self, mylogger, msg, dictTitle='dictionary'):
@@ -272,10 +279,10 @@ class LnLogger(logging.getLoggerClass()):
 ##############################################################################
 class nullLogger():
     def __init__(self, package=None, stackNum=1, extra=None): pass
-    def info(self, data):       self._dummy(data)
-    def debug(self, data):      self._dummy(data)
-    def error(self, data):      self._dummy(data)
-    def warning(self, data):    self._dummy(data)
+    def info(self, data, dictTitle=None):       self._dummy(data)
+    def debug(self, data, dictTitle=None):      self._dummy(data)
+    def error(self, data, dictTitle=None):      self._dummy(data)
+    def warning(self, data, dictTitle=None):    self._dummy(data)
     def _dummy(self, data): pass
 
     '''
@@ -345,8 +352,15 @@ class ContextFilter(logging.Filter):
     def filter(self, record):
         dummy, programFile, lineNO, funcName, lineCode, rest = inspect.stack()[self._stack]
         if self._autoReset: self._stack = self._defaultStack
-
         if funcName == '<module>': funcName = '__main__'
+
+        xxx=False
+        if xxx == True:
+            fname = os.path.basename(programFile).split('.')[0]
+            funcName = "{0}.{1}".format(fname, funcName)
+
+
+
 
             # - modifica della riga
         if self._line:

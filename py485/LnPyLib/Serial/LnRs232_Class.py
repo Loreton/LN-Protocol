@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 18-01-2018 16.40.01
+# Version ......: 19-01-2018 16.17.10
 
 import serial       # sudo pip3.4 install pyserial
 import sys
@@ -160,7 +160,7 @@ class LnRs232():
 
             chInt = int.from_bytes(ch, 'little')
             _dataBuffer.append(chInt)
-            logger.debug("Received byte: x'{0:02x}'".format(chInt))
+            # logger.debug("Received byte: x'{0:02x}'".format(chInt))
 
 
         if self._close_port_after_each_call:
