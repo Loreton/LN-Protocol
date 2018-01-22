@@ -80,3 +80,5 @@ def digitalToggle(gv, LnRs485, payload):
             print (__name__, "Keybord interrupt has been pressed")
             LnRs485.Close()
             sys.exit()
+
+    logger = Ln.SetLogger(__name__, exiting=True)

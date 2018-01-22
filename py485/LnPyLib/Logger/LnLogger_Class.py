@@ -27,7 +27,7 @@ class LnLogger(logging.getLoggerClass()):
         # - variabili che saranno condivise da tutti i chiamanti.
         # - inserisco i pointer ed i valori basilari per condividere la classe
         # ----------------------------------------------------------------------------
-    loggers    = set() # univoco MA... non mantiene l'ordine di iserimento
+    loggerNames    = set() # univoco MA... non mantiene l'ordine di iserimento
     Pointers   = LnClass()
 
     def __init__(   self,
@@ -41,13 +41,13 @@ class LnLogger(logging.getLoggerClass()):
                     maxBytes=20000,
                     when="m",       # m=minutes
                     interval=60,
-                    filterDefaultStack=5, # default stackLevel per il ContextFilter
+                    funcname='M+F',
                     ):
 
 
         ''' internal variables '''
         self._logEnabled        = False
-        self._level             = logging.INFO
+        self._logLevel             = logging.INFO
 
         self._name              = name
         self._to_file           = False
@@ -69,19 +69,21 @@ class LnLogger(logging.getLoggerClass()):
 
         self._realLogger        = logging.getLogger(self._name)
         self._nullLogger        = nullLogger()
-        self._LnFilter          = ContextFilter(defaultStack=filterDefaultStack, autoReset=True)
+        self._LnFilter          = ContextFilter(defaultStack=6, autoReset=True)
+        if funcname =='M+F':
+            self._LnFilter.setModuleFuncName(True)
 
-        if name not in self.loggers:
-            self.loggers.add(name)
-            self._realLogger.setLevel(self._level)
+        if name not in self.loggerNames:
+            self.loggerNames.add(name)
+            self._realLogger.setLevel(self._logLevel)
             self._realLogger.addFilter(self._LnFilter)
 
         self._LnFilter.setFuncName('initializing')
 
         ''' setting LogLevel '''
         assert type(defaultLogLevel) == str
-        if   defaultLogLevel.lower() == 'debug':    self._level = logging.DEBUG
-        elif defaultLogLevel.lower() == 'warning':  self._level = logging.WARNING
+        if   defaultLogLevel.lower() == 'debug':    self._logLevel = logging.DEBUG
+        elif defaultLogLevel.lower() == 'warning':  self._logLevel = logging.WARNING
 
 
 
@@ -92,11 +94,12 @@ class LnLogger(logging.getLoggerClass()):
         self._prepareConsoleLog(toCONSOLE)
 
         ''' prepare logfile if required '''
+        self._myLogger = self._realLogger
         if self._to_file or self._to_console:
             self._logEnabled = True
-            self._myLogger = self._realLogger
         else:
-            self._myLogger = self._nullLogger
+            self._logEnabled = False
+            # self._myLogger = self._nullLogger
 
 
             # ---------------------------------------------
@@ -105,21 +108,23 @@ class LnLogger(logging.getLoggerClass()):
             # - di logger
             # ---------------------------------------------
         self.Pointers.rootName     = self._name
-        self.Pointers.logger       = self   # <=== save class pointer
+        self.Pointers.ClassInstance = self   # <=== class pointer
+        self.Pointers.realLogger   = self._realLogger
         self.Pointers.nullLogger   = self._nullLogger
         self.Pointers.LnFilter     = self._LnFilter
         self.Pointers.modulesToLog = self._modulesToLog
-        self.Pointers.logLevel     = self._level
+        self.Pointers.logLevel     = self._logLevel
 
         if False:
             print('pointers.rootName     = ', self.Pointers.rootName)
-            print('pointers.logger       = ', self.Pointers.logger)
+            print('pointers.ClassInstance  = ', self.Pointers.ClassInstance)
+            print('pointers.realLogger   = ', self.Pointers.realLogger)
             print('pointers.nullLogger   = ', self.Pointers.nullLogger)
             print('pointers.LnFilter     = ', self.Pointers.LnFilter)
             print('pointers.modulesToLog = ', self.Pointers.modulesToLog)
             print('pointers.logLevel     = ', self.Pointers.logLevel)
 
-        self._realLogger.setLevel(self._level)
+        self._realLogger.setLevel(self._logLevel)
         self.info('initialised.....')
         # self._LnFilter.setFuncName(None) # reset al nome del modulo chiamante
 
@@ -237,39 +242,52 @@ class LnLogger(logging.getLoggerClass()):
     #
     ##############################################################
     def info(self, msg, extra=None, dictTitle=None):
-        # self._myLogger.info(msg)
-        # self._myLogger.info(msg, extra=extra)
-        self.commonLog(self._myLogger.info, msg, dictTitle=dictTitle)
 
-
-    def error(self, msg, extra=None, dictTitle=None):
-        self.commonLog(self._myLogger.error, msg, dictTitle=dictTitle)
-        # self._myLogger.error(msg, extra=extra)
-
-    def debug(self, msg, extra=None, dictTitle=None):
-        self.commonLog(self._myLogger.debug, msg, dictTitle=dictTitle)
-        # self._myLogger.debug(msg, extra=extra)
-
-    def warn(self, msg, extra=None, dictTitle=None):
-        self.commonLog(self._myLogger.warn, msg, dictTitle=dictTitle)
-        # self._myLogger.warn(msg, extra=extra)
-
-
-    def commonLog(self, mylogger, msg, dictTitle='dictionary'):
-            # cambio lo stackNum per saltare commonLog ed info/debug/...
-        self._LnFilter.addStack(2)
-
-            # se è un dictionary stampiamolo come tale ad un livello solo
+        myLogger = self._myLogger.info
         if isinstance(msg, dict):
             savedAutoReset = self._LnFilter.getAutoReset()
             self._LnFilter.setAutoReset(False)    # blocca l'autoreset dello stack
-            mylogger('{}: {}'.format(dictTitle, type(msg)))
+            myLogger('{}: {}'.format(dictTitle, type(msg)))
             for key in msg.keys():
-                mylogger('  {:<20}: {}'.format(key, msg[key]))
+                myLogger('  {:<20}: {}'.format(key, msg[key]))
             self._LnFilter.setAutoReset(savedAutoReset)    # ripristina l'autoreset dello stack
-
         else:
-            mylogger(msg)
+            self._myLogger.info(msg, extra=extra)
+        # self.commonLog(self._myLogger.info, msg, dictTitle=dictTitle)
+
+
+    def error(self, msg, extra=None, dictTitle=None):
+        # self.commonLog(self._myLogger.error, msg, dictTitle=dictTitle)
+        if self._logEnabled:
+            self._myLogger.error(msg, extra=extra)
+
+    def debug(self, msg, extra=None, dictTitle=None):
+        # self.commonLog(self._myLogger.debug, msg, dictTitle=dictTitle)
+        if self._logEnabled:
+            self._myLogger.debug(msg, extra=extra)
+
+    def warn(self, msg, extra=None, dictTitle=None):
+        # self.commonLog(self._myLogger.warn, msg, dictTitle=dictTitle)
+        if self._logEnabled:
+            self._myLogger.warn(msg, extra=extra)
+
+
+    def commonLog(self, myLogger, msg, dictTitle='dictionary'):
+            # cambio lo stackNum per saltare commonLog ed info/debug/...
+        if self._logEnabled:
+            self._LnFilter.addStack(1)
+
+                # se è un dictionary stampiamolo come tale ad un livello solo
+            if isinstance(msg, dict):
+                savedAutoReset = self._LnFilter.getAutoReset()
+                self._LnFilter.setAutoReset(False)    # blocca l'autoreset dello stack
+                myLogger('{}: {}'.format(dictTitle, type(msg)))
+                for key in msg.keys():
+                    myLogger('  {:<20}: {}'.format(key, msg[key]))
+                self._LnFilter.setAutoReset(savedAutoReset)    # ripristina l'autoreset dello stack
+
+            else:
+                myLogger(msg)
 
 
 
@@ -309,9 +327,10 @@ class ContextFilter(logging.Filter):
     Rather than use actual contextual information, we just use random
     data in this demo.
     """
-    def __init__(self, defaultStack=5, autoReset=False):
+    def __init__(self, defaultStack=6, autoReset=False):
         '''
         defaultStack=5 sembra OK
+        defaultStack=6 sembra OK all'interno di una classe
         '''
         self._defaultStack  = defaultStack
         self._line          = None
@@ -320,15 +339,15 @@ class ContextFilter(logging.Filter):
         self._stack         = defaultStack
         self._fDEBUG        = False
         self._autoReset     = autoReset
-        '''
-        ho verificato che con 5 sembra andare bene
-        usato quando chiamato direttamete dal logger
-        quando lo chiamo dal SetLogger devo impostaro a 6
-        '''
+        self._Module_Funcname = True   # module.funcname else funcname
+
 
 
     def getAutoReset(self):
         return self._autoReset
+
+    def setModuleFuncName(self, flag):
+        return self._Module_Funcname
 
     def setAutoReset(self, flag):
         self._autoReset = flag
@@ -354,8 +373,7 @@ class ContextFilter(logging.Filter):
         if self._autoReset: self._stack = self._defaultStack
         if funcName == '<module>': funcName = '__main__'
 
-        xxx=False
-        if xxx == True:
+        if self._Module_Funcname == True:
             fname = os.path.basename(programFile).split('.')[0]
             funcName = "{0}.{1}".format(fname, funcName)
 

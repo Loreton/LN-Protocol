@@ -11,12 +11,12 @@ import collections
 import configparser
 import codecs
 
-from .. Logger.SetLogger import SetLogger
+from  .. Logger.SetLogger import SetLogger
 from  .. Common.LnColor  import LnColor
 
 class ReadIniFile(object):
     """docstring for ClassName"""
-    def __init__(self, fileName, strict=True, logger=None):
+    def __init__(self, fileName, strict=True):
         self._filename                = str(fileName) # potrebbe essere della classe pathlib
         self._delimiters              = ('=', ':')
         self._comment_prefixes        = ('#',';')
@@ -33,7 +33,7 @@ class ReadIniFile(object):
         self._fDEBUG                  = False
         self._subSectionChar          = []   # es ('\\', '/' , '.')
         self._exitOnError             = False
-        self._logger                 = logger
+        self._SetLogger                 = SetLogger
 
         self._SetParser()
 
@@ -77,8 +77,8 @@ class ReadIniFile(object):
     def returnRAW(self, flag):
         self._returnRAW = flag
 
-    def setLogger(self, logger):
-        self._logger = logger
+    # def setLogger(self, logger):
+    #     self._logger = logger
 
     def subSectionChar(self, charList):
         if isinstance(charList, str):
@@ -92,7 +92,7 @@ class ReadIniFile(object):
     # # https://docs.python.org/3/library/configparser.html
     # ######################################################
     def read(self, onlySection=None, returnOrderedDict=False, resolveEnvVars=False):
-        logger  = SetLogger(package=__name__)
+        logger  = self._SetLogger(package=__name__)
         self._onlySection       = onlySection
         self._returnOrderedDict = returnOrderedDict
         self._resolveEnvVars    = resolveEnvVars
@@ -135,6 +135,7 @@ class ReadIniFile(object):
         else:
             self.dict = self._configMain
 
+        logger  = self._SetLogger(package=__name__, exiting=True)
 
 
 
@@ -143,7 +144,7 @@ class ReadIniFile(object):
     #                  interpretare la stessa come section+subsection
     ############################################################
     def _iniConfigAsDict(self):
-        logger  = SetLogger(package=__name__)
+        logger  = self._SetLogger(package=__name__)
         C = LnColor()
         """
         Converts a ConfigParser object into a dictionary.
@@ -226,7 +227,10 @@ class ReadIniFile(object):
 
 
         if self._onlySection:
-            return the_dict[self._onlySection]
+            retDict = the_dict[self._onlySection]
         else:
-            return the_dict
+            retDict = the_dict
+
+        logger  = self._SetLogger(package=__name__, exiting=True)
+        return retDict
 

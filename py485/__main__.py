@@ -53,10 +53,10 @@ if __name__ == "__main__":
                                 rotationType='time', when="m", interval=60,
                                 # rotationType='size', maxBytes=500000,
                                 backupCount=5,
-                                filterDefaultStack=5
                             )
 
     logger.info(gv.args, dictTitle='command line parameters...')
+    print (logger)
 
 
 

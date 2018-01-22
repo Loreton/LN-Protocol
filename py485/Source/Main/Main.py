@@ -24,8 +24,12 @@ def Main(gv):
     # ----- common part into the Prj modules --------
     global Ln
     Ln     = Prj.LnLib
-    logger = Ln.SetLogger(__package__)
-    print (logger)
+    logger = Ln.SetLogger(__name__)
+    # print (logger)
+    logger.info('ciao sono io 01')
+    logger.info('ciao sono io 02')
+    logger.info('ciao sono io 03')
+    # Ln.Exit(9999)
     # -----------------------------------------------
 
     iniMain     = gv.iniFile.MAIN
@@ -86,5 +90,6 @@ def Main(gv):
 
     myPort.Close()
 
+    logger = Ln.SetLogger(__name__, exiting=True)
 
     Ln.Exit(0)

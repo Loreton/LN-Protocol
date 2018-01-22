@@ -31,10 +31,10 @@ read_TIMEOUT  = 0.05
 # - MAIN LnRS485 CLASS
 #####################################################################
 class LnRs232():
-    def __init__(self, port, mode='ascii', baudrate=9600, logger=None, myDict=LnClass):
+    def __init__(self, port, mode='ascii', baudrate=9600, useLogger=None, myDict=LnClass):
 
-        if logger:
-            self._setLogger = logger
+        if useLogger:
+            self._setLogger = useLogger
         else:
             self._setLogger = self._internaLogger
 
@@ -82,6 +82,7 @@ class LnRs232():
 
         self._TxDataRaw         =  bytearray()   # raw data in uscita   dalla seriale
         self._TxDataHex         =  ''            # raw data in uscita   dalla seriale
+        logger = self._setLogger(package=__name__, exiting=True)
 
 
 
@@ -197,6 +198,8 @@ class LnRs232():
 
         if self._close_port_after_each_call:
             self._serial.close()
+
+        logger = self._setLogger(package=__name__, exiting=True)
 
 
     _serialRead  = read232

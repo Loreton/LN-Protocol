@@ -28,9 +28,9 @@ from . Data_Formatter import Formatter
 # - MAIN LnRS485 CLASS
 #####################################################################
 class LnRs485(LnRs232):
-    def __init__(self, port, mode='ascii', baudrate=9600, logger=None, myDict=LnClass):
+    def __init__(self, port, mode='ascii', baudrate=9600, useLogger=None, myDict=LnClass):
 
-        super().__init__(port=port, mode=mode, baudrate=baudrate, logger=logger, myDict=myDict)
+        super().__init__(port=port, mode=mode, baudrate=baudrate, useLogger=useLogger, myDict=myDict)
 
         self.__LnRs485_validBytesHex = [
                                     '0x0F',
@@ -117,6 +117,9 @@ class LnRs485(LnRs232):
             logger.debug('  {:<15}:{}'.format(k,v))
         self._fld = mydict
 
+        logger = self._setLogger(package=__name__, exiting=True)
+
+
     def SetSTX(self, value):
         logger = self._setLogger(package=__name__)
         if isinstance(value, str):
@@ -124,12 +127,17 @@ class LnRs485(LnRs232):
         self._STX = value
         logger.info('setting STX to {}'.format(self._STX))
 
+        logger = self._setLogger(package=__name__, exiting=True)
+
     def SetETX(self, value):
         logger = self._setLogger(package=__name__)
         if isinstance(value, str):
             value = int(value, 16)
         self._ETX = value
         logger.info('setting ETX to {}'.format(self._ETX))
+
+        logger = self._setLogger(package=__name__, exiting=True)
+
 
     def SetCRC(self, bFlag):
         logger = self._setLogger(package=__name__)
@@ -140,6 +148,9 @@ class LnRs485(LnRs232):
         else:
             self._CRC = True
         logger.info('setting CRC to {}'.format(self._CRC))
+
+        logger = self._setLogger(package=__name__, exiting=True)
+
 
     def ClosePortAfterEachCall(self, bFlag):
         logger = self._setLogger(package=__name__)
@@ -153,13 +164,14 @@ class LnRs485(LnRs232):
             if not self._serial.isOpen():
                 logger.info('opening port...')
                 self._serial.open()
+        logger = self._setLogger(package=__name__, exiting=True)
 
     def Close(self):
         logger = self._setLogger(package=__name__)
         if self._serial.isOpen():
             logger.info('closing port...')
             self._serial.close()
-
+        logger = self._setLogger(package=__name__, exiting=True)
 
 
 
@@ -214,6 +226,8 @@ class LnRs485(LnRs232):
 
         logger.debug ("byte: {B:02X} converted in: lowNibble: {L:02X} - highNibble: {H:02X}".format(B=byte, L=lowNibble, H=highNibble) )
 
+        logger = self._setLogger(package=__name__, exiting=True)
+
             # second two bytes
         return highNibble, lowNibble
 
@@ -260,7 +274,7 @@ class LnRs485(LnRs232):
             dict485.fld = self._myDict()
             # dict485.rcode = dict485[self._fld.f05_RCODE]
 
-
+        logger = self._setLogger(package=__name__, exiting=True)
         return dict232, dict485
 
 
@@ -307,6 +321,7 @@ class LnRs485(LnRs232):
 
         # INVIO dati
         self.write232(dataToSend)
+        logger = self._setLogger(package=__name__, exiting=True)
         return dataToSend
         # data232 = self._formatter._fmtData(self, dataToSend, self._myDict)
         # return data232
@@ -349,6 +364,7 @@ class LnRs485(LnRs232):
         if not rawData or not rawData[0] == self._STX or not rawData[-1] == self._ETX:
             errMsg = 'STX or ETX missed'
             logger.error(errMsg)
+            logger = self._setLogger(package=__name__, exiting=True)
             return bytearray()
 
 
@@ -396,7 +412,7 @@ class LnRs485(LnRs232):
             logger.error ('-')
             Ln.Exit(9999)
             return bytearray()
-
+        logger = self._setLogger(package=__name__, exiting=True)
         return _payloadData[:-1] # drop CRC
 
 

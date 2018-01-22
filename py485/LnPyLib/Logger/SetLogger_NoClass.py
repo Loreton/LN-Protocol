@@ -16,37 +16,52 @@ from . LnLogger_Class import LnLogger
 def SetLogger(package, exiting=False, offsetSL=0):
 
     pointers = LnLogger.static_getMainPointers()
-        # importante prendere questo pointer in quanto mi porta dietro anche i .info, .debug, ...
-    logger = pointers.ClassInstance
-
     fDEBUG = False
     if fDEBUG:
-        print('     rootName      = ', logger._name)
-        print('     realLogger    = ', logger._realLogger)
-        print('     ClassInstance = ', logger)
-        print('     LnFilter      = ', logger._LnFilter)
-        print('     modulesToLog  = ', logger._modulesToLog)
-        print('     logLevel      = ', logger._logLevel)
-        print('     nullLogger    = ', logger._nullLogger)
+        print('     pointers.rootName     = ', pointers.rootName)
+        print('     pointers.realLogger   = ', pointers.realLogger)
+        print('     pointers.ClassLogger  = ', pointers.ClassLogger)
+        print('     pointers.LnFilter     = ', pointers.LnFilter)
+        print('     pointers.modulesToLog = ', pointers.modulesToLog)
+        print('     pointers.logLevel     = ', pointers.logLevel)
+        print('     pointers.nullLogger   = ', pointers.nullLogger)
 
 
-    caller_01 = GetCaller(1)
+    USE_CLASS = False  # non funziona ancora, fare altri esperimenti
+    USE_CLASS = True
+    if USE_CLASS:
+        logger        = pointers.ClassLogger
+    else:
+        logger        = pointers.realLogger
 
+    _LnFilter     = pointers.LnFilter
+    _modulesToLog = pointers.modulesToLog
+    _logLevel     = pointers.logLevel
+    _nullLogger   = pointers.nullLogger
+
+
+
+
+    ''' otteniamo i caller che ci servono '''
+    CALLER = [1,2,3,4,5,6,7]
+    CALLER[1] = GetCaller(1)
+    # CALLER[2] = GetCaller(2)
+    # CALLER[4] = GetCaller(4)
 
         # ---------------------------------
         # - individuiamo se è un modulo
         # - da tracciare o meno
         # ---------------------------------
-    fullPkg = (package + '.' + caller_01._funcname)
-    if '!ALL!' in logger._modulesToLog:
-        LOG_LEVEL = logger._logLevel
+    fullPkg = (package + '.' + CALLER[1]._funcname)
+    if '!ALL!' in _modulesToLog:
+        LOG_LEVEL = _logLevel
 
     else:
         fullPkg_LOW = fullPkg.lower()
         LOG_LEVEL = None
-        for moduleStr in logger._modulesToLog:
+        for moduleStr in _modulesToLog:
             if moduleStr.lower() in fullPkg_LOW:
-                LOG_LEVEL = logger._logLevel
+                LOG_LEVEL = _logLevel
 
 
     if fDEBUG:
@@ -55,20 +70,32 @@ def SetLogger(package, exiting=False, offsetSL=0):
 
 
     if not LOG_LEVEL:
-        logger._logEnabled = False   #  by Loreto:  22-01-2018 09.15.02
-        return logger  # in fase di verifica  #  by Loreto:  22-01-2018 09.14.58
-        # return _nullLogger
+        return _nullLogger
 
     logger.setLevel(LOG_LEVEL)
-    logger._LnFilter.addStack(1+offsetSL)    # cambio lo stackNum
-    caller_03 = GetCaller(3)
+    if USE_CLASS:
+        pass
+        _LnFilter.addStack(1+offsetSL)    # cambio lo stackNum
+        CALLER[3] = GetCaller(3)
+    else:
+        logger.addFilter(_LnFilter)
+        # _LnFilter.addStack(0+offsetSL)    # cambio lo stackNum
+        _LnFilter.setAutoReset(False)    # cambio lo stackNum
+        # _LnFilter.setStack(5)    # cambio lo stackNum
+        _LnFilter.setStack(7)
+        CALLER[3] = GetCaller(3)
 
 
     if exiting:
         logger.info('.... exiting\n')
     else:
-        logger.info('.... entering called by: {CALLER}'.format(CALLER=caller_03._fullcaller))
+        logger.info('.... entering called by: {CALLER}'.format(CALLER=CALLER[3]._fullcaller))
 
+    # if USE_CLASS:
+        # pass
+    # else:
+        # _LnFilter.setStack(6)    # cambio lo stackNum
+    # reset dello stackNum NON server se autoReset == True
     return logger
 
 

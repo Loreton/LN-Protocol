@@ -70,5 +70,6 @@ def monitorRS485(LnSerial):
             print (__name__, "Keybord interrupt has been pressed")
             sys.exit()
 
+    logger = Ln.SetLogger(__name__, exiting=True)
 
 

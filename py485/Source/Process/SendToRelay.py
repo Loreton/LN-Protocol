@@ -57,9 +57,12 @@ def SendToRelay(myPort, payload):
             LnSerial.Close()
             Ln.Exit(0)
 
+
+
     if LOOP < 1:
         Ln.Exit(1, "    Il relay non risponde...")
 
+    logger = Ln.SetLogger(__name__, exiting=True)
 
 
 def _waitForIdleState():
