@@ -2,7 +2,7 @@
 Author:     Loreto Notarantonio
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 19-01-2018 15.59.27
+# Version ......: 22-01-2018 16.50.21
 
 
 Scope:      Funzione di relay.
@@ -24,89 +24,78 @@ Scope:      Funzione di relay.
 // #    - torniamo indietro la risposta
 // ################################################################
 void Relay_Main(unsigned long RxTimeout) {
-    if (firstRun) {     // Il relay on deve scrivere sulla seriale in chiaro
-        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData      = false;                // display raw data
-    }
-
+    RxTimeout = 100000;         // set timeout
     pData->Rx_Timeout = RxTimeout;         // set timeout
-    Rx[fld_DATALEN]   = 0;
-
-        // -------------------------------------------
-        // - ricezione messaggio da RaspBerry (Rs232)
-        // -------------------------------------------
-    byte rCode = recvMsg232(pData);
+    I_AM_RELAY  = true;
+    I_AM_SLAVE  = false;
 
 
-    if (rCode == LN_TIMEOUT) {
-        if (returnRs485ToMaster == true) {
-            copyRxMessageToTx(pData);
-            char noDataRcvd[] = " - waiting for data ... ";
-            setDataCommand(Tx, noDataRcvd, sizeof(noDataRcvd));
-            Tx[fld_DESTINATION_ADDR] = 1;
-            Tx[fld_SENDER_ADDR]      = myEEpromAddress;
-            Tx[fld_CMD_RCODE]        = LN_WAITING_FOR_CMD;
-            sendMsg232(pData);
+    while (true) {
+        Serial.print(myID); Serial.print(F(" sono qui: 00"));Serial.println();
+
+        Rx[fld_DATALEN]   = 0;
+
+            // -------------------------------------------
+            // - ricezione messaggio da RaspBerry (Rs232)
+            // -------------------------------------------
+        byte rCode = recvMsg232(pData);
+        Serial.print(myID); Serial.print(F(" - rcode: "));Serial.print(rCode);Serial.println(errMsg[rCode]);
+
+        // rCode = LN_OK;
+
+        if (rCode == LN_TIMEOUT) {
+            if (returnRs485ToMaster == true) {
+                Serial.print(myID); Serial.print(F(" sono in TIMEOUT"));Serial.println();
+                /* solo per eventuale DEBUG
+                copyRxMessageToTx(pData);
+                char noDataRcvd[] = " - waiting for data ... ";
+                setDataCommand(Tx, noDataRcvd, sizeof(noDataRcvd));
+                Tx[fld_DESTINATION_ADDR] = 1;
+                Tx[fld_SENDER_ADDR]      = myEEpromAddress;
+                Tx[fld_CMD_RCODE]        = LN_WAITING_FOR_CMD;
+                sendMsg232(pData);
+                */
+            }
+            else {
+                Serial.print(myID);
+                Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
+                Serial.println();
+            }
+
+            continue;
         }
-        else {
-            Serial.print(myID);
-            Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
-            Serial.println();
+        displayRXFull(pData);
+
+            /*
+                echo del comando appena ricevuto
+                come ack verso RaspBerry
+            */
+
+        copyRxMessageToTx(pData);
+        sendMsg232(pData);
+
+        if (rCode == LN_OK) {
+            Serial.print(myID); Serial.print(F(" sono in RC=OK"));Serial.println();
+
+                // processiamo il comando come fossimo uno slave.
+            if (Rx[fld_DESTINATION_ADDR] == myEEpromAddress)  {
+                Serial.print(myID); Serial.print(F(" sono in LOCAL Execution"));Serial.println();
+                // processRequest(pData);
+            }
+
+            else {
+                Serial.print(myID); Serial.print(F(" sono in FWD"));Serial.println();
+                    // forward message to Rs485 bus
+                Relay_fwdToRs485(pData);
+                    // wait for response
+                byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
+                    // forward message to RaspBerry (rs232)
+                Relay_fwdToRaspBerry(pData, rcvdRCode);
+            }
         }
 
-        return;
-    }
-
-
-
-
-        // --------------------------------------
-        // - se corretto:
-        // -    1. echo del messaggio appena ricevuto verso RaspBerry (come ack)
-        // -    1. inoltra to rs485 bus
-        // -    2. attendi risposta
-        // -    3. copia comunque su Txdata
-        // -    4. Se ricezione OK:
-        // -        4a. copia messaggio su TX
-        // -        4a. ruota pacchetto verso PI
-        // -    5. Se ricezione NOT OK:
-        // -        5a. prepara messaggo di errore
-        // -        5b. ruota pacchetto verso PI
-        // - altrimenti:
-        // -    1. ignora
-        // --------------------------------------
-
-
-
-
-
-        /*
-            echo del comando appena ricevuto
-            come ack verso RaspBerry
-        */
-    copyRxMessageToTx(pData);
-    sendMsg232(pData);
-
-    if (rCode == LN_OK) {
-
-            // processiamo il comando come fossimo uno slave.
-        if (Rx[fld_DESTINATION_ADDR] == myEEpromAddress)  {
-            processRequest(pData);
-        }
-
-        else {
-                // forward message to Rs485 bus
-            Relay_fwdToRs485(pData);
-                // wait for response
-            byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-                // forward message to RaspBerry (rs232)
-            Relay_fwdToRaspBerry(pData, rcvdRCode);
-        }
-    }
-
-
+        // Serial.print(myID); Serial.print(F(" sono qui: 03"));Serial.println();
+    } // end while true
 }
 
 
@@ -186,3 +175,28 @@ byte Relay_waitRs485Response(RXTX_DATA *pData, unsigned long RxTimeout) {
     }
     return rcvdRCode;
 }
+
+#if 0
+void displayRXFull(RXTX_DATA *pData) {
+    const byte *data;
+    const byte *raw;
+    byte  rawIndex=0;
+
+    raw = pData->raw;
+    data = pData->rx;
+    // byte dataLen = data[fld_DATALEN];
+    byte rawLen  = raw[0];
+
+    if (rawLen > 0) {
+        rawIndex = fld_DATA_COMMAND*2;
+        Serial.println();
+        Serial.print(TAB4);Serial.print(F("full raw - len:["));Serial.print(Utoa(raw[0], 3, '0'));Serial.print(F("] - "));
+        Serial.print(TAB4);printHex((char *) &raw[1], raw[0]); //Serial.println();
+
+        Serial.println();
+        Serial.print(TAB4);Serial.print(F("CMD  raw -      "));;Serial.print(Utoa(raw[0], 3, '0'));
+        Serial.print(TAB4);printHex((char *) &raw[rawIndex], rawLen-rawIndex-2);//Serial.println();
+
+    }
+}
+#endif

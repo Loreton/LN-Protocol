@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 19-01-2018 14.19.33
+# Version ......: 22-01-2018 16.11.34
 #
 # ######################################################################################
 
@@ -81,7 +81,7 @@ def Main(gv):
             Prj.monitorRS485(myPort)
 
         elif gv.args.secondPosParameter == 'raw':
-            Prj.monitorRaw(myPort, inpArgs=gv.args)
+            Prj.monitorRaw(myPort, dHex=gv.args.hex, dText=gv.args.text, dChar=gv.args.char)
 
     else:
         errMsg = 'comando primario non previsto'

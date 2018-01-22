@@ -20,35 +20,30 @@ int pinNO;
 // lo slave scrive sulla seriale come debug
 // ################################################################
 void Slave_Main(unsigned long RxTimeout) {
-    if (firstRun) {
-        pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData      = false;                // display raw data
-    }
+    I_AM_SLAVE  = true;
 
-    // Serial.println();
-    pData->Rx_Timeout   = RxTimeout;         // set RXtimeout
-    byte rcvdRCode      = recvMsg485(pData);
-    // byte rcvdRCode = 0;
+    while (true) {
 
-    if (rcvdRCode == LN_OK) {
-        processRequest(pData);
-    }
+        pData->Rx_Timeout   = RxTimeout;         // set RXtimeout
+        byte rcvdRCode      = recvMsg485(pData);
 
-    else if (Rx[fld_DATALEN] == 0) {
-        Serial.print(myID);
-        Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
-        Serial.println();
+        if (rcvdRCode == LN_OK) {
+            processRequest(pData);
+        }
 
-    }
+        else if (Rx[fld_DATALEN] == 0) {
+            Serial.print(myID);
+            Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
+            Serial.println();
 
-    else { // DEBUG
-        Serial.print(myID);
-        Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
-        Serial.println(F(" - errore non identificato: "));
-    }
+        }
 
+        else { // DEBUG
+            Serial.print(myID);
+            Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
+            Serial.println(F(" - errore non identificato: "));
+        }
+    } // end while (true)
 }
 
 

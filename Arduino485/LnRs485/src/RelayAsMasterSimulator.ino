@@ -18,34 +18,31 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // se vogliamo che Arduino invii un echo autonomamente
 // ##########################################################
 void loop_MasterSimulator() {
-    unsigned long RX_TIMEOUT = 2000;
-    // forziamo myAddress a MASTER
-    // myEEpromAddress = 0;
+    while (true) {
+        // byte returnRs485ToMaster = false;
 
-    if (returnRs485ToMaster == true) {
-        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData      = false;                // display raw data
+        if (returnRs485ToMaster == true) {
+            pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
+            pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
+            pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+            pData->fDisplayRawData      = false;                // display raw data
 
-        Simulator(pData);
+            Simulator(pData);
 
-        // proviamo ad intercettare una richiesta da RaspBerry per massimo
-        Relay_Main(10000);
+        }
+        else {
+            pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
+            pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
+            pData->fDisplayOtherFull    = true;                // display dati relativi ad  altri indirizzi
+            pData->fDisplayRawData      = false;                // display raw data
+            Serial.print(myID);Serial.println(F("Sono in Relay simulation mode"));
+
+            Simulator(pData);
+            Serial.println();
+        }
+
+        delay(5000);
     }
-    else {
-        pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayOtherFull    = true;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData      = false;                // display raw data
-        Serial.print(myID);Serial.println(F("Sono in Relay simulation mode"));
-
-        Simulator(pData);
-        Serial.println();
-    }
-
-
-    delay(5000);
 }
 
 // #############################################################
@@ -114,10 +111,6 @@ void Simulator(RXTX_DATA *pData) {
                 data[dataLen++]  = D13;     // pin number
 
         #endif
-
-        // Rx[fld_DATALEN]          = fld_SUBCOMMAND;
-
-
 
             // come comandData inviamo un testo di esempio
         setDataCommand(Rx, data, dataLen);

@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 19-01-2018 12.19.40
+# Version ......: 22-01-2018 16.14.51
 #
 # ######################################################################################
 
@@ -18,7 +18,7 @@ import Source as Prj
 ########################################################
 # - monitorRaw()
 ########################################################
-def monitorRaw(LnRs485, inpArgs):
+def monitorRaw(serialPort, MAX_LOOP=1000000, dHex=True, dText=False, dChar=False):
     # ----- common part into the Prj modules --------
     Ln      = Prj.LnLib
     C       = Ln.Color()
@@ -33,17 +33,20 @@ def monitorRaw(LnRs485, inpArgs):
         # ===================================================
     C.printColored (color=C.yellowH, text=__name__ + '... press ctrl-c to stop the process.', tab=8)
     # gv.args.printTree(fPAUSE=True)
-    while True:
+    while MAX_LOOP>0:
         try:
                 # return bytearray
-            data = LnRs485._serialRead(timeoutValue=2000)
+            data = serialPort._serialRead(timeoutValue=2000)
             if data:
-                fmtData = LnRs485.fmtData(data, Ln.Dict)
+                fmtData = serialPort.fmtData(data, Ln.Dict)
                 logger.debug('received... {}'.format(fmtData.hexm))
-                if gv.args.hex:  print (fmtData.hexm)
-                if gv.args.char: print (fmtData.char)
-                if gv.args.text: print (fmtData.text)
+                if dHex:  print (fmtData.hexm)
+                if dChar: print (fmtData.char)
+                if dText: print (fmtData.text)
                 print ('\n'*2)
+                MAX_LOOP = 0 # exiting
+
+            MAX_LOOP -= 1
 
 
         except (KeyboardInterrupt) as key:

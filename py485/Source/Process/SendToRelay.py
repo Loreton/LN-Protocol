@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 19-01-2018 16.26.21
+# Version ......: 22-01-2018 16.15.20
 #
 # ######################################################################################
 
@@ -18,9 +18,9 @@ import    Source as Prj
 # - SendToRelay()
 ########################################################
 def SendToRelay(myPort, payload):
-    global logger, LnSerial
+    global logger, serialPort
     assert type(payload) == bytearray
-    LnSerial = myPort
+    serialPort = myPort
     Ln     = Prj.LnLib
     logger  = Ln.SetLogger(package=__package__)
 
@@ -32,29 +32,37 @@ def SendToRelay(myPort, payload):
         # ---------------------------------------------------------------------
     LOOP = 10
     while LOOP:
-        logger.info('waiting for idle state')
-        _waitForIdleState()
+        # logger.info('waiting for idle state')
+        # _waitForIdleState()
         try:
                 # - invio messaggio (torna il dict dei dati nella seriale232)
-            xmittedData = LnSerial.write485(payload)
+            xmittedData = serialPort.write485(payload)
             logger.info('xmittedData: {}'.format(xmittedData))
+            print('xmittedData: {}'.format(xmittedData))
+            Prj.monitorRaw(serialPort, MAX_LOOP=3, dHex=True, dText=True, dChar=False)
+            LOOP -= 1
+            Ln.KeyboardInput('pausing...', validKeys='ENTER', exitKey='X')
+
+            '''
 
                 # - attesa echo
-            rcvdData    = LnSerial.read232(timeoutValue=4000) # return dict.raw dict.hexd dict.hexm dict.text dict.char
+            rcvdData    = serialPort.read232(timeoutValue=4000) # return dict.raw dict.hexd dict.hexm dict.text dict.char
             logger.info('rcvdData   : {}'.format(rcvdData))
+            print('rcvdData   : {}'.format(rcvdData))
             if  rcvdData == xmittedData:
 
-            # data232 = LnSerial.fmtData(data, Ln.Dict)
+            # data232 = serialPort.fmtData(data, Ln.Dict)
             # if  data232.raw == xmittedData.raw:
                 print ('    echo has been received from Arduino Relay...')
                 break
             else:
                 LOOP -= 1
+            '''
 
 
         except (KeyboardInterrupt) as key:
             print (__name__, "Keybord interrupt has been pressed")
-            LnSerial.Close()
+            serialPort.Close()
             Ln.Exit(0)
 
 
@@ -74,16 +82,42 @@ def _waitForIdleState():
     while True:
         try:
                 # read serial data
-            dict232, dict485 = LnSerial.read485(timeoutValue=2000)
+            dict232, dict485 = serialPort.read485(timeoutValue=2000)
                 # - ricevuto il messaggio di waiting for command da parte del Relay
             if dict485.raw and dict485.fld.f05_RCODE==6:
                 logger.info(dict485.fld, dictTitle='RS485 received data')
-                print ('\n'*2)
-                return
+                if dict485.fld.f05_RCODE == 6:
+                    print('Idle message received from...: ', dict485.fld.f01_sourceAddr)
+                continue
 
         except (KeyboardInterrupt) as key:
             print (__name__, "Keybord interrupt has been pressed")
-            LnSerial.Close()
+            serialPort.Close()
             Ln.Exit(9999)
 
     Ln.Exit(9999)
+
+
+
+def _monitorDebug():
+
+    while True:
+        try:
+            dict232, dict485 = serialPort.read485(timeoutValue=5000)
+                # - ricevuto il messaggio di waiting for command da parte del Relay
+            if dict485.raw:
+                logger.info(dict485.fld, dictTitle='RS485 received data')
+
+                if dict485.fld.f05_RCODE == 6:
+                    print('Idle message received from...: ', dict485.fld.f01_sourceAddr)
+                else:
+                    dict485.printTree(fPAUSE=True)
+
+            else:
+                print('nothing received...')
+            return
+
+
+        except (KeyboardInterrupt) as key:
+            print (__name__, "Keybord interrupt has been pressed")
+            sys.exit()

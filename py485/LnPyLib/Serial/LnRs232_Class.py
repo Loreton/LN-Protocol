@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 19-01-2018 16.17.10
+# Version ......: 22-01-2018 15.52.51
 
 import serial       # sudo pip3.4 install pyserial
 import sys
@@ -168,7 +168,13 @@ class LnRs232():
             logger.info('closing port...')
             self._serial.close()
 
-        logger.info( "received {} bytes".format(len(_dataBuffer)))
+        # logger.info( "received {} bytes".format(len(_dataBuffer)))
+
+            # RECEIVED data
+        _HexData = ' '.join('{0:02x}'.format(x) for x in _dataBuffer)
+        _HexMsg = '     {DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=_HexData)
+        logger.info('received data on serial port: ')
+        logger.info(_HexMsg)
         logger = self._setLogger(package=__name__, exiting=True)
         return _dataBuffer
 
@@ -191,7 +197,7 @@ class LnRs232():
 
             # INVIO dati
         _HexData = ' '.join('{0:02x}'.format(x) for x in txData)
-        _HexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=_HexData)
+        _HexMsg = '     {DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=_HexData)
         logger.info('xmitting data on serial port: ')
         logger.info(_HexMsg)
         self._serial.write(txData)

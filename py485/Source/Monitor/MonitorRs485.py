@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 19-01-2018 16.03.40
+# Version ......: 22-01-2018 12.39.41
 #
 # ######################################################################################
 
@@ -38,7 +38,8 @@ def monitorRS485(LnSerial):
                 # - ricevuto il messaggio di waiting for command da parte del Relay
             if dict485.raw and dict485.fld.f05_RCODE==6:
                 logger.info(dict485.fld, dictTitle='RS485 received data')
-                print ('\n'*2)
+                if dict485.fld.f05_RCODE == 6:
+                    print('Idle message received from...: ', dict485.fld.f01_sourceAddr)
                 continue
 
             # if data:
