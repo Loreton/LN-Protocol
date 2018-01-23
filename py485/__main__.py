@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 19-01-2018 16.37.40
+# Version ......: 23-01-2018 12.35.50
 #
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -56,7 +56,7 @@ if __name__ == "__main__":
                             )
 
     logger.info(gv.args, dictTitle='command line parameters...')
-    print (logger)
+    # print (logger)
 
 
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         # ===================================================
 
     Prj.Main(gv)
-    gv.Ln.Exit(0, "completed", printStack=False, stackLevel=9, console=True)
+    Ln.Exit(0, "completed", printStack=False, stackLevel=9, console=True)
     sys.exit()
 
 

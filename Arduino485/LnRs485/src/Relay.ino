@@ -1,9 +1,6 @@
 /*
 Author:     Loreto Notarantonio
-
-# updated by ...: Loreto Notarantonio
-# Version ......: 22-01-2018 16.50.21
-
+version:    LnVer_2017-11-30_19.07.33
 
 Scope:      Funzione di relay.
                 Prende i dati provenienti da una seriale collegata a RaspBerry
@@ -24,28 +21,36 @@ Scope:      Funzione di relay.
 // #    - torniamo indietro la risposta
 // ################################################################
 void Relay_Main(unsigned long RxTimeout) {
-    RxTimeout = 100000;         // set timeout
-    pData->Rx_Timeout = RxTimeout;         // set timeout
-    I_AM_RELAY  = true;
-    I_AM_SLAVE  = false;
-
-
+    pData->Rx_Timeout      = RxTimeout;         // set timeout
     while (true) {
-        Serial.print(myID); Serial.print(F(" sono qui: 00"));Serial.println();
+        Rx[fld_DATALEN] = 0;
 
-        Rx[fld_DATALEN]   = 0;
-
-            // -------------------------------------------
-            // - ricezione messaggio da RaspBerry (Rs232)
-            // -------------------------------------------
+            // --------------------------------------
+            // - ricezione messaggio da RaspBerry
+            // --------------------------------------
         byte rCode = recvMsg232(pData);
-        Serial.print(myID); Serial.print(F(" - rcode: "));Serial.print(rCode);Serial.println(errMsg[rCode]);
+        // Rx = pData->rx;
+        // Tx = pData->tx;
 
-        // rCode = LN_OK;
+
+            // --------------------------------------
+            // - se corretto:
+            // -    1. inoltra to rs485 bus
+            // -    2. attendi risposta
+            // -    3. copia comunque su Txdata
+            // -    4. Se ricezione OK:
+            // -        4a. copia messaggio su TX
+            // -        4a. ruota pacchetto verso PI
+            // -    5. Se ricezione NOT OK:
+            // -        5a. prepara messaggo di errore
+            // -        5b. ruota pacchetto verso PI
+            // - altrimenti:
+            // -    1. ignora
+            // --------------------------------------
 
         if (rCode == LN_TIMEOUT) {
-            if (returnRs485ToMaster == true) {
-                Serial.print(myID); Serial.print(F(" sono in TIMEOUT"));Serial.println();
+            if (returnRs485ToMaster) {
+                // Serial.print(myID); Serial.print(F(" sono in TIMEOUT"));Serial.println();
                 /* solo per eventuale DEBUG
                 copyRxMessageToTx(pData);
                 char noDataRcvd[] = " - waiting for data ... ";
@@ -61,49 +66,40 @@ void Relay_Main(unsigned long RxTimeout) {
                 Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
                 Serial.println();
             }
-
             continue;
         }
-        displayRXFull(pData);
 
-            /*
-                echo del comando appena ricevuto
-                come ack verso RaspBerry
-            */
-
+            // - echo del comando appena ricevuto
+            // - anche se in errore....
         copyRxMessageToTx(pData);
         sendMsg232(pData);
 
         if (rCode == LN_OK) {
-            Serial.print(myID); Serial.print(F(" sono in RC=OK"));Serial.println();
 
-                // processiamo il comando come fossimo uno slave.
-            if (Rx[fld_DESTINATION_ADDR] == myEEpromAddress)  {
-                Serial.print(myID); Serial.print(F(" sono in LOCAL Execution"));Serial.println();
-                // processRequest(pData);
+            if (Rx[fld_DESTINATION_ADDR] == myEEpromAddress)  { // facciamo echo del comando....
+                processRequest(pData); // esegue come fosse uno slave.
+                sendMsg232(pData);
+                // fwdToRs232(pData, 0);
             }
 
             else {
-                Serial.print(myID); Serial.print(F(" sono in FWD"));Serial.println();
-                    // forward message to Rs485 bus
-                Relay_fwdToRs485(pData);
-                    // wait for response
+                fwdToRs485(pData);
+                    // qualsiasi esito il msg è pronto da inviare sulla rs232
                 byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-                    // forward message to RaspBerry (rs232)
-                Relay_fwdToRaspBerry(pData, rcvdRCode);
+                copyRxMessageToTx(pData);
+                fwdToRs232(pData, rcvdRCode);
             }
-        }
 
-        // Serial.print(myID); Serial.print(F(" sono qui: 03"));Serial.println();
-    } // end while true
+        } // end if rcode
+    } // end while(true)
+
 }
 
 
 // ################################################################
 // # - Forward del messaggio ricevuto da RaspBerry verso RS485
 // ################################################################
-void Relay_fwdToRs485(RXTX_DATA *pData) {
-
+void fwdToRs485(RXTX_DATA *pData) {
     copyRxMessageToTx(pData);
         // send to RS-485 bus
     sendMsg485(pData);
@@ -115,10 +111,10 @@ void Relay_fwdToRs485(RXTX_DATA *pData) {
 // ################################################################
 // # - Forward del messaggio ricevuto da RS485 verso RaspBerry
 // ################################################################
-void Relay_fwdToRaspBerry(RXTX_DATA *pData, byte rcvdRCode) {
-    copyRxMessageToTx(pData);
+void fwdToRs232(RXTX_DATA *pData, byte rcvdRCode) {
+    // copyRxMessageToTx(pData);
 
-    if (returnRs485ToMaster == true)
+    if (returnRs485ToMaster)
         sendMsg232(pData);
     else
         displayMyData("RX-xxxx", rcvdRCode, pData);
@@ -175,28 +171,3 @@ byte Relay_waitRs485Response(RXTX_DATA *pData, unsigned long RxTimeout) {
     }
     return rcvdRCode;
 }
-
-#if 0
-void displayRXFull(RXTX_DATA *pData) {
-    const byte *data;
-    const byte *raw;
-    byte  rawIndex=0;
-
-    raw = pData->raw;
-    data = pData->rx;
-    // byte dataLen = data[fld_DATALEN];
-    byte rawLen  = raw[0];
-
-    if (rawLen > 0) {
-        rawIndex = fld_DATA_COMMAND*2;
-        Serial.println();
-        Serial.print(TAB4);Serial.print(F("full raw - len:["));Serial.print(Utoa(raw[0], 3, '0'));Serial.print(F("] - "));
-        Serial.print(TAB4);printHex((char *) &raw[1], raw[0]); //Serial.println();
-
-        Serial.println();
-        Serial.print(TAB4);Serial.print(F("CMD  raw -      "));;Serial.print(Utoa(raw[0], 3, '0'));
-        Serial.print(TAB4);printHex((char *) &raw[rawIndex], rawLen-rawIndex-2);//Serial.println();
-
-    }
-}
-#endif

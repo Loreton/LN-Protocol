@@ -8,12 +8,20 @@
 
     #define MASTER_ADDRESS      1
 
-    #define MASTER_SIMULATOR
+    #define MASTER_SIMULATOR_XXXX
 
-    RXTX_DATA   RxTx, *pData;             // struttura dati
-    unsigned char *Rx;                  //    unsigned char *Rx = pData->rx;
-    unsigned char *Tx;                  //    unsigned char *Tx = pData->tx;
-    bool returnRs485ToMaster = false;
+    RXTX_DATA       RxTx, *pData;             // struttura dati
+    unsigned char   *Rx;                  //    unsigned char *Rx = pData->rx;
+    unsigned char   *Tx;                  //    unsigned char *Tx = pData->tx;
+    bool            I_AM_RELAY = false;
+    bool            I_AM_SLAVE = false;
+
+    #define RETURN_RS485_TO_MASTER   // on MASTER-RELAY-RS232 port return RS485 data or Text data
+    #ifdef RETURN_RS485_TO_MASTER
+        bool returnRs485ToMaster = true;
+    #else
+        bool returnRs485ToMaster = false;
+    #endif
 
 
     #if defined (I_AM_MAIN_)
@@ -106,6 +114,6 @@
 
 
     // inserite solo per impostare il valore di default nei paramentri
-    void Relay_fwdToRaspBerry(RXTX_DATA *pData, byte rcvdRCode);
+    // void Relay_fwdToRaspBerry(RXTX_DATA *pData, byte rcvdRCode);
 
 #endif

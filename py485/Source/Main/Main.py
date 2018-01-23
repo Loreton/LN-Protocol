@@ -2,13 +2,14 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 22-01-2018 16.11.34
+# Version ......: 23-01-2018 15.09.19
 #
 # ######################################################################################
 
 
 import os, sys
 import Source as Prj
+import time
 # import LnLib as Ln
 
 # from Source.Setup import GlobalVars_Module as projectGlobalVars
@@ -63,11 +64,17 @@ def Main(gv):
         # ==========================================
     if gv.args.firstPosParameter in ['digital']:
         myPort = Prj.openRs485Port(relay, rs485Prot)
+
         if gv.args.secondPosParameter == 'read':
             Prj.digitalRead(myPort, gv.iniFile, srcAddress=rs485Prot.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
-
         elif gv.args.secondPosParameter == 'toggle':
             # Prj.digitalToggle(myPort, gv.iniFile, srcAddress=rs485Prot.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
+            Prj.digitalToggle(gv, myPort, payload=payload)
+            print ('\n'*4)
+            time.sleep(1)
+            Prj.digitalToggle(gv, myPort, payload=payload)
+            print ('\n'*4)
+            time.sleep(1)
             Prj.digitalToggle(gv, myPort, payload=payload)
 
         elif gv.args.secondPosParameter == 'write':
@@ -75,8 +82,12 @@ def Main(gv):
 
 
     elif gv.args.firstPosParameter in ['monitor']:
-        if gv.args.port: monitor.port = gv.args.port
+
+        if gv.args.port:
+            monitor.port = gv.args.port
+
         myPort = Prj.openRs485Port(monitor, rs485Prot)
+
         if gv.args.secondPosParameter == 'rs485':
             Prj.monitorRS485(myPort)
 
@@ -92,4 +103,4 @@ def Main(gv):
 
     logger = Ln.SetLogger(__name__, exiting=True)
 
-    Ln.Exit(0)
+    # Ln.Exit(0)

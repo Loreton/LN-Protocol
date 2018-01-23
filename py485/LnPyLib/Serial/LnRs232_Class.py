@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 22-01-2018 15.52.51
+# Version ......: 23-01-2018 12.12.34
 
 import serial       # sudo pip3.4 install pyserial
 import sys
@@ -57,14 +57,16 @@ class LnRs232():
                                                     timeout  = read_TIMEOUT)
 
             except (Exception) as why:
+                logger.error(str(why))
                 print ('ERROR:  ', str(why))
                 sys.exit()
 
         else:
             self._serial = _SERIALPORTS[port]
             if self._serial.port is None:
-                logger.info('opening port...')
+                logger.info('opening already known port...')
                 self._serial.open()
+
                 # - chissà se sono importanti....
                 self._serial.reset_input_buffer()        # clear input  buffer
                 self._serial.reset_output_buffer()       # clear output buffer
@@ -86,7 +88,7 @@ class LnRs232():
 
 
 
-    def _internaLogger(self, package=None):
+    def _internaLogger(self, package=None, exiting=None):
         ##############################################################################
         # - classe che mi permette di lavorare nel caso il logger non sia richiesto
         ##############################################################################
@@ -193,16 +195,18 @@ class LnRs232():
 
 
         if self._close_port_after_each_call:
+            logger.info('opening port...')
             self._serial.open()
 
             # INVIO dati
         _HexData = ' '.join('{0:02x}'.format(x) for x in txData)
-        _HexMsg = '     {DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=_HexData)
+        _HexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=_HexData)
         logger.info('xmitting data on serial port: ')
         logger.info(_HexMsg)
         self._serial.write(txData)
 
         if self._close_port_after_each_call:
+            logger.info('closing port...')
             self._serial.close()
 
         logger = self._setLogger(package=__name__, exiting=True)

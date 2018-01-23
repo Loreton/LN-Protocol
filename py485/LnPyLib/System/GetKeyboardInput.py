@@ -4,14 +4,16 @@
 #
 # -----------------------------------------------
 # updated by ...: Loreto Notarantonio
-# Version ......: 12-01-2018 15.09.02
+# Version ......: 23-01-2018 12.18.55
 # -----------------------------------------------
 #
 # ####################################################################################################################
 import sys, os
 import inspect
 
-from .. Logger.SetLogger import SetLogger
+# from .. Logger.SetLogger import SetLogger
+# from .. Logger.LnLogger import SetLogger
+from .. Logger.LnLogger_Class import SetLogger       # OK funziona dalla upperDir del package
 from .. Common.LnColor  import LnColor
 from .. Common.Exit     import Exit      as LnExit
 

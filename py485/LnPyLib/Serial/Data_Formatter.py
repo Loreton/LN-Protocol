@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 19-01-2018 15.08.27
+# Version ......: 23-01-2018 10.37.30
 
 import sys
 
@@ -27,57 +27,6 @@ class Formatter:
         return hexData, hexMsg
 
 
-
-
-    ######################################################
-    # -
-    ######################################################
-    @staticmethod
-    def _xxfmtData___(obj485, data, myDict):
-        '''
-            Prende in input un bytearray di dati
-            li formatta di diversi formati
-            e li ritorna.
-        '''
-        assert type(data) == bytearray
-        logger = obj485._setLogger(package=__name__)
-
-        d      = myDict()
-        d.raw  = data
-
-        if d.raw:
-            _validChars = _printableChars
-            _validChars.append(10)                  # aggiungiamo il newline in modo che venga displayato
-
-            if isinstance(data, bytes):
-                data = data.decode('utf-8')
-
-                # PARTE HEX
-            hexData = ' '.join('{0:02x}'.format(x) for x in data)
-            hexMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=hexData)
-
-
-                # PARTE TEXT or CHAR
-            _lineToPrint = []
-            for i in data:
-                if i in _validChars:                    # Handle only printable ASCII
-                    _lineToPrint.append(chr(i))
-                else:
-                    _lineToPrint.append(" ")
-
-            chrMsg  = '{DESCR:^10}:  <data> {DATA}</data>'.format(DESCR="char", DATA='  '.join(_lineToPrint))
-            textMsg = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="text", DATA=''.join(_lineToPrint))
-
-            d.hexd = hexData
-            d.hexm = hexMsg
-            d.text = textMsg
-            d.char = chrMsg
-            funcName = sys._getframe(1).f_code.co_name
-            for key, val in d.items():
-                logger.debug('{}.{:} --> {}'.format(funcName, key, val))
-
-        return d
-        # return {'TEXT': textMsg, 'CHAR': chrMsg, 'HEXD': hexData, 'HEXM': hexMsg}
 
 
 

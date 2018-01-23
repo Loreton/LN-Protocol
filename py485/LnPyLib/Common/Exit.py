@@ -7,7 +7,8 @@
 
 import os, inspect, sys
 
-from .. Logger.SetLogger import SetLogger       # OK funziona dalla upperDir del package
+# from .. Logger.SetLogger import SetLogger       # OK funziona dalla upperDir del package
+from .. Logger.LnLogger_Class import SetLogger       # OK funziona dalla upperDir del package
 from . LnColor  import LnColor
 
 

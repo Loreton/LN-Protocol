@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 22-01-2018 16.15.20
+# Version ......: 23-01-2018 16.59.53
 #
 # ######################################################################################
 
@@ -25,6 +25,7 @@ def SendToRelay(myPort, payload):
     logger  = Ln.SetLogger(package=__package__)
 
 
+    print ('new:', payload)
 
         # ---------------------------------------------------------------------
         # - invio del messaggio al Relay ed attesa dello stesso come echo
@@ -32,21 +33,37 @@ def SendToRelay(myPort, payload):
         # ---------------------------------------------------------------------
     LOOP = 10
     while LOOP:
-        # logger.info('waiting for idle state')
-        # _waitForIdleState()
         try:
                 # - invio messaggio (torna il dict dei dati nella seriale232)
             xmittedData = serialPort.write485(payload)
-            logger.info('xmittedData: {}'.format(xmittedData))
-            print('xmittedData: {}'.format(xmittedData))
-            Prj.monitorRaw(serialPort, MAX_LOOP=3, dHex=True, dText=True, dChar=False)
-            LOOP -= 1
-            Ln.KeyboardInput('pausing...', validKeys='ENTER', exitKey='X')
+            print('xmittedData : {}'.format(xmittedData.raw))
+            logger.info('xmittedData : {}'.format(xmittedData.raw))
+
+                # - attesa echo (lo leggiamo direttamente dalla porta 232
+            # rcvdData = serialPort.read232(timeoutValue=2000) # return dict.raw dict.hexd dict.hexm dict.text dict.char
+            # print('receivedData: {}'.format(rcvdData))
+            # logger.info('echo received data: {}'.format(rcvdData))
+            # if  rcvdData == xmittedData.raw:
+
+            data232, data485 = serialPort.read485(timeoutValue=2000) # return dict.raw dict.hexd dict.hexm dict.text dict.char
+            print('receivedData: {}'.format(data232.raw))
+            logger.info('echo received data: {}'.format(data232.raw))
+            if  data232.raw == xmittedData.raw:
+            # print (data485.text)
+                logger.info('OK - echo received data is the same xmitted')
+                print ('    echo has been received from Arduino Relay...')
+                break
+            else:
+                LOOP -= 1
+                continue
+
+            # Ln.KeyboardInput('pausing...', validKeys='ENTER', exitKey='X')
+
+            # Ln.KeyboardInput('pausing...', validKeys='ENTER', exitKey='X')
 
             '''
 
                 # - attesa echo
-            rcvdData    = serialPort.read232(timeoutValue=4000) # return dict.raw dict.hexd dict.hexm dict.text dict.char
             logger.info('rcvdData   : {}'.format(rcvdData))
             print('rcvdData   : {}'.format(rcvdData))
             if  rcvdData == xmittedData:

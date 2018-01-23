@@ -2,16 +2,17 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 17-01-2018 12.35.28
+# Version ......: 23-01-2018 12.17.45
 #
 
 
 
 # ---------- LnLIB Logger Functions ------
-# from . Common.LnLogger                  import init             as InitLogger
-# from . Common.LnLogger                  import SetLogger        as SetLogger
+# from . Logger.LnLogger                  import init             as InitLogger
+# from . Logger.LnLogger                  import SetLogger        as SetLogger
 from . Logger.LnLogger_Class              import LnLogger        as InitLogger
-from . Logger.SetLogger                   import SetLogger
+from . Logger.LnLogger_Class              import SetLogger
+# from . Logger.SetLogger                   import SetLogger
 
 # ---------- LnLIB COMMON Functions ------
 from . Common.Exit                        import Exit             as Exit
@@ -50,5 +51,7 @@ from . Process.RunProgram                 import OutOnFile        as runGetOnfil
 # from . Monkey                           import LnMonkeyFunctions # per Path.LnCopy, Path.LnBackup
 
 
+# from . Serial_Prev.LnRs232_Class               import LnRs232 as Rs232 #                                                         import di un membro
+# from . Serial_Prev.LnRs485_Class               import LnRs485 as Rs485 #                                                         import di un membro
 from . Serial.LnRs232_Class               import LnRs232 as Rs232 #                                                         import di un membro
 from . Serial.LnRs485_Class               import LnRs485 as Rs485 #                                                         import di un membro

@@ -11,38 +11,41 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 */
 
 
-// #define RETURN_RS485_TO_MASTER   // on MASTER-RELAY-RS232 port return RS485 data or Text data
+
 #ifdef MASTER_SIMULATOR
 
 // ##########################################################
 // se vogliamo che Arduino invii un echo autonomamente
 // ##########################################################
 void loop_MasterSimulator() {
-    while (true) {
-        // byte returnRs485ToMaster = false;
+    unsigned long RX_TIMEOUT = 2000;
+    // forziamo myAddress a MASTER
+    // myEEpromAddress = 0;
 
-        if (returnRs485ToMaster == true) {
-            pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
-            pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
-            pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
-            pData->fDisplayRawData      = false;                // display raw data
+    #ifdef RETURN_RS485_TO_MASTER
+        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayRawData      = false;                // display raw data
 
-            Simulator(pData);
+        Simulator(pData);
 
-        }
-        else {
-            pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
-            pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
-            pData->fDisplayOtherFull    = true;                // display dati relativi ad  altri indirizzi
-            pData->fDisplayRawData      = false;                // display raw data
-            Serial.print(myID);Serial.println(F("Sono in Relay simulation mode"));
+        // proviamo ad intercettare una richiesta da RaspBerry per massimo
+        Relay_Main(10000);
 
-            Simulator(pData);
-            Serial.println();
-        }
+    #else
+        pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
+        pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayOtherFull    = true;                // display dati relativi ad  altri indirizzi
+        pData->fDisplayRawData      = false;                // display raw data
+        Serial.print(myID);Serial.println(F("Sono in Relay simulation mode"));
 
-        delay(5000);
-    }
+        Simulator(pData);
+        Serial.println();
+    #endif
+
+
+    delay(5000);
 }
 
 // #############################################################
@@ -76,32 +79,32 @@ void Simulator(RXTX_DATA *pData) {
             // - dovendo simulare la ricezione da parte del raspberry
             // - preparo un messaggio come se fosse stato ricevuto
             // ---------------------------------------------------------
-        Rx[fld_SENDER_ADDR]      = MASTER_ADDRESS;                                    // proviene dal master
-        Rx[fld_DESTINATION_ADDR] = destAddresses[i];                    // DA
-        Rx[fld_SEQNO_HIGH]       = seqNO >> 8;
-        Rx[fld_SEQNO_LOW]        = seqNO & 0x00FF;
-        Rx[fld_CMD_RCODE]        = LN_OK;
+        pData->rx[fld_SENDER_ADDR]      = MASTER_ADDRESS;                                    // proviene dal master
+        pData->rx[fld_DESTINATION_ADDR] = destAddresses[i];                    // DA
+        pData->rx[fld_SEQNO_HIGH]       = seqNO >> 8;
+        pData->rx[fld_SEQNO_LOW]        = seqNO & 0x00FF;
+        pData->rx[fld_CMD_RCODE]        = LN_OK;
 
         #if SIMULATION_TYPE==POLLING
             char dataCmd[]  = "Simulation request!";
-            Rx[fld_COMMAND]          = POLLING_CMD;
-            Rx[fld_SUBCOMMAND]       = REPLY;
+            pData->rx[fld_COMMAND]          = POLLING_CMD;
+            pData->rx[fld_SUBCOMMAND]       = REPLY;
             dataLen = sizeof(dataCmd);
         #elif SIMULATION_TYPE==DIGITALREAD
             char data[]  = "......";
-            Rx[fld_COMMAND]         = DIGITAL_CMD;
-            Rx[fld_SUBCOMMAND]      = READ_PIN;
+            pData->rx[fld_COMMAND]         = DIGITAL_CMD;
+            pData->rx[fld_SUBCOMMAND]      = READ_PIN;
             data[dataLen++]  = D01;     // pin number
         #elif SIMULATION_TYPE==DIGITALWRITE
             char data[]  = "......";
-            Rx[fld_COMMAND]         = DIGITAL_CMD;
-            Rx[fld_SUBCOMMAND]      = WRITE_PIN;
+            pData->rx[fld_COMMAND]         = DIGITAL_CMD;
+            pData->rx[fld_SUBCOMMAND]      = WRITE_PIN;
             data[dataLen++]  = D13;     // pin number
             data[dataLen++]  = LOW;     // value
         #elif SIMULATION_TYPE==TOGGLEPIN
             char data[]  = "......";
-            Rx[fld_COMMAND]         = DIGITAL_CMD;
-            Rx[fld_SUBCOMMAND]      = TOGGLE_PIN;
+            pData->rx[fld_COMMAND]         = DIGITAL_CMD;
+            pData->rx[fld_SUBCOMMAND]      = TOGGLE_PIN;
 
             if (destAddresses[i] == 11)
                 data[dataLen++]  = D11;     // pin number
@@ -112,16 +115,20 @@ void Simulator(RXTX_DATA *pData) {
 
         #endif
 
+        // pData->rx[fld_DATALEN]          = fld_SUBCOMMAND;
+
+
+
             // come comandData inviamo un testo di esempio
-        setDataCommand(Rx, data, dataLen);
+        setDataCommand(pData->rx, data, dataLen);
 
         // - simuliamo la ricezione con rCode=LN_OK
         byte rCode = LN_OK;
         if (rCode == LN_OK) {
-            Relay_fwdToRs485(pData);
+            fwdToRs485(pData);
                 // qualsiasi esito il msg è pronto da inviare sulla rs232
             byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-            Relay_fwdToRaspBerry(pData, rcvdRCode);
+            fwdToRs232(pData, rcvdRCode);
         }
 
 

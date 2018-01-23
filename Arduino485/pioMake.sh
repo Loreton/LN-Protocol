@@ -54,29 +54,31 @@ function clearLibraryLink {
 # ########################################################################
 # # M A I N
 # ########################################################################
-    thisDir="$(dirname  "$(test -L "$0" && readlink "$0" || echo "$0")")"     # risolve anche eventuali LINK presenti sullo script
-    thisDir=$(cd $(dirname "$thisDir"); pwd -P)/$(basename "$thisDir")        # GET AbsolutePath
-    scriptDir=${thisDir%/.*}
+    # thisDir="$(dirname  "$(test -L "$0" && readlink "$0" || echo "$0")")"     # risolve anche eventuali LINK presenti sullo script
+    # thisDir=$(cd $(dirname "$thisDir"); pwd -P)/$(basename "$thisDir")        # GET AbsolutePath
+    # scriptDir=${thisDir%/.*}
 
     thisDir="$(test -L "$PWD" && readlink "$PWD" || echo "$PWD")"     # risolve anche eventuali LINK presenti sullo script
     thisDir=$(cd $(dirname "$thisDir"); pwd -P)/$(basename "$thisDir")        # GET AbsolutePath
     currentDir=${thisDir%/.*}
 
+    PROJECT_ARDUINO_DIR=$(dirname "$currentDir")
+    LORETO_LIB_DIR="$PROJECT_ARDUINO_DIR/LnLibraries"
 
-    GIT_ROOT_DIR="$scriptDir"
+
+    # PROJECT_ROOT_DIR=$(dirname "$PROJECT_ARDUINO_DIR")
     Project_DIR="$currentDir"
 
     Project_LIB_DIR="$Project_DIR/lib"
-    LORETO_LIB_DIR="$GIT_ROOT_DIR/LnLibraries"
 
-    platformioINI="$GIT_ROOT_DIR/platformio.ini"
+    platformioINI="$PROJECT_ARDUINO_DIR/platformio.ini"
     platformioLNK="${Project_DIR}/platformio.ini"
 
     # LORETO_LIB_DIR="/home/pi/GIT-REPO/HW-Projects/LnProtocol/LnLibraries"
 
     echo
-    echo "      GIT ROOT DIR    dir is: $GIT_ROOT_DIR"
-    echo "      library         dir is: $LORETO_LIB_DIR"
+    # echo "      PROJECT ROOT DIR    is: $PROJECT_ROOT_DIR"
+    echo "      Arduino library DIR is: $LORETO_LIB_DIR"
     echo
     echo "      current         dir is: $currentDir"
     echo "      prjLib          dir is: $Project_LIB_DIR"

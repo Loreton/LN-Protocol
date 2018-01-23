@@ -26,8 +26,6 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 #include    <LnRS485_protocol.h>
 #include    "LnRs485.h"
 
-bool     I_AM_RELAY = false;
-bool     I_AM_SLAVE = false;
 
 /*
     Per i pin di Arduino, facendo riferimento alle istruzioni di Arduino stesso, sono
@@ -105,35 +103,38 @@ void setup() {
 // # - M A I N     Loop
 // ################################################################
 void loop() {
-    unsigned long RX_TIMEOUT = 5000;
+    unsigned long RX_TIMEOUT = 2000;
+    pData->myEEpromAddress  = myEEpromAddress;
     // IMPORTANTE ri-assegnarli a questo punto
     Rx  = pData->rx; // è globale
     Tx  = pData->tx; // è globale
-    pData->myEEpromAddress  = myEEpromAddress;
 
     if (myEEpromAddress <= 10) {
+        I_AM_RELAY = true;
 
         #ifdef MASTER_SIMULATOR
-            setMyID("Simul", myEEpromAddress);
-            pData->myID = myID;
+            if (firstRun) {
+                setMyID("Simul", myEEpromAddress);
+                pData->myID             = myID;
+            }
             loop_MasterSimulator();
+            delay(1000);
 
         #else
             setMyID("Relay", myEEpromAddress);
-            pData->myID = myID;
+            pData->myID             = myID;
             pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
             pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
             pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
             pData->fDisplayRawData      = false;                // display raw data
-
             Relay_Main(RX_TIMEOUT);
-
         #endif
     }
-
     else {
+
+        I_AM_SLAVE = true;
         setMyID("Slave", myEEpromAddress);
-        pData->myID = myID;
+        pData->myID             = myID;
         pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
         pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
         pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi

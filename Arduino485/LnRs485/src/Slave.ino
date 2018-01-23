@@ -20,20 +20,31 @@ int pinNO;
 // lo slave scrive sulla seriale come debug
 // ################################################################
 void Slave_Main(unsigned long RxTimeout) {
-    I_AM_SLAVE  = true;
+    pData->Rx_Timeout   = RxTimeout;         // set RXtimeout
 
     while (true) {
+        Rx[fld_DATALEN] = 0;
 
-        pData->Rx_Timeout   = RxTimeout;         // set RXtimeout
+        // Serial.println();
         byte rcvdRCode      = recvMsg485(pData);
+        // byte rcvdRCode = 0;
+
+        if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
+            // [Slave-012] - RX-data [rcvdCode: OK] - [00/000] --> [0B/011] - SeqNO: 00007 - [it's NOT for me...]
+            returnxxx;
+        }
 
         if (rcvdRCode == LN_OK) {
             processRequest(pData);
+            sendMsg485(pData);
+
         }
 
         else if (Rx[fld_DATALEN] == 0) {
             Serial.print(myID);
-            Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
+            Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
+            Serial.print(F(" - Nessuna richiesta ricevuta in un tempo di mS: "));
+            Serial.print(pData->Rx_Timeout);
             Serial.println();
 
         }
@@ -43,7 +54,8 @@ void Slave_Main(unsigned long RxTimeout) {
             Serial.print(F("rcvdRCode: "));Serial.print(rcvdRCode);
             Serial.println(F(" - errore non identificato: "));
         }
-    } // end while (true)
+    } // end while(true)
+
 }
 
 
@@ -52,8 +64,6 @@ void Slave_Main(unsigned long RxTimeout) {
 // #
 // #############################################################
 void processRequest(RXTX_DATA *pData) {
-    // unsigned char *Rx = pData->rx;
-    // unsigned char *Tx = pData->tx;
     byte senderAddr = Rx[fld_SENDER_ADDR];
     byte destAddr   = Rx[fld_DESTINATION_ADDR];
 
@@ -104,7 +114,7 @@ void processRequest(RXTX_DATA *pData) {
                 // print6Str(); ... il codice qui non viene considerato
 
                 case READ_PIN:
-                    if (I_AM_SLAVE==true) {
+                    if (I_AM_SLAVE) {
                         print6Str(TAB4, descr_DigitalCMD, descr_ReadingPin);
                         Serial.print(pinNO);
                     }
@@ -116,10 +126,11 @@ void processRequest(RXTX_DATA *pData) {
                     // Write Pin (if level is different from requested value)
                     // return [x,y] - previous and current
                 case WRITE_PIN:
-                    if (I_AM_SLAVE==true) {
+                    if (I_AM_SLAVE) {
                         print6Str(TAB4, descr_DigitalCMD, descr_WritingPin);
                         Serial.print(pinNO);
                     }
+
 
                     readValue1 = digitalRead(pinNO);
                     if (readValue1 != valueToWrite)
@@ -130,15 +141,13 @@ void processRequest(RXTX_DATA *pData) {
 
                     returnDATA[counter++] = (char) readValue1;
                     returnDATA[counter++] = (char) readValue2;
-                    if (I_AM_SLAVE==true) {
-                        print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
-                    }
+                    print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
                     break;
 
                     // led lampeggiante
                     // return [x,y] - previous and current
                 case TOGGLE_PIN:
-                    if (I_AM_SLAVE==true) {
+                    if (I_AM_SLAVE) {
                         print6Str(TAB4, descr_DigitalCMD, descr_TogglePin);
                         Serial.print(pinNO);
                     }
@@ -153,9 +162,8 @@ void processRequest(RXTX_DATA *pData) {
 
                     returnDATA[counter++] = (char) readValue1;
                     returnDATA[counter++] = (char) readValue2;
-                    if (I_AM_SLAVE==true) {
-                        print6Str(" before/after ");
-                        printDataToHex(returnDATA, counter, "/");
+                    if (I_AM_SLAVE) {
+                        print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
                     }
 
                     break;
@@ -230,8 +238,14 @@ void processRequest(RXTX_DATA *pData) {
 
     Tx[fld_DESTINATION_ADDR] = senderAddr;
     Tx[fld_SENDER_ADDR]      = myEEpromAddress;
-    print6Str(TAB4, "returning Data: ");printDataToHex(returnDATA, counter, " ");
-    sendMsg485(pData);
+    if (I_AM_SLAVE) {
+        print6Str(TAB4, "returning Data: ");
+        printDataToHex(returnDATA, counter, " ");
+        // sendMsg485(pData);
+    }
+    // else {
+        // sendMsg232(pData);
+    // }
 }
 
 

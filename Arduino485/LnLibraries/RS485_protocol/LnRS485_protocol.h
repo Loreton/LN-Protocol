@@ -21,7 +21,6 @@
                                 "BAD-CHAR",
                                 "TIMEOUT",
                                 "PAYLOAD",
-                                "WAITING_FOR_DATA",
                                 "DEBUG",
                             };
 
@@ -57,7 +56,6 @@
                         LN_BADCHAR,
                         LN_TIMEOUT,
                         LN_PAYLOAD,
-                        LN_WAITING_FOR_CMD,
                         LN_DEBUG,
                         LN_UNKNOWN_CMD,
                     };
@@ -90,7 +88,7 @@
         byte            Tx_CRCcalc;    // CRC value
         byte            Rx_CRCcalc;    // CRC value
         byte            Rx_CRCrcvd;    // CRC value
-        unsigned long   Rx_Timeout         = 100000;        // receive default timeout
+        unsigned long   Rx_Timeout         = 1000;        // receive default timeout
 
         bool            fDisplayMyData      = false;       // display dati relativi al mio indirizzo
         bool            fDisplayOtherHeader = false;       // display solo header di altri indirizzi
