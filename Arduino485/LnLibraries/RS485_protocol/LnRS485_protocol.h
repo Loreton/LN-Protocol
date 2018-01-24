@@ -117,7 +117,7 @@
 
 
 
-    void copyRxMessageToTx(RXTX_DATA *pData);
+    void clone_Rx_To_Tx(RXTX_DATA *pData);
     void setDataCommand(byte *pData, char cmdData[], byte dataLen);
     byte waitRs485Response(RXTX_DATA *pData, unsigned long RxTimeout);
 

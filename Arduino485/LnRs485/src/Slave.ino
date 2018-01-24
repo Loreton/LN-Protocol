@@ -20,21 +20,29 @@ int pinNO;
 // lo slave scrive sulla seriale come debug
 // ################################################################
 void Slave_Main(unsigned long RxTimeout) {
+    I_AM_SLAVE = true;
+
+    setMyID("Slave", myEEpromAddress);
+    pData->myID                 = myID;
+    pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
+    pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
+    pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+    pData->fDisplayRawData      = false;                // display raw data
+
     pData->Rx_Timeout   = RxTimeout;         // set RXtimeout
 
     while (true) {
         Rx[fld_DATALEN] = 0;
 
-        // Serial.println();
         byte rcvdRCode      = recvMsg485(pData);
-        // byte rcvdRCode = 0;
 
-        if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
-            // [Slave-012] - RX-data [rcvdCode: OK] - [00/000] --> [0B/011] - SeqNO: 00007 - [it's NOT for me...]
-            returnxxx;
+        if (Rx[fld_DESTINATION_ADDR] != myEEpromAddress) {    // non sono io.... commento sulla seriale
+            continue;
         }
 
         if (rcvdRCode == LN_OK) {
+            // copiamo RX to TX per poi andare a modificare solo il necessario
+            clone_Rx_To_Tx(pData);
             processRequest(pData);
             sendMsg485(pData);
 
@@ -59,13 +67,17 @@ void Slave_Main(unsigned long RxTimeout) {
 }
 
 
+byte valueBefore;
+byte valueAfter;
+char returnDATA[20];
+byte counter;
+
 
 // #############################################################
 // #
 // #############################################################
 void processRequest(RXTX_DATA *pData) {
-    byte senderAddr = Rx[fld_SENDER_ADDR];
-    byte destAddr   = Rx[fld_DESTINATION_ADDR];
+    // byte senderAddr = Rx[fld_SENDER_ADDR];
 
     byte analogValue = 0;
     byte pinNO        = Rx[fld_DATA_COMMAND];
@@ -76,15 +88,15 @@ void processRequest(RXTX_DATA *pData) {
     // Serial.print(TAB);Serial.print(F( "CMD_RCode   0x : "));printHex(pData[fld_CMD_RCODE]);
     // Serial.print(TAB);Serial.print(F( "CMD/subCMD  0x : "));printHex(pData[fld_COMMAND]);Serial.print(" ");printHex(pdata[fld_SUBCOMMAND]);
 
-    byte readValue1  = 0;
-    byte readValue2  = 0;
-    char returnDATA[20];
-    byte counter;
+    // byte valueBefore  = 0;
+    // byte valueAfter  = 0;
+    // char returnDATA[20];
+    // byte counter;
 
-    if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
+    // if (destAddr != myEEpromAddress) {    // non sono io.... commento sulla seriale
         // [Slave-012] - RX-data [rcvdCode: OK] - [00/000] --> [0B/011] - SeqNO: 00007 - [it's NOT for me...]
-        return;
-    }
+        // return;
+    // }
 
     char descr_PollingAnswer[]  = "Polling answer!";
     char descr_UnknownCommand[] = "UNKNOWN command";
@@ -95,8 +107,6 @@ void processRequest(RXTX_DATA *pData) {
     char descr_TogglePin[]      = " - toggle pin: ";
     // byte myANALOG_PINS[] =  {PIN_A0, PIN_A1, PIN_A2, PIN_A3, PIN_A4, PIN_A5, PIN_A6, PIN_A7 };
 
-    // copiamo RX to TX per poi andare a modificare solo il necessario
-    copyRxMessageToTx(pData);
 
     counter = 0;
     switch (Rx[fld_COMMAND]) {
@@ -105,11 +115,6 @@ void processRequest(RXTX_DATA *pData) {
             //                  DIGITAL Command
             // ------------------------------------------------------
         case DIGITAL_CMD:
-            // print6Str("\n",  TAB4, "DIGITAL_CMD    0x", D2X(DIGITAL_CMD, 2));
-            // print6Str(       TAB4, "fld_COMMAND    0x", D2X(Rx[fld_COMMAND], 2));
-            // print6Str(       TAB4, "fld_SUBCOMMAND 0x", D2X(Rx[fld_SUBCOMMAND], 2));
-            // print6Str(       TAB4, "DATA_fld       0x", D2X(Rx[fld_DATA_COMMAND], 2));
-            // print6Str(       TAB4, "DATApinNO      0x", D2X(pinNO, 2));
             switch (Rx[fld_SUBCOMMAND]) {
                 // print6Str(); ... il codice qui non viene considerato
 
@@ -118,8 +123,8 @@ void processRequest(RXTX_DATA *pData) {
                         print6Str(TAB4, descr_DigitalCMD, descr_ReadingPin);
                         Serial.print(pinNO);
                     }
-                    readValue1 = digitalRead(pinNO);
-                    returnDATA[counter++] = (char) readValue1;
+                    valueBefore = digitalRead(pinNO);
+                    returnDATA[counter++] = (char) valueBefore;
                     setDataCommand(Tx, descr_ReadingPin, sizeof(descr_ReadingPin));
                     break;
 
@@ -132,15 +137,15 @@ void processRequest(RXTX_DATA *pData) {
                     }
 
 
-                    readValue1 = digitalRead(pinNO);
-                    if (readValue1 != valueToWrite)
+                    valueBefore = digitalRead(pinNO);
+                    if (valueBefore != valueToWrite)
                         digitalWrite(pinNO, valueToWrite);
 
                     delay(10);
-                    readValue2 = digitalRead(pinNO);
+                    valueAfter = digitalRead(pinNO);
 
-                    returnDATA[counter++] = (char) readValue1;
-                    returnDATA[counter++] = (char) readValue2;
+                    returnDATA[counter++] = (char) valueBefore;
+                    returnDATA[counter++] = (char) valueAfter;
                     print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
                     break;
 
@@ -151,19 +156,23 @@ void processRequest(RXTX_DATA *pData) {
                         print6Str(TAB4, descr_DigitalCMD, descr_TogglePin);
                         Serial.print(pinNO);
                     }
+                    toggleDigitalPin(pinNO);
 
-                    readValue1 = digitalRead(pinNO);
-                    if (readValue1 == LOW)
+                    /*
+                    valueBefore = digitalRead(pinNO);
+                    if (valueBefore == LOW)
                         digitalWrite(pinNO, HIGH);
                     else
                         digitalWrite(pinNO, LOW);
                     delay(10);
-                    readValue2 = digitalRead(pinNO);
+                    valueAfter = digitalRead(pinNO);
 
-                    returnDATA[counter++] = (char) readValue1;
-                    returnDATA[counter++] = (char) readValue2;
+                    returnDATA[counter++] = (char) valueBefore;
+                    returnDATA[counter++] = (char) valueAfter;
+                    */
                     if (I_AM_SLAVE) {
-                        print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
+                        print6Str(" before/after ");
+                        printDataToHex(returnDATA, counter, "/");
                     }
 
                     break;
@@ -236,7 +245,7 @@ void processRequest(RXTX_DATA *pData) {
             break;
     }
 
-    Tx[fld_DESTINATION_ADDR] = senderAddr;
+    Tx[fld_DESTINATION_ADDR] = Rx[fld_SENDER_ADDR];
     Tx[fld_SENDER_ADDR]      = myEEpromAddress;
     if (I_AM_SLAVE) {
         print6Str(TAB4, "returning Data: ");
@@ -256,6 +265,22 @@ int readPWM(int pin) {
 
 int writePWM(int pin) {
     return 0;
+}
+
+void toggleDigitalPin(int pinNO) {
+    counter = 0;
+    valueBefore = digitalRead(pinNO);
+    if (valueBefore == LOW)
+        digitalWrite(pinNO, HIGH);
+    else
+        digitalWrite(pinNO, LOW);
+    delay(10);
+    valueAfter = digitalRead(pinNO);
+
+    returnDATA[counter++] = (char) valueBefore;
+    returnDATA[counter++] = (char) valueAfter;
+
+    return;
 }
 
 

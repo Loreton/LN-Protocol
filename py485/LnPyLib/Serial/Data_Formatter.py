@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-01-2018 10.37.30
+# Version ......: 24-01-2018 08.52.56
 
 import sys
 
@@ -70,11 +70,18 @@ class Formatter:
             d.text  = '{DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="text", DATA=''.join(_lineToPrint))
             d.char  = '{DESCR:^10}:  <data> {DATA}</data>'.format(DESCR="char", DATA='  '.join(_lineToPrint))
 
+
+
+            d.text2  = ''.join(_lineToPrint)
+            d.char2  = '  '.join(_lineToPrint)
+
         else:
             d.hex   = None
             d.hexm  = None
             d.text  = None
             d.char  = None
+            d.text2  = None
+            d.char2  = None
 
         # funcName = sys._getframe(1).f_code.co_name
         for key, val in d.items():
@@ -112,8 +119,16 @@ class Formatter:
         myDict.f05_RCODE       = data[fld.RCODE]
         myDict.f04_CMD         = "x'{:02X}'".format(data[fld.CMD])
         myDict.f06_subCMD      = "x'{:02X}'".format(data[fld.SUB_CMD])
+
+
+        commandData           = Formatter._fmtData(obj485, data[fld.COMMAND_DATA:], dictType)
+
+
         # myDict.f07_commandData = data[fld.COMMAND_DATA:]
-        myDict.f07_commandData = ' '.join("x'{0:02x}'".format(x) for x in data[fld.COMMAND_DATA:])
+        # myDict.f07_commandData = ' '.join("x'{0:02x}'".format(x) for x in data[fld.COMMAND_DATA:])
+        myDict.f07_commandData = commandData.hex
+
+        myDict.f07_commandDataTxt = commandData.text2
         # myDict.s07_commandData = Formatter._toHex(data[fld.COMMAND_DATA:])[0]
 
         return myDict

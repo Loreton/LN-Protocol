@@ -19,33 +19,38 @@ Ref:        http://www.gammon.com.au/forum/?id=11428
 // ##########################################################
 void loop_MasterSimulator() {
     unsigned long RX_TIMEOUT = 2000;
+
+    setMyID("Simul", myEEpromAddress);
+    pData->myID             = myID;
+
     // forziamo myAddress a MASTER
     // myEEpromAddress = 0;
+    while (true) {
+        #ifdef RETURN_RS485_TO_MASTER
+            pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
+            pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
+            pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+            pData->fDisplayRawData      = false;                // display raw data
 
-    #ifdef RETURN_RS485_TO_MASTER
-        pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData      = false;                // display raw data
+            Simulator(pData);
 
-        Simulator(pData);
+            // proviamo ad intercettare una richiesta da RaspBerry per massimo
+            Relay_Main(10000);
 
-        // proviamo ad intercettare una richiesta da RaspBerry per massimo
-        Relay_Main(10000);
+        #else
+            pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
+            pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
+            pData->fDisplayOtherFull    = true;                // display dati relativi ad  altri indirizzi
+            pData->fDisplayRawData      = false;                // display raw data
+            Serial.print(myID);Serial.println(F("Sono in Relay simulation mode"));
 
-    #else
-        pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayOtherFull    = true;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData      = false;                // display raw data
-        Serial.print(myID);Serial.println(F("Sono in Relay simulation mode"));
-
-        Simulator(pData);
-        Serial.println();
-    #endif
+            Simulator(pData);
+            Serial.println();
+        #endif
 
 
-    delay(5000);
+        delay(5000);
+    }
 }
 
 // #############################################################

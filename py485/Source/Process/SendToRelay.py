@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-01-2018 16.59.53
+# Version ......: 24-01-2018 09.59.32
 #
 # ######################################################################################
 
@@ -51,7 +51,9 @@ def SendToRelay(myPort, payload):
             if  data232.raw == xmittedData.raw:
             # print (data485.text)
                 logger.info('OK - echo received data is the same xmitted')
+                print ()
                 print ('    echo has been received from Arduino Relay...')
+                print ()
                 break
             else:
                 LOOP -= 1

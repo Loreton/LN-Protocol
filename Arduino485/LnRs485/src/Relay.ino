@@ -21,6 +21,15 @@ Scope:      Funzione di relay.
 // #    - torniamo indietro la risposta
 // ################################################################
 void Relay_Main(unsigned long RxTimeout) {
+    I_AM_RELAY = true;
+
+    setMyID("Relay", myEEpromAddress);
+    pData->myID             = myID;
+    pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
+    pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
+    pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
+    pData->fDisplayRawData      = false;                // display raw data
+
     pData->Rx_Timeout      = RxTimeout;         // set timeout
     while (true) {
         Rx[fld_DATALEN] = 0;
@@ -29,8 +38,6 @@ void Relay_Main(unsigned long RxTimeout) {
             // - ricezione messaggio da RaspBerry
             // --------------------------------------
         byte rCode = recvMsg232(pData);
-        // Rx = pData->rx;
-        // Tx = pData->tx;
 
 
             // --------------------------------------
@@ -52,7 +59,7 @@ void Relay_Main(unsigned long RxTimeout) {
             if (returnRs485ToMaster) {
                 // Serial.print(myID); Serial.print(F(" sono in TIMEOUT"));Serial.println();
                 /* solo per eventuale DEBUG
-                copyRxMessageToTx(pData);
+                clone_Rx_To_Tx(pData);
                 char noDataRcvd[] = " - waiting for data ... ";
                 setDataCommand(Tx, noDataRcvd, sizeof(noDataRcvd));
                 Tx[fld_DESTINATION_ADDR] = 1;
@@ -62,6 +69,7 @@ void Relay_Main(unsigned long RxTimeout) {
                 */
             }
             else {
+                // print6Str(myID, " - No data received in the last mS: ", Utos(pData->Rx_Timeout, padLen=9), "\n");
                 Serial.print(myID);
                 Serial.print(F(" - No data received in the last mS: "));Serial.print(pData->Rx_Timeout);
                 Serial.println();
@@ -71,12 +79,14 @@ void Relay_Main(unsigned long RxTimeout) {
 
             // - echo del comando appena ricevuto
             // - anche se in errore....
-        copyRxMessageToTx(pData);
+        clone_Rx_To_Tx(pData);
         sendMsg232(pData);
 
         if (rCode == LN_OK) {
 
             if (Rx[fld_DESTINATION_ADDR] == myEEpromAddress)  { // facciamo echo del comando....
+                delay(1000); // .....IMPORTANTE.....
+                clone_Rx_To_Tx(pData);
                 processRequest(pData); // esegue come fosse uno slave.
                 sendMsg232(pData);
                 // fwdToRs232(pData, 0);
@@ -86,7 +96,7 @@ void Relay_Main(unsigned long RxTimeout) {
                 fwdToRs485(pData);
                     // qualsiasi esito il msg è pronto da inviare sulla rs232
                 byte rcvdRCode = Relay_waitRs485Response(pData, 2000);
-                copyRxMessageToTx(pData);
+                clone_Rx_To_Tx(pData);
                 fwdToRs232(pData, rcvdRCode);
             }
 
@@ -100,7 +110,7 @@ void Relay_Main(unsigned long RxTimeout) {
 // # - Forward del messaggio ricevuto da RaspBerry verso RS485
 // ################################################################
 void fwdToRs485(RXTX_DATA *pData) {
-    copyRxMessageToTx(pData);
+    clone_Rx_To_Tx(pData);
         // send to RS-485 bus
     sendMsg485(pData);
 
@@ -112,7 +122,7 @@ void fwdToRs485(RXTX_DATA *pData) {
 // # - Forward del messaggio ricevuto da RS485 verso RaspBerry
 // ################################################################
 void fwdToRs232(RXTX_DATA *pData, byte rcvdRCode) {
-    // copyRxMessageToTx(pData);
+    // clone_Rx_To_Tx(pData);
 
     if (returnRs485ToMaster)
         sendMsg232(pData);

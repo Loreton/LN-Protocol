@@ -27,7 +27,7 @@
     #if defined (I_AM_MAIN_)
         byte  myEEpromAddress = 0;        // who we are
         char sharedWorkingBuff[50];
-        bool firstRun = true;
+        // bool firstRun = true;
         const char TAB4[] = "\n    ";
 
     #else

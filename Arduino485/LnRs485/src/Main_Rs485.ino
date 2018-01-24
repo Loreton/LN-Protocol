@@ -110,40 +110,19 @@ void loop() {
     Tx  = pData->tx; // è globale
 
     if (myEEpromAddress <= 10) {
-        I_AM_RELAY = true;
-
         #ifdef MASTER_SIMULATOR
-            if (firstRun) {
-                setMyID("Simul", myEEpromAddress);
-                pData->myID             = myID;
-            }
             loop_MasterSimulator();
-            delay(1000);
-
         #else
-            setMyID("Relay", myEEpromAddress);
-            pData->myID             = myID;
-            pData->fDisplayMyData       = false;                // display dati relativi al mio indirizzo
-            pData->fDisplayOtherHeader  = false;                // display dati relativi ad  altri indirizzi
-            pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
-            pData->fDisplayRawData      = false;                // display raw data
             Relay_Main(RX_TIMEOUT);
         #endif
     }
     else {
 
-        I_AM_SLAVE = true;
-        setMyID("Slave", myEEpromAddress);
-        pData->myID             = myID;
-        pData->fDisplayMyData       = true;                // display dati relativi al mio indirizzo
-        pData->fDisplayOtherHeader  = true;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayOtherFull    = false;                // display dati relativi ad  altri indirizzi
-        pData->fDisplayRawData      = false;                // display raw data
 
         Slave_Main(RX_TIMEOUT);
 
     }
-    firstRun = false;
+    // firstRun = false;
 
 }
 

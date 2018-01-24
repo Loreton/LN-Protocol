@@ -75,13 +75,14 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
                 }
                 else {
                     Serial.print(F(" - [it's NOT for me...]"));
-                    if (pData->fDisplayOtherFull) fDisplayFullData = true;
+                    if (pData->fDisplayOtherFull)
+                        fDisplayFullData = true;
                 }
 
                 if (caller[0] == 'R') {
                     Serial.print(F(" - [rcvdCode: "));
                     Serial.print(errMsg[rCode]);
-                    Serial.print(']');
+                    Serial.println(']');
                 }
         } // --- HEADER END -----
 
@@ -113,6 +114,7 @@ void displayMyData(const char *caller, byte rCode, RXTX_DATA *pData) {
             Serial.print(TAB4);Serial.print(F( "SEQNO       0x : "));printHex((char *) &data[fld_SEQNO_HIGH], 2);
             Serial.print(TAB4);Serial.print(F( "CMD_RCode   0x : "));printHex(data[fld_CMD_RCODE]);
             Serial.print(TAB4);Serial.print(F( "CMD/subCMD  0x : "));printHex(data[fld_COMMAND]);Serial.print(" ");printHex(data[fld_SUBCOMMAND]);
+            Serial.println("");
 
         } // end fDisplayFullData
     }   // end dataLen
