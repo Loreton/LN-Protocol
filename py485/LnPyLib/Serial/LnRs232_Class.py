@@ -4,11 +4,15 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-01-2018 12.12.34
+# Version ......: 24-01-2018 18.26.26
 
 import serial       # sudo pip3.4 install pyserial
 import sys
 import time
+import logging
+
+# from .. Logger.LnLogger_Class import SetLogger
+# from .. Logger.LnLogger import SetLogger
 
 class LnClass():
     def __init__(self):
@@ -25,23 +29,35 @@ _SERIALPORTS = {}
 read_TIMEOUT  = 0.05
 """Default value for the timeout value in seconds (float)."""
 
-
+# logger = None
 
 #####################################################################
 # - MAIN LnRS485 CLASS
 #####################################################################
 class LnRs232():
+    # global logger
     def __init__(self, port, mode='ascii', baudrate=9600, useLogger=None, myDict=LnClass):
 
         if useLogger:
             self._setLogger = useLogger
         else:
             self._setLogger = self._internaLogger
+        '''
+        try:
+            self._setLogger = SetLogger
+        except:
+            self._setLogger = self._internaLogger
+        '''
 
-        logger = self._setLogger(package=__name__)
+        # self._logger = logging.getLogger('LnLoggerClass')
+        self._logger = self._setLogger(package=__name__)
+
+        # self._logger = self._setLogger(package=__name__)
+        logger = self._logger
+        # self._logger = userLoggee
         self._myDict = myDict
 
-
+        print ('self._logger', self._logger)
         if port not in _SERIALPORTS or not _SERIALPORTS[port]:
             try:
                 logger.info('opening port...')
@@ -84,7 +100,7 @@ class LnRs232():
 
         self._TxDataRaw         =  bytearray()   # raw data in uscita   dalla seriale
         self._TxDataHex         =  ''            # raw data in uscita   dalla seriale
-        logger = self._setLogger(package=__name__, exiting=True)
+        # logger = self._setLogger(package=__name__, exiting=True)
 
 
 
@@ -132,6 +148,7 @@ class LnRs232():
     def read232(self, timeoutValue=1000):
         logger = self._setLogger(package=__name__)
 
+
         if self._close_port_after_each_call:
             logger.info('opening port...')
             self._serial.open()
@@ -170,13 +187,14 @@ class LnRs232():
             logger.info('closing port...')
             self._serial.close()
 
-        # logger.info( "received {} bytes".format(len(_dataBuffer)))
+        logger.info( "received {} bytes".format(len(_dataBuffer)))
 
             # RECEIVED data
         _HexData = ' '.join('{0:02x}'.format(x) for x in _dataBuffer)
         _HexMsg = '     {DESCR:^10}:  <data>{DATA}</data>'.format(DESCR="hex", DATA=_HexData)
         logger.info('received data on serial port: ')
         logger.info(_HexMsg)
+
         logger = self._setLogger(package=__name__, exiting=True)
         return _dataBuffer
 
@@ -191,6 +209,7 @@ class LnRs232():
     #######################################################################
     def write232(self, txData):
         logger = self._setLogger(package=__name__)
+        # logger = self._logger  # è lo stesso di sopra ma non capisco percé non funziona....
         assert type(txData)==bytearray
 
 

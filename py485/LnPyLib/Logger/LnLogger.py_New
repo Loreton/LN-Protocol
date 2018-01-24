@@ -3,7 +3,7 @@
 # Scope:  Programma per ...........
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 24-01-2018 16.56.18
+# Version ......: 23-01-2018 12.09.56
 # -----------------------------------------------
 
 '''
@@ -188,6 +188,7 @@ def init(   toFILE=False,
             defaultLogLevel='info',
             ARGS=None,
             ROTATE='time',
+            rotationType='time',
             backupCount=5,
             maxBytes=20000,
             when="m",
@@ -344,14 +345,15 @@ def SetLogger(package, stackNum=0, exiting=False):
     logger.addFilter(LnFilter)
     LnFilter.setStack(6)    # cambio lo stackNum
 
+
     if exiting:
         logger.info('.... exiting\n')
         LnFilter.setStack(None)    # cambio lo stackNum
         return
     else:
         logger.info('.... entering called by: {CALLER}'.format(CALLER=CALLER[3]._fullcaller))
-        LnFilter.setStack(None)    # cambio lo stackNum
 
+    LnFilter.setStack(None)    # cambio lo stackNum
 
     if fDEBUG:
         print ('...\n')

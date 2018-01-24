@@ -53,6 +53,8 @@ coverage.xml
 .build/
 # Arduino/
 *.o
+#*/**/*.log_01
+*.log_??
 
 # platfomio NON funziona....
 */.pioenvs/*

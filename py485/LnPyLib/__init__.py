@@ -2,16 +2,17 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-01-2018 12.17.45
+# Version ......: 24-01-2018 16.41.43
 #
 
 
 
 # ---------- LnLIB Logger Functions ------
-# from . Logger.LnLogger                  import init             as InitLogger
-# from . Logger.LnLogger                  import SetLogger        as SetLogger
-from . Logger.LnLogger_Class              import LnLogger        as InitLogger
-from . Logger.LnLogger_Class              import SetLogger
+from . Logger.LnLogger                  import init             as InitLogger
+from . Logger.LnLogger                  import SetLogger        as SetLogger
+# from . Logger.LnLogger_Class              import LnLogger        as InitLogger
+# from . Logger.LnLogger_Class              import SetLogger
+# from . Logger.LnLogger_Class              import SetLogger_Light as SetLogger
 # from . Logger.SetLogger                   import SetLogger
 
 # ---------- LnLIB COMMON Functions ------

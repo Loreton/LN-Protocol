@@ -7,10 +7,10 @@
 
 import os, inspect, sys
 
-# from .. Logger.SetLogger import SetLogger       # OK funziona dalla upperDir del package
-from .. Logger.LnLogger_Class import SetLogger       # OK funziona dalla upperDir del package
+from .. Logger.LnLogger import SetLogger       # OK funziona dalla upperDir del package
+# from .. Logger.LnLogger_Class import SetLogger       # OK funziona dalla upperDir del package
 from . LnColor  import LnColor
-
+import logging
 
 EXIT_KEYB   = -30
 PAUSE_KEYB   = -31
@@ -24,6 +24,7 @@ EXIT_STACK  = -32
 # =======================================================================
 def Exit(rcode, text=None, printStack=True, stackLevel=9, console=True):
     logger  = SetLogger(package=__name__)
+    # logger  = logging.getLogger()
     C       = LnColor()
 
     if text == None and rcode == 9999:
@@ -68,7 +69,7 @@ def Exit(rcode, text=None, printStack=True, stackLevel=9, console=True):
             logWrite(' '*10 + "{0}".format(line))
 
     if printStack:
-        logWrite("EXIT STACK:")
+        logWrite("EXIT STACK")
         print()
         for i in reversed(list(range(1, stackLevel))):
             caller = _calledBy(i)

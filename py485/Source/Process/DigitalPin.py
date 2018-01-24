@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-01-2018 16.58.39
+# Version ......: 24-01-2018 15.08.33
 #
 # ######################################################################################
 
@@ -57,6 +57,8 @@ def digitalToggle(gv, serialPort, payload):
         # ---------------------------------------------------------------------
         # - invio del messaggio al Relay ....
     Prj.SendToRelay(serialPort, payload)
+
+    Ln.Exit(9999)
 
         # - ... attesa dello stesso come echo
     fDEBUG = False

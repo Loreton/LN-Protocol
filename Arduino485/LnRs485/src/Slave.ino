@@ -71,7 +71,7 @@ byte valueBefore;
 byte valueAfter;
 char returnDATA[20];
 byte counter;
-
+byte valueToWrite;
 
 // #############################################################
 // #
@@ -136,17 +136,12 @@ void processRequest(RXTX_DATA *pData) {
                         Serial.print(pinNO);
                     }
 
+                    writeDigitalPin(pinNO, Rx[fld_DATA_COMMAND+1]);
 
-                    valueBefore = digitalRead(pinNO);
-                    if (valueBefore != valueToWrite)
-                        digitalWrite(pinNO, valueToWrite);
-
-                    delay(10);
-                    valueAfter = digitalRead(pinNO);
-
-                    returnDATA[counter++] = (char) valueBefore;
-                    returnDATA[counter++] = (char) valueAfter;
-                    print6Str(" before/after ");printDataToHex(returnDATA, counter, "/");
+                    if (I_AM_SLAVE) {
+                        print6Str(" before/after ");
+                        printDataToHex(returnDATA, counter, "/");
+                    }
                     break;
 
                     // led lampeggiante
@@ -156,20 +151,9 @@ void processRequest(RXTX_DATA *pData) {
                         print6Str(TAB4, descr_DigitalCMD, descr_TogglePin);
                         Serial.print(pinNO);
                     }
+
                     toggleDigitalPin(pinNO);
 
-                    /*
-                    valueBefore = digitalRead(pinNO);
-                    if (valueBefore == LOW)
-                        digitalWrite(pinNO, HIGH);
-                    else
-                        digitalWrite(pinNO, LOW);
-                    delay(10);
-                    valueAfter = digitalRead(pinNO);
-
-                    returnDATA[counter++] = (char) valueBefore;
-                    returnDATA[counter++] = (char) valueAfter;
-                    */
                     if (I_AM_SLAVE) {
                         print6Str(" before/after ");
                         printDataToHex(returnDATA, counter, "/");
@@ -267,6 +251,27 @@ int writePWM(int pin) {
     return 0;
 }
 
+// ####################################################
+// #
+// ####################################################
+void writeDigitalPin(int pinNO, byte valueToWrite) {
+    counter = 0;
+    // valueToWrite = Rx[fld_DATA_COMMAND+1];
+
+    valueBefore = digitalRead(pinNO);
+    if (valueBefore != valueToWrite)
+        digitalWrite(pinNO, valueToWrite);
+
+    delay(10);
+    valueAfter = digitalRead(pinNO);
+
+    returnDATA[counter++] = (char) valueBefore;
+    returnDATA[counter++] = (char) valueAfter;
+}
+
+// ####################################################
+// #
+// ####################################################
 void toggleDigitalPin(int pinNO) {
     counter = 0;
     valueBefore = digitalRead(pinNO);

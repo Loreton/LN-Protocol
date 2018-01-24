@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-01-2018 15.09.19
+# Version ......: 24-01-2018 12.12.18
 #
 # ######################################################################################
 
@@ -71,11 +71,11 @@ def Main(gv):
             # Prj.digitalToggle(myPort, gv.iniFile, srcAddress=rs485Prot.MasterAddress, destAddr=gv.args.slave_address, pinNO=gv.args.pin_number)
             Prj.digitalToggle(gv, myPort, payload=payload)
             print ('\n'*4)
-            time.sleep(1)
-            Prj.digitalToggle(gv, myPort, payload=payload)
-            print ('\n'*4)
-            time.sleep(1)
-            Prj.digitalToggle(gv, myPort, payload=payload)
+            # time.sleep(1)
+            # Prj.digitalToggle(gv, myPort, payload=payload)
+            # print ('\n'*4)
+            # time.sleep(1)
+            # Prj.digitalToggle(gv, myPort, payload=payload)
 
         elif gv.args.secondPosParameter == 'write':
             Prj.digitalWrite(myPort, gv.args.slave_address, gv.iniFile)

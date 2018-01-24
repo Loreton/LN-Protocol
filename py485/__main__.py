@@ -3,7 +3,7 @@
 # -*- coding: utf-8 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 23-01-2018 12.35.50
+# Version ......: 24-01-2018 16.50.42
 #
 # ######################################################################################
 import sys; sys.dont_write_bytecode = True
@@ -50,12 +50,12 @@ if __name__ == "__main__":
                                 toFILE=gv.args.log,
                                 toCONSOLE=gv.args.log_console,
                                 defaultLogLevel=gv.args.loglevel,
-                                rotationType='time', when="m", interval=60,
+                                # rotationType='time', when="m", interval=60,
                                 # rotationType='size', maxBytes=500000,
                                 backupCount=5,
                             )
 
-    logger.info(gv.args, dictTitle='command line parameters...')
+    # logger.info(gv.args, dictTitle='command line parameters...')
     # print (logger)
 
 

@@ -94,7 +94,7 @@ class LnLogger(logging.getLoggerClass()):
         self._prepareConsoleLog(toCONSOLE)
 
         ''' prepare logfile if required '''
-        self._myLogger = self._realLogger
+        # self._myLogger = self._realLogger
         if self._to_file or self._to_console:
             self._logEnabled = True
         else:
@@ -143,18 +143,20 @@ class LnLogger(logging.getLoggerClass()):
 
         if toCONSOLE==False:
             self._to_console = False
+            self._modulesToLog = ['xxxx']
             return
 
         elif toCONSOLE==[]:
             self._to_console = True
-            self._modulesToLog = ['!ALL!']
+            self._modulesToLog = ['_ALL_']
 
         elif toCONSOLE:
             self._to_console = True
             self._modulesToLog = toCONSOLE
 
+        # print ('CONSOLE self._modulesToLog', self._modulesToLog)
 
-            ''' prepare log to console if required '''
+        ''' prepare log to console if required '''
         _consoleFormatter = logging.Formatter(fmt=self._console_format, datefmt=self._date_time_format)
         _consoleHandler   = logging.StreamHandler(stream=sys.stdout)
         _consoleHandler.setFormatter(_consoleFormatter)
@@ -177,12 +179,12 @@ class LnLogger(logging.getLoggerClass()):
 
         if toFILE==False:
             self._to_file = False
+            self._modulesToLog = ['xxxx']
             return
 
-
-        if toFILE==[]:
+        elif toFILE==[]:
             self._to_file = True
-            self._modulesToLog = ['!ALL!']
+            self._modulesToLog = ['_ALL_']
 
         elif toFILE:
             self._to_file = True
@@ -190,6 +192,7 @@ class LnLogger(logging.getLoggerClass()):
 
 
 
+        # print ('FILE self._modulesToLog', self._modulesToLog)
         _LOG_DIR = Path(logfilename).parent
         self._filename = logfilename
 
@@ -243,7 +246,8 @@ class LnLogger(logging.getLoggerClass()):
     ##############################################################
     def info(self, msg, extra=None, dictTitle=None):
 
-        myLogger = self._myLogger.info
+        # myLogger = self._myLogger.info
+        myLogger = self._realLogger.info
         if isinstance(msg, dict):
             savedAutoReset = self._LnFilter.getAutoReset()
             self._LnFilter.setAutoReset(False)    # blocca l'autoreset dello stack
@@ -252,24 +256,24 @@ class LnLogger(logging.getLoggerClass()):
                 myLogger('  {:<20}: {}'.format(key, msg[key]))
             self._LnFilter.setAutoReset(savedAutoReset)    # ripristina l'autoreset dello stack
         else:
-            self._myLogger.info(msg, extra=extra)
+            myLogger(msg, extra=extra)
         # self.commonLog(self._myLogger.info, msg, dictTitle=dictTitle)
 
 
     def error(self, msg, extra=None, dictTitle=None):
         # self.commonLog(self._myLogger.error, msg, dictTitle=dictTitle)
         if self._logEnabled:
-            self._myLogger.error(msg, extra=extra)
+            self._realLogger.error(msg, extra=extra)
 
     def debug(self, msg, extra=None, dictTitle=None):
         # self.commonLog(self._myLogger.debug, msg, dictTitle=dictTitle)
         if self._logEnabled:
-            self._myLogger.debug(msg, extra=extra)
+            self._realLogger.debug(msg, extra=extra)
 
     def warn(self, msg, extra=None, dictTitle=None):
         # self.commonLog(self._myLogger.warn, msg, dictTitle=dictTitle)
         if self._logEnabled:
-            self._myLogger.warn(msg, extra=extra)
+            self._realLogger.warn(msg, extra=extra)
 
 
     def commonLog(self, myLogger, msg, dictTitle='dictionary'):
@@ -434,6 +438,75 @@ class ContextFilter(logging.Filter):
 # - è tra quelli da fare il log.
 # - Il package mi server per verficare se devo loggare il modulo o meno
 # ====================================================================================
+def SetLogger_Light(package, exiting=False, offsetSL=0):
+
+    pointers = LnLogger.static_getMainPointers()
+        # importante prendere questo pointer in quanto mi porta dietro anche i .info, .debug, ...
+    fDEBUG = False
+    if fDEBUG:
+        print('     rootName      = ', pointers.rootName)
+        print('     ClassInstance = ', pointers.ClassInstance)
+        print('     realLogger    = ', pointers.realLogger)
+        print('     nullLogger    = ', pointers.nullLogger)
+        print('     LnFilter      = ', pointers.LnFilter)
+        print('     modulesToLog  = ', pointers.modulesToLog)
+        print('     logLevel      = ', pointers.logLevel)
+
+
+    caller01 = GetCaller(1)
+
+    logger = logging.getLogger(pointers.rootName)
+
+        # ---------------------------------
+        # - individuiamo se è un modulo
+        # - da tracciare o meno
+        # ---------------------------------
+    fullPkg = (package + '.' + caller01._funcname)
+
+    LOG_LEVEL = None
+    if '_ALL_' in pointers.modulesToLog:
+        LOG_LEVEL = pointers.logLevel
+
+    else:
+        fullPkg_LOW = fullPkg.lower()
+        for moduleStr in pointers.modulesToLog:
+            if moduleStr.lower() in fullPkg_LOW:
+                LOG_LEVEL = pointers.logLevel
+                break
+    '''
+    '''
+
+    # LOG_LEVEL = pointers.logLevel
+    print ('......', LOG_LEVEL, pointers.modulesToLog)
+
+    if fDEBUG:
+        print ('fullPkg   :', fullPkg )
+        print ('LOG_LEVEL :', LOG_LEVEL )
+
+
+    if not LOG_LEVEL:
+        # logger._logEnabled = False   #  by Loreto:  22-01-2018 09.15.02
+        # return logger  # in fase di verifica  #  by Loreto:  22-01-2018 09.14.58
+        return pointers.nullLogger
+
+    logger.setLevel(LOG_LEVEL)
+    # pointers.LnFilter.addStack(1+offsetSL)    # cambio lo stackNum
+    # logger.addFilter(pointers.LnFilter)
+    caller03 = GetCaller(3)
+
+
+    if exiting:
+        logger.info('.... exiting\n')
+    else:
+        logger.info('.... entering called by: {CALLER}'.format(CALLER=caller03._fullcaller))
+
+    return logger
+
+# ====================================================================================
+# - dal package passato come parametro cerchiamo di individuare se la fuzione/modulo
+# - è tra quelli da fare il log.
+# - Il package mi server per verficare se devo loggare il modulo o meno
+# ====================================================================================
 def SetLogger(package, exiting=False, offsetSL=0):
 
     pointers = LnLogger.static_getMainPointers()
@@ -459,7 +532,7 @@ def SetLogger(package, exiting=False, offsetSL=0):
         # - da tracciare o meno
         # ---------------------------------
     fullPkg = (package + '.' + caller_01._funcname)
-    if '!ALL!' in logger._modulesToLog:
+    if '_ALL_' in logger._modulesToLog:
         LOG_LEVEL = logger._logLevel
 
     else:
@@ -470,6 +543,7 @@ def SetLogger(package, exiting=False, offsetSL=0):
                 LOG_LEVEL = logger._logLevel
 
 
+    # print ('......', LOG_LEVEL, pointers.modulesToLog)
     if fDEBUG:
         print ('fullPkg   :', fullPkg )
         print ('LOG_LEVEL :', LOG_LEVEL )

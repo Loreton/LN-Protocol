@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 24-01-2018 08.52.56
+# Version ......: 24-01-2018 15.32.50
 
 import sys
 
@@ -34,7 +34,7 @@ class Formatter:
     # - format rs485 data
     ######################################################
     @staticmethod
-    def _fmtData(obj485, data, myDict):
+    def _fmtData(mainSelf, data, myDict):
         '''
             Prende in input un bytearray di dati
             return:
@@ -45,7 +45,7 @@ class Formatter:
                     d.char
         '''
         assert type(data) == bytearray
-        logger = obj485._setLogger(package=__name__)
+        logger = mainSelf._setLogger(package=__name__)
 
         d      = myDict()
         d.raw  = data
@@ -87,7 +87,7 @@ class Formatter:
         for key, val in d.items():
             logger.debug('{:<10} --> {}'.format(key, val))
 
-        logger = obj485._setLogger(package=__name__, exiting=True)
+        logger = mainSelf._setLogger(package=__name__, exiting=True)
         return d
 
 
@@ -103,14 +103,14 @@ class Formatter:
     # -    4. mette i dati un un dictionnary
     ######################################################
     @staticmethod
-    def _payloadFields(obj485, data, dictType):
+    def _payloadFields(mainSelf, data, dictType):
         assert type(data) == bytearray
-        # logger = obj485._setLogger(package=__name__)
+        logger = mainSelf._setLogger(package=__name__)
 
         myDict = dictType()
         if not data: return myDict
 
-        fld = obj485._fld
+        fld = mainSelf._fld
         # fld.printTree(fPAUSE=True)
 
         myDict.f01_sourceAddr  = "x'{:02X}'".format(data[fld.SRC_ADDR])
@@ -121,7 +121,7 @@ class Formatter:
         myDict.f06_subCMD      = "x'{:02X}'".format(data[fld.SUB_CMD])
 
 
-        commandData           = Formatter._fmtData(obj485, data[fld.COMMAND_DATA:], dictType)
+        commandData           = Formatter._fmtData(mainSelf, data[fld.COMMAND_DATA:], dictType)
 
 
         # myDict.f07_commandData = data[fld.COMMAND_DATA:]

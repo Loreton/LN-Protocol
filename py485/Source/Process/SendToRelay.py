@@ -6,11 +6,11 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 24-01-2018 09.59.32
+# Version ......: 24-01-2018 14.35.12
 #
 # ######################################################################################
 
-
+import time
 import    Source as Prj
 
 
@@ -57,6 +57,7 @@ def SendToRelay(myPort, payload):
                 break
             else:
                 LOOP -= 1
+                time.sleep(1)
                 continue
 
             # Ln.KeyboardInput('pausing...', validKeys='ENTER', exitKey='X')
