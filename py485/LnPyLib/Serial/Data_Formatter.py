@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 24-01-2018 15.32.50
+# Version ......: 25-01-2018 09.26.32
 
 import sys
 
@@ -45,7 +45,7 @@ class Formatter:
                     d.char
         '''
         assert type(data) == bytearray
-        logger = mainSelf._setLogger(package=__name__)
+        logger = mainSelf._logger
 
         d      = myDict()
         d.raw  = data
@@ -87,7 +87,7 @@ class Formatter:
         for key, val in d.items():
             logger.debug('{:<10} --> {}'.format(key, val))
 
-        logger = mainSelf._setLogger(package=__name__, exiting=True)
+        # logger = mainSelf._setLogger(package=__name__, exiting=True)
         return d
 
 
@@ -105,7 +105,7 @@ class Formatter:
     @staticmethod
     def _payloadFields(mainSelf, data, dictType):
         assert type(data) == bytearray
-        logger = mainSelf._setLogger(package=__name__)
+        logger = mainSelf._logger
 
         myDict = dictType()
         if not data: return myDict

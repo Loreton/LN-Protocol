@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 24-01-2018 15.08.33
+# Version ......: 25-01-2018 14.29.00
 #
 # ######################################################################################
 
@@ -26,6 +26,7 @@ def digitalToggle(gv, serialPort, payload):
     Ln     = Prj.LnLib
     C      = Ln.Color()
     logger = Ln.SetLogger(package=__name__)
+    logger.info('prova.....................')
 
 
 

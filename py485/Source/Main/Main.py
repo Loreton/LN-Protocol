@@ -2,7 +2,7 @@
 # -*- coding: iso-8859-1 -*-
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 24-01-2018 12.12.18
+# Version ......: 25-01-2018 07.49.37
 #
 # ######################################################################################
 
@@ -28,8 +28,8 @@ def Main(gv):
     logger = Ln.SetLogger(__name__)
     # print (logger)
     logger.info('ciao sono io 01')
-    logger.info('ciao sono io 02')
-    logger.info('ciao sono io 03')
+    logger.warning('ciao sono io 02')
+    logger.error('ciao sono io 03')
     # Ln.Exit(9999)
     # -----------------------------------------------
 

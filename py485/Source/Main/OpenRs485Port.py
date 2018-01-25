@@ -27,7 +27,7 @@ def openRs485Port(portData, rs485):
         # = RS-485 open/initialize port
         # ----------------------------------------------------
     # port = Ln.Rs485(port=portData.port, baudrate=portData.baudrate, mode=rs485.mode, useLogger=logger, myDict=Ln.Dict)
-    port = Ln.Rs485(port=portData.port, baudrate=portData.baudrate, mode=rs485.mode, useLogger=Ln.SetLogger, myDict=Ln.Dict)
+    port = Ln.Rs485(port=portData.port, baudrate=portData.baudrate, mode=rs485.mode, setLogger=Ln.SetLogger, myDict=Ln.Dict)
     # port = Ln.Rs485(port=portData.port, baudrate=portData.baudrate, mode=rs485.mode, myDict=Ln.Dict)
 
     port.SetSTX(rs485.STX)

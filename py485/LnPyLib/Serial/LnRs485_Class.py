@@ -3,7 +3,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 24-01-2018 18.32.57
+# Version ......: 25-01-2018 16.57.24
 
 
 
@@ -27,9 +27,9 @@ from . Data_Formatter import Formatter
 # - MAIN LnRS485 CLASS
 #####################################################################
 class LnRs485(LnRs232):
-    def __init__(self, port, mode='ascii', baudrate=9600, useLogger=None, myDict=LnClass):
+    def __init__(self, port, mode='ascii', baudrate=9600, setLogger=None, useLogger=None, myDict=LnClass):
 
-        super().__init__(port=port, mode=mode, baudrate=baudrate, useLogger=useLogger, myDict=myDict)
+        super().__init__(port=port, mode=mode, baudrate=baudrate, setLogger=setLogger, useLogger=useLogger, myDict=myDict)
 
 
         self.__LnRs485_validBytesHex = [
@@ -105,7 +105,8 @@ class LnRs485(LnRs232):
 
     def SetPayloadFieldName(self, mydict):
         logger = self._setLogger(package=__name__)
-        # logger = self._logger
+        logger = self._logger
+
         assert type(mydict) == self._myDict
 
             # ---- solo per logging ------------
@@ -117,11 +118,13 @@ class LnRs485(LnRs232):
         for k, v in xx:
             logger.debug('  {:<15}:{}'.format(k,v))
         self._fld = mydict
-        logger = self._setLogger(package=__name__, exiting=True)
+        # logger = self._setLogger(package=__name__, exiting=True)
 
     def SetSTX(self, value):
         logger = self._setLogger(package=__name__)
-        # logger = self._logger
+        logger = self._logger
+
+
         if isinstance(value, str):
             value = int(value, 16)
         self._STX = value
@@ -129,15 +132,19 @@ class LnRs485(LnRs232):
 
     def SetETX(self, value):
         logger = self._setLogger(package=__name__)
-        # logger = self._logger
+        logger = self._logger
+
+
         if isinstance(value, str):
             value = int(value, 16)
         self._ETX = value
         logger.info('set ETX to {}'.format(self._ETX))
 
     def SetCRC(self, bFlag):
-        # logger = self._setLogger(package=__name__)
+        logger = self._setLogger(package=__name__)
         logger = self._logger
+
+
         if isinstance(bFlag, bool):
             self._CRC = bFlag
         elif isinstance(bFlag, str):
@@ -148,7 +155,9 @@ class LnRs485(LnRs232):
 
     def ClosePortAfterEachCall(self, bFlag):
         logger = self._setLogger(package=__name__)
-        # logger = self._logger
+        logger = self._logger
+
+
         self._close_port_after_each_call = bFlag
 
         if bFlag:
@@ -162,8 +171,10 @@ class LnRs485(LnRs232):
         # logger = self._setLogger(package=__name__, exiting=True)
 
     def Close(self):
-        # logger = self._setLogger(package=__name__)
+        logger = self._setLogger(package=__name__)
         logger = self._logger
+        #
+
         if self._serial.isOpen():
             logger.info('closing port...')
             self._serial.close()
@@ -178,8 +189,10 @@ class LnRs485(LnRs232):
     # - _getCRC8
     # =====================================================
     def _getCRC8(self, byteArray_data):
-        logger = self._setLogger(package=__name__)
-        # logger = self._logger
+        # logger = self._setLogger(package=__name__)
+        logger = self._logger
+
+
         crcValue = 0
         for byte in byteArray_data:
             # if isinstance(byte, str): byte = ord(byte)            # onverte nel valore ascii
@@ -194,7 +207,7 @@ class LnRs485(LnRs232):
                 if (odd):
                     crcValue ^= 0x8C # this means crc ^= 140
 
-        logger = self._setLogger(package=__name__, exiting=True)
+        # logger = self._setLogger(package=__name__, exiting=True)
         return crcValue
 
 
@@ -210,7 +223,9 @@ class LnRs485(LnRs232):
     # ---------------------------------------------
     def _splitComplementedByte(self, byte):
         # logger = self._setLogger(package=__name__)
-        # logger = self._logger
+        logger = self._logger
+
+
         # logger.info ("byte to be converted: {0} - type: {1}".format(byte, type(byte)))
 
             # first nibble
@@ -238,7 +253,9 @@ class LnRs485(LnRs232):
     #######################################################################
     def read485(self, timeoutValue=2000):
         # logger = self._setLogger(package=__name__)
-        # logger = self._logger
+        logger = self._logger
+
+
 
         data485 = self._myDict()
         data232 = self._myDict()
@@ -249,7 +266,7 @@ class LnRs485(LnRs232):
         rcvd232Data  = self.read232(timeoutValue = timeoutValue)
 
         if rcvd232Data:
-            data232  = self._formatter._fmtData(self, rcvd232Data, self._myDict) # format payload
+            data232      = self._formatter._fmtData(self, rcvd232Data, self._myDict) # format payload
             payloadArray = self._extractPayload(rcvd232Data)    # extract payload
             data485      = self._formatter._fmtData(self, payloadArray, self._myDict) # format payload
             data485.dict = self._formatter._payloadFields(self, payloadArray, self._myDict) # create a dictionary with fields
@@ -271,6 +288,8 @@ class LnRs485(LnRs232):
 
         # logger = self._setLogger(package=__name__)
         logger = self._logger
+
+
         logger.info('payload: {}'.format(self._formatter._toHex(payload)[0]))
 
             # - prepariamo il bytearray per i dati da inviare
@@ -326,6 +345,8 @@ class LnRs485(LnRs232):
         assert type(rawData) == bytearray
         # logger = self._setLogger(package=__name__)
         logger = self._logger
+
+
 
         logger.error('analizing rawData: {}'.format(' '.join('{0:02x}'.format(x) for x in rawData)))
             # cerchiamo STX

@@ -21,6 +21,7 @@ def singleton_with_args(*args, **kwargs):
 @singleton_with_args(0)
 '''
 class LnLogger(logging.getLoggerClass()):
+# class LnLogger(object):
     ''' LnLogger class '''
 
         # ----------------------------------------------------------------------------
@@ -143,7 +144,7 @@ class LnLogger(logging.getLoggerClass()):
 
         if toCONSOLE==False:
             self._to_console = False
-            self._modulesToLog = ['xxxx']
+            # self._modulesToLog = ['xxxx']
             return
 
         elif toCONSOLE==[]:
@@ -179,7 +180,7 @@ class LnLogger(logging.getLoggerClass()):
 
         if toFILE==False:
             self._to_file = False
-            self._modulesToLog = ['xxxx']
+            # self._modulesToLog = ['xxxx']
             return
 
         elif toFILE==[]:
@@ -247,33 +248,34 @@ class LnLogger(logging.getLoggerClass()):
     def info(self, msg, extra=None, dictTitle=None):
 
         # myLogger = self._myLogger.info
-        myLogger = self._realLogger.info
-        if isinstance(msg, dict):
-            savedAutoReset = self._LnFilter.getAutoReset()
-            self._LnFilter.setAutoReset(False)    # blocca l'autoreset dello stack
-            myLogger('{}: {}'.format(dictTitle, type(msg)))
-            for key in msg.keys():
-                myLogger('  {:<20}: {}'.format(key, msg[key]))
-            self._LnFilter.setAutoReset(savedAutoReset)    # ripristina l'autoreset dello stack
-        else:
-            myLogger(msg, extra=extra)
+        # if self._logEnabled:
+            myLogger = self._realLogger.info
+            if isinstance(msg, dict):
+                savedAutoReset = self._LnFilter.getAutoReset()
+                self._LnFilter.setAutoReset(False)    # blocca l'autoreset dello stack
+                myLogger('{}: {}'.format(dictTitle, type(msg)))
+                for key in msg.keys():
+                    myLogger('  {:<20}: {}'.format(key, msg[key]))
+                self._LnFilter.setAutoReset(savedAutoReset)    # ripristina l'autoreset dello stack
+            else:
+                myLogger(msg, extra=extra)
         # self.commonLog(self._myLogger.info, msg, dictTitle=dictTitle)
 
 
     def error(self, msg, extra=None, dictTitle=None):
         # self.commonLog(self._myLogger.error, msg, dictTitle=dictTitle)
-        if self._logEnabled:
+        # if self._logEnabled:
             self._realLogger.error(msg, extra=extra)
 
     def debug(self, msg, extra=None, dictTitle=None):
         # self.commonLog(self._myLogger.debug, msg, dictTitle=dictTitle)
-        if self._logEnabled:
+        # if self._logEnabled:
             self._realLogger.debug(msg, extra=extra)
 
-    def warn(self, msg, extra=None, dictTitle=None):
+    def warning(self, msg, extra=None, dictTitle=None):
         # self.commonLog(self._myLogger.warn, msg, dictTitle=dictTitle)
-        if self._logEnabled:
-            self._realLogger.warn(msg, extra=extra)
+        # if self._logEnabled:
+            self._realLogger.warning(msg, extra=extra)
 
 
     def commonLog(self, myLogger, msg, dictTitle='dictionary'):
@@ -543,7 +545,7 @@ def SetLogger(package, exiting=False, offsetSL=0):
                 LOG_LEVEL = logger._logLevel
 
 
-    # print ('......', LOG_LEVEL, pointers.modulesToLog)
+    print ('......', LOG_LEVEL, fullPkg.lower(), pointers.modulesToLog)
     if fDEBUG:
         print ('fullPkg   :', fullPkg )
         print ('LOG_LEVEL :', LOG_LEVEL )
