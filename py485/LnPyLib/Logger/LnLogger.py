@@ -48,19 +48,17 @@ class LnLogger(logging.getLoggerClass()):
 
         ''' internal variables '''
         self._logEnabled        = False
-        self._logLevel             = logging.INFO
+        self._logLevel          = logging.INFO
 
         self._name              = name
-        self._to_file           = False
-        self._to_console        = False
         self._filename          = None
         self._modulesToLog      = []
 
-        self._rotation_type     = rotationType
-        self._backup_count      = backupCount
-        self._max_bytes         = maxBytes
-        self._when_rotate       = when
-        self._rotation_interval = interval
+        self.__rotation_type     = rotationType
+        self.__backup_count      = backupCount
+        self.__max_bytes         = maxBytes
+        self.__when_rotate       = when
+        self.__rotation_interval = interval
 
         self._file_format       = '[%(asctime)s] [%(LnFuncName)-30s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
         self._console_format    = '[%(LnFuncName)-30s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
@@ -68,41 +66,7 @@ class LnLogger(logging.getLoggerClass()):
         # self._console_format    = '[%(module)-20s:%(lineno)4d] %(levelname)-5.5s - %(message)s'
         self._date_time_format  = '%m-%d %H:%M:%S'
 
-        self._realLogger        = logging.getLogger(self._name)
-        self._nullLogger        = nullLogger()
 
-
-
-        ''' setting LogLevel '''
-        assert type(defaultLogLevel) == str
-        if   defaultLogLevel.lower() == 'debug':    self._logLevel = logging.DEBUG
-        elif defaultLogLevel.lower() == 'warning':  self._logLevel = logging.WARNING
-
-
-
-        ''' setting file/console/logEnable/modulesToLog '''
-        self._prepareFileLog(toFILE, logfilename)
-
-        ''' put Console to override file settings '''
-        self._prepareConsoleLog(toCONSOLE)
-
-        ''' prepare logfile if required '''
-        # self._myLogger = self._realLogger
-        if self._to_file or self._to_console:
-            self._logEnabled = True
-        else:
-            self._myLogger = self._nullLogger
-
-        self._LnFilter = ContextFilter(defaultStack=6, autoReset=True)
-        self._LnFilter.setFuncName('initializing')
-        if name not in self.loggerNames:
-            self.loggerNames.add(name)
-            self._realLogger.setLevel(self._logLevel)
-            self._realLogger.addFilter(self._LnFilter)
-
-        if funcname =='M+F':
-            self._LnFilter.setModuleFuncName(True)
-        self._LnFilter.setModuleToLog(self._modulesToLog)
 
 
             # ---------------------------------------------
@@ -110,26 +74,49 @@ class LnLogger(logging.getLoggerClass()):
             # - agli altri di accedere alla stessa istanza
             # - di logger
             # ---------------------------------------------
-        self.Pointers.rootName     = self._name
+        self.Pointers.rootName      = self._name
         self.Pointers.ClassInstance = self   # <=== class pointer
-        self.Pointers.realLogger   = self._realLogger
-        self.Pointers.nullLogger   = self._nullLogger
-        self.Pointers.LnFilter     = self._LnFilter
-        self.Pointers.modulesToLog = self._modulesToLog
-        self.Pointers.logLevel     = self._logLevel
+        self._myLogger           = logging.getLogger(self._name)
+
+
+
+            # put Console to override file settings
+        if not toCONSOLE == False:
+            self._prepareConsoleLog(toCONSOLE)
+            self._logEnabled = True
+
+            # setting file/console/logEnable/modulesToLog
+        elif not toFILE == False:
+            self._prepareFileLog(toFILE, logfilename)
+            self._logEnabled = True
+
+        else:
+            self._logEnabled = False
+
+
+
+            # prepare/add Filter
+        self._LnFilter = ContextFilter(defaultStack=6, autoReset=True)
+        self._LnFilter.setModuleToLog(self._modulesToLog)
+        self._LnFilter.setFuncName('initializing logger')
+        if funcname =='M+F': self._LnFilter.setModuleFuncName(True)
+
+            # add logger to myLoggersList
+        if name not in self.loggerNames:
+            self.loggerNames.add(name)
+            self._myLogger.addFilter(self._LnFilter)
+
 
         if False:
             print('pointers.rootName     = ', self.Pointers.rootName)
-            print('pointers.ClassInstance  = ', self.Pointers.ClassInstance)
-            print('pointers.realLogger   = ', self.Pointers.realLogger)
-            print('pointers.nullLogger   = ', self.Pointers.nullLogger)
-            print('pointers.LnFilter     = ', self.Pointers.LnFilter)
-            print('pointers.modulesToLog = ', self.Pointers.modulesToLog)
-            print('pointers.logLevel     = ', self.Pointers.logLevel)
+            print('pointers.ClassInstance= ', self.Pointers.ClassInstance)
 
-        self._realLogger.setLevel(self._logLevel)
+        ''' setting LogLevel '''
+        if   defaultLogLevel.lower() == 'debug':    self._logLevel = logging.DEBUG
+        elif defaultLogLevel.lower() == 'warning':  self._logLevel = logging.WARNING
+        self._myLogger.setLevel(self._logLevel)
         self.info('initialised.....')
-        # self._LnFilter.setFuncName(None) # reset al nome del modulo chiamante
+
 
 
 
@@ -144,21 +131,16 @@ class LnLogger(logging.getLoggerClass()):
                 add consoleHandler to logger
         '''
 
-        if toCONSOLE==False:
-            pass
-
+        if toCONSOLE==[]:
+            self._modulesToLog = ['_all_']
         else:
-            self._logEnabled = True
-            if toCONSOLE==[]:
-                self._modulesToLog = ['_all_']
-            else:
-                self._modulesToLog = toCONSOLE
+            self._modulesToLog = toCONSOLE
 
-            ''' prepare log to console if required '''
-            _consoleFormatter = logging.Formatter(fmt=self._console_format, datefmt=self._date_time_format)
-            _consoleHandler   = logging.StreamHandler(stream=sys.stdout)
-            _consoleHandler.setFormatter(_consoleFormatter)
-            self._realLogger.addHandler(_consoleHandler)
+        ''' prepare log to console if required '''
+        _consoleFormatter = logging.Formatter(fmt=self._console_format, datefmt=self._date_time_format)
+        _consoleHandler   = logging.StreamHandler(stream=sys.stdout)
+        _consoleHandler.setFormatter(_consoleFormatter)
+        self._myLogger.addHandler(_consoleHandler)
 
 
 
@@ -175,47 +157,43 @@ class LnLogger(logging.getLoggerClass()):
                 add fileHandlet to logger
         '''
 
-        if toFILE==False:
+
+        if toFILE==[]:
+            self._modulesToLog = ['_all_']
+        else:
+            self._modulesToLog = toFILE
+
+        _LOG_DIR = Path(logfilename).parent
+        self._filename = logfilename
+
+        try:
+            _LOG_DIR.mkdir(parents=True)
+        except (FileExistsError):           # skip error if exists
             pass
 
+        print ('logFile:', str(self._filename))
+
+        if self.__rotation_type == 'time':
+            fileHandler = handlers.TimedRotatingFileHandler(
+                            str(self._filename),
+                            when=self.__when_rotate,
+                            interval=self.__rotation_interval,
+                            backupCount=self.__backup_count
+                        )
+
+        elif self.__rotation_type == 'size':
+            fileHandler = handlers.RotatingFileHandler(
+                            str(self._filename),
+                            maxBytes=self.__max_bytes,
+                            backupCount=self.__backup_count
+                        )
+
         else:
-            self._logEnabled = True
-            if toFILE==[]:
-                self._modulesToLog = ['_all_']
-            else:
-                self._modulesToLog = toFILE
+            fileHandler = logging.FileHandler(self._filename)
 
-            _LOG_DIR = Path(logfilename).parent
-            self._filename = logfilename
-
-            try:
-                _LOG_DIR.mkdir(parents=True)
-            except (FileExistsError):           # skip error if exists
-                pass
-
-            print ('logFile:', str(self._filename))
-
-            if self._rotation_type == 'time':
-                fileHandler = handlers.TimedRotatingFileHandler(
-                                str(self._filename),
-                                when=self._when_rotate,
-                                interval=self._rotation_interval,
-                                backupCount=self._backup_count
-                            )
-
-            elif self._rotation_type == 'size':
-                fileHandler = handlers.RotatingFileHandler(
-                                str(self._filename),
-                                maxBytes=self._max_bytes,
-                                backupCount=self._backup_count
-                            )
-
-            else:
-                fileHandler = logging.FileHandler(self._filename)
-
-            fileFormatter = logging.Formatter(fmt=self._file_format, datefmt=self._date_time_format)
-            fileHandler.setFormatter(fileFormatter)
-            self._realLogger.addHandler(fileHandler)
+        fileFormatter = logging.Formatter(fmt=self._file_format, datefmt=self._date_time_format)
+        fileHandler.setFormatter(fileFormatter)
+        self._myLogger.addHandler(fileHandler)
 
 
 
@@ -227,65 +205,49 @@ class LnLogger(logging.getLoggerClass()):
     def static_getMainPointers():
         return LnLogger.Pointers
 
-    # def setFilterDefaultStack(self, stackLevel):
-        # self._LnFilter.setDefaultStack(stackLevel)
-
-    # def setPackageName(self, name):
-        # self._LnFilter.setPackageName(name)
-
 
     ##############################################################
     #
     ##############################################################
     def info(self, msg, extra=None, dictTitle=None):
-
-        # myLogger = self._myLogger.info
         if self._logEnabled:
-            myLogger = self._realLogger.info
-            if isinstance(msg, dict):
-                savedAutoReset = self._LnFilter.getAutoReset()
-                self._LnFilter.setAutoReset(False)    # blocca l'autoreset dello stack
-                myLogger('{}: {}'.format(dictTitle, type(msg)))
-                for key in msg.keys():
-                    myLogger('  {:<20}: {}'.format(key, msg[key]))
-                self._LnFilter.setAutoReset(savedAutoReset)    # ripristina l'autoreset dello stack
-            else:
-                myLogger(msg, extra=extra)
-        # self.commonLog(self._myLogger.info, msg, dictTitle=dictTitle)
-
+            myLogger = self._myLogger.info
+            data = self.__prepareData(msg, dictTitle=dictTitle)
+            for item in data:
+                myLogger(item)
 
     def error(self, msg, extra=None, dictTitle=None):
-        # self.commonLog(self._myLogger.error, msg, dictTitle=dictTitle)
         if self._logEnabled:
-            self._realLogger.error(msg, extra=extra)
+            myLogger = self._myLogger.error
+            data = self.__prepareData(msg, dictTitle=dictTitle)
+            for item in data:
+                myLogger(item)
 
     def debug(self, msg, extra=None, dictTitle=None):
-        # self.commonLog(self._myLogger.debug, msg, dictTitle=dictTitle)
         if self._logEnabled:
-            self._realLogger.debug(msg, extra=extra)
+            myLogger = self._myLogger.debug
+            data = self.__prepareData(msg, dictTitle=dictTitle)
+            for item in data:
+                myLogger(item)
 
     def warning(self, msg, extra=None, dictTitle=None):
-        # self.commonLog(self._myLogger.warn, msg, dictTitle=dictTitle)
         if self._logEnabled:
-            self._realLogger.warning(msg, extra=extra)
+            myLogger = self._myLogger.warning
+            data = self.__prepareData(msg, dictTitle=dictTitle)
+            for item in data:
+                myLogger(item)
 
 
-    def commonLog(self, myLogger, msg, dictTitle='dictionary'):
-            # cambio lo stackNum per saltare commonLog ed info/debug/...
-        if self._logEnabled:
-            self._LnFilter.addStack(1)
-
-                # se è un dictionary stampiamolo come tale ad un livello solo
-            if isinstance(msg, dict):
-                savedAutoReset = self._LnFilter.getAutoReset()
-                self._LnFilter.setAutoReset(False)    # blocca l'autoreset dello stack
-                myLogger('{}: {}'.format(dictTitle, type(msg)))
-                for key in msg.keys():
-                    myLogger('  {:<20}: {}'.format(key, msg[key]))
-                self._LnFilter.setAutoReset(savedAutoReset)    # ripristina l'autoreset dello stack
-
-            else:
-                myLogger(msg)
+        # prepara i dati per il logging
+    def __prepareData(self, msg, dictTitle='dictionary'):
+        data = []
+        if isinstance(msg, dict):
+            data.append('{}: {}'.format(dictTitle, type(msg)))
+            for key in msg.keys():
+                data.append('  {:<20}: {}'.format(key, msg[key]))
+        else:
+            data = [msg]
+        return data
 
 
 
@@ -295,13 +257,12 @@ class LnLogger(logging.getLoggerClass()):
 ##############################################################################
 class nullLogger():
     def __init__(self, package=None, stackNum=1, extra=None): pass
-    def info(self, data, dictTitle=None):       self._dummy(data)
+    def info(self, data, dictTitle=None):       self.print(data)
     def debug(self, data, dictTitle=None):      self._dummy(data)
     def error(self, data, dictTitle=None):      self._dummy(data)
     def warning(self, data, dictTitle=None):    self._dummy(data)
     def _dummy(self, data): pass
 
-    '''
     def _print(self, data, stackNum=2):
         TAB = 4
         data = '{0}{1}'.format(TAB*' ',data)
@@ -311,6 +272,7 @@ class nullLogger():
         pkg = package.split('.', 1)[1] + '.' +funcName
         str = "[{FUNC:<20}:{LINENO}] - {DATA}".format(FUNC=pkg, LINENO=lineNumber, DATA=data)
         print (str)
+    '''
     '''
 
 
@@ -342,15 +304,10 @@ class ContextFilter(logging.Filter):
         self._pkgname       = ''   # module.funcname else funcname
 
 
-
-    def getAutoReset(self):
-        return self._autoReset
-
     def setModuleToLog(self, nameList):
         self._modulesToLog = []
         for name in nameList:
             self._modulesToLog.append(name.lower())
-
 
     def setModuleFuncName(self, flag):
         return self._Module_Funcname
@@ -379,19 +336,18 @@ class ContextFilter(logging.Filter):
         # print ('self._stack changed to:', self._stack)
 
     def filter(self, record):
+        # print ('.........filter')
         dummy, programFile, lineNO, funcName, lineCode, rest = inspect.stack()[self._stack]
         if self._autoReset: self._stack = self._defaultStack
         if funcName == '<module>': funcName = '__main__'
         fname = os.path.basename(programFile).split('.')[0]
 
-        # caller_01 = GetCaller(2)
-
         # ---------------------------------
         # - individuiamo se è un modulo
         # - da tracciare o meno
         # ---------------------------------
-        fullPkg_LOW = self._pkgname + '.' + funcName + fname
-        # print ('fullPkg_LOW', fullPkg_LOW)
+        # fullPkg_LOW = self._pkgname + '.' + funcName + fname
+        fullPkg_LOW = funcName + fname
 
         flag = False
         if '_all_' in self._modulesToLog:
@@ -408,10 +364,6 @@ class ContextFilter(logging.Filter):
 
         if self._Module_Funcname == True:
             funcName = "{0}.{1}".format(fname, funcName)
-
-
-
-
 
 
             # - modifica della riga
@@ -482,14 +434,17 @@ def SetLogger(package, exiting=False, offsetSL=0):
         print ('package            :', package )
         print ('logger._logEnabled :', logger._logEnabled )
 
-    logger._LnFilter.addStack(1+offsetSL)    # cambio lo stackNum
     caller_03 = GetCaller(3)
+
+    logger._LnFilter.addStack(1+offsetSL)    # cambio lo stackNum
+    # logger._LnFilter.setAutoReset(True)    # cambio lo stackNum
     if exiting:
         logger.info('.... exiting\n')
+        return None
     else:
         logger.info('.... entering called by: {CALLER}'.format(CALLER=caller_03._fullcaller))
+        return logger
 
-    return logger
 
 
 
@@ -506,7 +461,7 @@ def SetLogger(package, exiting=False, offsetSL=0):
         print('     LnFilter      = ', logger._LnFilter)
         print('     modulesToLog  = ', logger._modulesToLog)
         print('     logLevel      = ', logger._logLevel)
-        print('     nullLogger    = ', logger._nullLogger)
+        # print('     nullLogger    = ', logger._nullLogger)
 
 
     caller_01 = GetCaller(1)

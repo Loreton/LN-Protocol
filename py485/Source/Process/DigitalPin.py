@@ -6,7 +6,7 @@
 #         Il Relay ritrasmette il comando sul bus Rs485
 #
 # updated by ...: Loreto Notarantonio
-# Version ......: 25-01-2018 14.29.00
+# Version ......: 26-01-2018 14.19.32
 #
 # ######################################################################################
 
@@ -43,7 +43,7 @@ def digitalToggle(gv, serialPort, payload):
         # ===================================================
         # = RS-485 preparazione del comando
         # ===================================================
-    payload[_fld.SEQNO_H], payload[_fld.SEQNO_L] = serialPort._seqCounter
+    payload[_fld.SEQNO_H], payload[_fld.SEQNO_L] = serialPort.seqCounter()
     payload[_fld.RCODE]     = 0 # 0 per la TX
 
     payload[_fld.DEST_ADDR] = int(gv.args.slave_address)

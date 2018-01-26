@@ -4,7 +4,7 @@
 # #####################################################
 
 # updated by ...: Loreto Notarantonio
-# Version ......: 25-01-2018 16.53.13
+# Version ......: 26-01-2018 15.58.06
 
 import serial       # sudo pip3.4 install pyserial
 import sys
@@ -29,27 +29,19 @@ _SERIALPORTS = {}
 read_TIMEOUT  = 0.05
 """Default value for the timeout value in seconds (float)."""
 
-# logger = None
 
 #####################################################################
 # - MAIN LnRS485 CLASS
 #####################################################################
 class LnRs232():
-    # global logger
-    def __init__(self, port, mode='ascii', baudrate=9600, setLogger=None, useLogger=None, myDict=LnClass):
-        '''
-        if useLogger:
-            self._logger = useLogger
-        else:
-            self._logger = self._internaLogger()
-        '''
-        # print ('setLogger', setLogger)
+    def __init__(self, port, mode='ascii', baudrate=9600, setLogger=None, myDict=LnClass):
+
         if setLogger:
             self._setLogger = setLogger
             self._logger = self._setLogger(package=__name__)
         else:
-            self._setLogger = self._internaLogger
-            self._logger = self._internaLogger()
+            self._setLogger = self.__internaLogger
+            self._logger = self.__internaLogger()
 
         logger = self._logger
 
@@ -102,14 +94,14 @@ class LnRs232():
 
 
 
-    def _internaLogger(self, package=None, exiting=None):
+    def __internaLogger(self, package=None, exiting=None):
         ##############################################################################
         # - classe che mi permette di lavorare nel caso il logger non sia richiesto
         ##############################################################################
         class nullLogger():
                 def __init__(self, package=None, stackNum=1):
                     pass
-                def info(self, data): pass
+                def info(self, data): pass # print('....', data)
                 def debug(self, data): pass
                     # self._print(data)
                 def error(self, data):  pass
@@ -145,7 +137,6 @@ class LnRs232():
     #######################################################################
     def read232(self, timeoutValue=1000):
         logger = self._setLogger(package=__name__)
-        # logger = self._logger
 
         if self._close_port_after_each_call:
             logger.info('opening port...')
@@ -193,7 +184,7 @@ class LnRs232():
         logger.info('received data on serial port: ')
         logger.info(_HexMsg)
 
-        logger = self._setLogger(package=__name__, exiting=True)
+        self._setLogger(package=__name__, exiting=True)
         return _dataBuffer
 
 
@@ -206,12 +197,8 @@ class LnRs232():
     # - Scrittura dati sulla seriale
     #######################################################################
     def write232(self, txData):
-        logger = self._setLogger(package=__name__)
-        # logger = self._logger
-
-        # logger = self._logger  # è lo stesso di sopra ma non capisco percé non funziona....
         assert type(txData)==bytearray
-
+        logger = self._setLogger(package=__name__)
 
         if self._close_port_after_each_call:
             logger.info('opening port...')
@@ -228,7 +215,7 @@ class LnRs232():
             logger.info('closing port...')
             self._serial.close()
 
-        logger = self._setLogger(package=__name__, exiting=True)
+        self._setLogger(package=__name__, exiting=True)
 
 
     _serialRead  = read232

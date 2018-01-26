@@ -26,13 +26,15 @@ def openRs485Port(portData, rs485):
         # ----------------------------------------------------
         # = RS-485 open/initialize port
         # ----------------------------------------------------
-    # port = Ln.Rs485(port=portData.port, baudrate=portData.baudrate, mode=rs485.mode, useLogger=logger, myDict=Ln.Dict)
-    port = Ln.Rs485(port=portData.port, baudrate=portData.baudrate, mode=rs485.mode, setLogger=Ln.SetLogger, myDict=Ln.Dict)
-    # port = Ln.Rs485(port=portData.port, baudrate=portData.baudrate, mode=rs485.mode, myDict=Ln.Dict)
+    port = Ln.Rs485(port=portData.port,
+                    baudrate=portData.baudrate,
+                    mode=rs485.mode,
+                    STX = rs485.STX,
+                    ETX = rs485.ETX,
+                    CRC = rs485.CRC,
+                    setLogger=Ln.SetLogger,
+                    myDict=Ln.Dict)
 
-    port.SetSTX(rs485.STX)
-    port.SetETX(rs485.ETX)
-    port.SetCRC(rs485.CRC)
     port.ClosePortAfterEachCall(False)
         # carichiamo i nomi dei campi del payload
     port.SetPayloadFieldName(rs485.payloadFieldName)
